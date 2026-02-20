@@ -1,0 +1,47 @@
+ProductClank Agent Skill License
+
+Copyright (c) 2026 ProductClank (Covariance Network, Inc.)
+
+This skill documentation is provided to enable AI agents and developers to
+interact with the ProductClank API. The ProductClank service and API are
+proprietary and subject to separate terms of service.
+
+GRANT OF LICENSE
+
+Permission is hereby granted, free of charge, to any person or AI agent
+obtaining a copy of this skill documentation (the "Skill"), to use the
+Skill for integration purposes, including without limitation the rights
+to use, copy, modify, and distribute the Skill, subject to the following
+conditions:
+
+1. The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Skill.
+
+2. The Skill is provided solely for the purpose of enabling integration
+   with the ProductClank API. Use of the ProductClank API itself is subject
+   to separate terms and requires API key authentication.
+
+3. The Skill may not be used to create competing services or to reverse
+   engineer the ProductClank platform.
+
+DISCLAIMER
+
+THE SKILL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SKILL OR THE USE OR OTHER DEALINGS
+IN THE SKILL.
+
+PRODUCTCLANK SERVICE TERMS
+
+Use of the ProductClank API and services is subject to ProductClank's Terms
+of Service, available at https://www.productclank.com/terms (when available).
+
+API keys are provided subject to approval and may be revoked at any time.
+
+For questions or to obtain an API key, contact ProductClank:
+- Website: https://www.productclank.com
+- Twitter: https://twitter.com/productclank
+- Warpcast: https://warpcast.com/productclank
