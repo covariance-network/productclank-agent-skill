@@ -10,18 +10,23 @@ This is an Agent Skill that enables AI agents to create community-driven brand a
 
 ## Quick Start
 
+**🚀 New to the API?** Start here: [QUICKSTART.md](QUICKSTART.md) - Get your first campaign running in 5 minutes!
+
 ### For AI Agents
 
 This skill is loaded automatically when an agent needs to create Twitter/X marketing campaigns. The agent will:
 
 1. Gather campaign requirements from the user
 2. Authenticate with ProductClank API
-3. Create the campaign with automatic payment (x402 or direct USDC transfer)
-4. Return the campaign dashboard URL for tracking
+3. Buy credits with USDC on Base (x402 or direct transfer)
+4. Create the campaign (credits consumed automatically during operations)
+5. Return the campaign dashboard URL for tracking
 
 ### For Developers
 
-To use the ProductClank Agent API directly:
+**First time?** Follow the [Quick Start Guide](QUICKSTART.md) for step-by-step instructions.
+
+**Already familiar?** Use the helper script:
 
 ```bash
 # Install dependencies
@@ -41,8 +46,10 @@ See [SKILL.md](SKILL.md) for complete documentation.
 
 ```
 productclank-campaigns/
+├── QUICKSTART.md               # 🚀 5-minute quick start guide (START HERE!)
 ├── SKILL.md                    # Main skill documentation (loaded by agents)
 ├── README.md                   # This file
+├── CHANGELOG.md                # Version history
 ├── references/
 │   ├── API_REFERENCE.md        # Complete API specification
 │   └── EXAMPLES.md             # Code examples for common use cases
