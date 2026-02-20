@@ -5,6 +5,26 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-20
+
+### Changed - Credit-Based Pricing 🔄
+- **BREAKING**: Replaced campaign packages with credit-based pay-per-use system
+- Agents buy credits ($2-$500), consume as operations performed (12 cr/post)
+- No upfront payment for campaigns - credits deducted during generation
+- Lower barrier to entry: $2 test bundle vs $99 minimum
+
+### Added
+- Credit bundles: nano ($2), micro ($10), small ($25), medium ($50), large ($100), enterprise ($500)
+- `GET /api/v1/agents/credits/balance` - Check balance
+- `POST /api/v1/agents/credits/topup` - Buy credits (x402/direct USDC)
+- `GET /api/v1/agents/credits/history` - Transaction history
+
+### Removed
+- Campaign package payments (selected_package field removed)
+- Payment requirement from POST /api/v1/agents/campaigns
+
+---
+
 ## [1.0.0] - 2026-02-20
 
 ### Added
