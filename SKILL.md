@@ -4,11 +4,11 @@ description: Create AI-powered Twitter/X brand advocacy campaigns on ProductClan
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "1.0.0"
+  version: "1.1.0"
   api_endpoint: https://app.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
-compatibility: Requires USDC on Base (chain ID 8453) for payment. Supports both x402 protocol and direct USDC transfers. Works with any wallet type.
+compatibility: Credit-based pay-per-use system. Agents buy credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
 ---
 
 # ProductClank Communiply Campaign Creation
@@ -75,16 +75,32 @@ Before creating a campaign, ensure you have:
 1. **ProductClank API Key** (format: `pck_live_XXXXXXXX`)
    - Contact ProductClank team to register your agent and receive a key
 
-2. **Payment Method** (one of):
+2. **Credit Balance**
+   - Buy credits via `/api/v1/agents/credits/topup` using USDC on Base
+   - Check balance via `/api/v1/agents/credits/balance`
+   - Credits consumed automatically as operations are performed (~12 credits per post)
+
+3. **Payment Method for Top-ups** (one of):
    - **x402 Protocol**: Wallet with private key access + USDC on Base
    - **Direct Transfer**: Any wallet that can send USDC on Base
    - **Trusted Agent Status**: Whitelisted agents skip payment (contact ProductClank)
 
-3. **Product Registration**
+4. **Product Registration**
    - Your product must exist on ProductClank with a valid `product_id` (UUID)
    - Visit [app.productclank.com/products](https://app.productclank.com/products) to browse products
 
 ## How to Create a Campaign
+
+### Step 0: Check Credit Balance (Optional but Recommended)
+
+```bash
+curl https://app.productclank.com/api/v1/agents/credits/balance \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+
+# Response: { balance: 1200, lifetime_purchased: 1200, lifetime_used: 0 }
+```
+
+If balance is low, top up credits first (see "Credit Management" section below).
 
 ### Step 1: Gather Campaign Requirements
 
@@ -93,7 +109,7 @@ Ask the user for:
 - **Campaign goal**: What do you want to achieve? (e.g., "Launch week buzz", "Competitor intercept")
 - **Target keywords**: What topics should we monitor? (e.g., ["AI tools", "productivity apps"])
 - **Search context**: Describe target conversations (e.g., "People discussing AI productivity tools and automation")
-- **Budget**: Which package? test ($0.01) / starter ($99) / growth ($499) / scale ($2000)
+- **Estimated scale**: How many posts do you want to target? (~50 posts = ~600 credits)
 
 Optional refinements:
 - **Mention accounts**: Twitter handles to mention naturally (e.g., ["@productclank"])
@@ -104,27 +120,10 @@ Optional refinements:
 
 ### Step 2: Create the Campaign
 
-#### Option A: Using x402 Protocol (Recommended for Private Key Wallets)
+Campaigns are created immediately (no upfront payment). Credits are consumed automatically as operations are performed.
 
 ```typescript
-import { wrapFetchWithPayment } from "@x402/fetch";
-import { createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-
-// Setup wallet client
-const account = privateKeyToAccount(process.env.AGENT_PRIVATE_KEY);
-const walletClient = createWalletClient({
-  account,
-  chain: base,
-  transport: http(),
-});
-
-// Wrap fetch with x402 payment capability
-const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
-
-// Create campaign (payment handled automatically)
-const response = await x402Fetch(
+const response = await fetch(
   "https://app.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
@@ -137,7 +136,7 @@ const response = await x402Fetch(
       title: "Launch Week Buzz Campaign",
       keywords: ["web3 tools", "crypto apps", "DeFi platforms"],
       search_context: "People discussing web3 tools, crypto products, and DeFi platforms",
-      selected_package: "starter", // $99
+      estimated_posts: 50, // Optional: for cost estimation
       mention_accounts: ["@productclank", "@0xCovariance"],
       reply_style_tags: ["friendly", "technical", "enthusiastic"],
       reply_length: "short",
@@ -152,64 +151,49 @@ const result = await response.json();
 if (result.success) {
   console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
   console.log(`📊 View at: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-  console.log(`💰 Payment: ${result.payment.method} - $${result.payment.amount_usdc} USDC`);
+  console.log(`💳 Estimated cost: ${result.cost_estimate.estimated_credits} credits`);
+  console.log(`💰 Current balance: ${result.cost_estimate.current_balance} credits`);
+  console.log(`✓ Sufficient credits: ${result.cost_estimate.sufficient_credits}`);
 } else {
   console.error(`❌ Error: ${result.error} - ${result.message}`);
 }
 ```
 
-**Dependencies for x402:**
-```bash
-npm install @x402/fetch viem
-```
-
-**x402 Requirements:**
-- Wallet must have private key access (EOA)
-- Wallet must hold USDC on Base (chain ID 8453)
-- USDC balance >= package price
-- Smart contract wallets / MPC wallets without `signTypedData` support cannot use x402 — use Direct Transfer instead
-
-#### Option B: Using Direct USDC Transfer (For Wallets Without Private Keys)
-
-```typescript
-// Step 1: Send USDC on Base to payment address
-// - Token: USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-// - Network: Base (chain ID 8453)
-// - To: 0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68
-// - Amount: Exact package price (e.g., 99 USDC for starter)
-
-// Step 2: Wait for confirmation, get transaction hash
-const txHash = "0x..."; // Your confirmed tx hash
-
-// Step 3: Create campaign with tx hash
-const response = await fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
-  {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer pck_live_YOUR_API_KEY",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      product_id: "PRODUCT_UUID",
-      title: "Launch Week Buzz Campaign",
-      keywords: ["web3 tools", "crypto apps"],
-      search_context: "People discussing web3 tools and crypto products",
-      selected_package: "starter",
-      payment_tx_hash: txHash, // Include the transaction hash
-    }),
+**Response includes cost estimate:**
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "uuid",
+    "campaign_number": "CP-042",
+    "title": "Launch Week Buzz Campaign",
+    "status": "active",
+    "is_funded": true
+  },
+  "cost_estimate": {
+    "posts_requested": 50,
+    "estimated_credits": 600,
+    "current_balance": 1200,
+    "sufficient_credits": true,
+    "note": "Sufficient credits available"
   }
-);
-
-const result = await response.json();
+}
 ```
 
-**Direct Transfer Requirements:**
-- Transaction must be confirmed on Base
-- Must be a USDC transfer to `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
-- Amount must be >= package price
-- Transaction must be recent (within 1 hour)
-- Each transaction hash can only be used once (no replay attacks)
+**Campaign Fields:**
+- `product_id` (required): Product UUID
+- `title` (required): Campaign name
+- `keywords` (required): Array of keywords to monitor
+- `search_context` (required): Description of target conversations
+- `estimated_posts` (optional): Expected number of posts for cost estimation
+- `mention_accounts` (optional): Twitter handles to mention
+- `reply_style_tags` (optional): Tone tags (e.g., ["friendly", "technical"])
+- `reply_length` (optional): "very-short" | "short" | "medium" | "long" | "mixed"
+- `reply_guidelines` (optional): Custom instructions for AI
+- `min_follower_count` (optional): Minimum followers (default: 100)
+- `min_engagement_count` (optional): Minimum engagement threshold
+- `max_post_age_days` (optional): Maximum post age in days
+- `require_verified` (optional): Only verified accounts
 
 ### Step 3: Handle the Response
 
@@ -226,32 +210,47 @@ const result = await response.json();
     "creator_agent_id": "agent-uuid",
     "is_funded": true
   },
-  "payment": {
-    "method": "x402",
-    "amount_usdc": 99,
-    "network": "base",
-    "payer": "0xAgentWalletAddress",
-    "tx_hash": "0x..." // only for direct_transfer
+  "cost_estimate": {
+    "posts_requested": 50,
+    "estimated_credits": 600,
+    "current_balance": 1200,
+    "sufficient_credits": true,
+    "note": "Sufficient credits available"
   }
 }
 ```
 
-**Next steps for user:**
+**Next steps:**
 - Campaign is live and actively discovering Twitter conversations
-- AI is generating replies for relevant posts
+- AI is generating replies for relevant posts (consumes 12 credits per post)
 - Community members can claim and execute reply opportunities
+- Credits deducted automatically as operations are performed
 - View campaign dashboard: `https://app.productclank.com/communiply/campaigns/{campaign.id}`
 - Track analytics, engagement, and ROI in real-time
 
-#### Payment Required (402)
+#### Low Credit Warning (200 OK, but warning in response)
+```json
+{
+  "success": true,
+  "campaign": {...},
+  "cost_estimate": {
+    "posts_requested": 50,
+    "estimated_credits": 600,
+    "current_balance": 200,
+    "sufficient_credits": false,
+    "note": "Warning: Low credit balance. Consider topping up via /api/v1/agents/credits/topup"
+  }
+}
+```
+
+**Action:** Top up credits via `/api/v1/agents/credits/topup` to avoid interruptions.
+
+#### Rate Limit Exceeded (429)
 ```json
 {
   "success": false,
-  "error": "payment_required",
-  "message": "Payment required to create campaign",
-  "amount_usdc": 99,
-  "package": "starter",
-  "payment_methods": {
+  "error": "rate_limit_exceeded",
+  "message": "Daily campaign creation limit exceeded (10/day)
     "x402": {
       "description": "x402 protocol payment (recommended for wallets with private key access)",
       "config": { /* x402 payment requirements */ }
@@ -264,28 +263,6 @@ const result = await response.json();
       "asset": "USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)"
     }
   }
-}
-```
-
-**This is normal on the first request without payment.** Use `@x402/fetch` to handle automatically, or switch to direct transfer method.
-
-#### Validation Error (400)
-```json
-{
-  "success": false,
-  "error": "validation_error",
-  "message": "Missing required fields: product_id, title, keywords (non-empty), search_context"
-}
-```
-
-**Fix:** Ensure all required fields are provided and non-empty.
-
-#### Rate Limit Exceeded (429)
-```json
-{
-  "success": false,
-  "error": "rate_limit_exceeded",
-  "message": "Daily campaign creation limit exceeded (10/day)"
 }
 ```
 
@@ -302,14 +279,153 @@ const result = await response.json();
 
 **Fix:** Verify API key is correct and starts with `pck_live_`.
 
-## Campaign Packages & Pricing
+## Credit Management
 
-| Package | Price (USDC) | Description |
-|---------|--------------|-------------|
-| **test** | $0.01 | For development and testing |
-| **starter** | $99 | Small campaign, ideal for launches |
-| **growth** | $499 | Medium campaign, sustained growth |
-| **scale** | $2,000 | Large campaign, enterprise-level |
+### Credit Bundles (USDC on Base)
+
+| Bundle | Price | Credits | Rate | Posts (~12 cr/post) | Best For |
+|--------|-------|---------|------|---------------------|----------|
+| **nano** | $2 USDC | 50 credits | 25 cr/$ | ~4 posts | **Testing the API** |
+| **micro** | $10 USDC | 200 credits | 20 cr/$ | ~16 posts | Small test campaign |
+| **small** | $25 USDC | 550 credits | 22 cr/$ | ~45 posts | Product launch |
+| **medium** | $50 USDC | 1,200 credits | 24 cr/$ | ~100 posts | Medium campaign |
+| **large** | $100 USDC | 2,600 credits | 26 cr/$ | ~216 posts | Large campaign |
+| **enterprise** | $500 USDC | 14,000 credits | 28 cr/$ | ~1,166 posts | High volume |
+
+### Credit Costs per Operation
+
+| Operation | Credits | Cost @ $50 bundle (24 cr/$) |
+|-----------|---------|------------------------------|
+| Discover post + generate reply | 12 | ~$0.50 |
+| Generate reply only | 8 | ~$0.33 |
+| Regenerate reply | 5 | ~$0.21 |
+| Tweet boost (10 AI replies) | 80 | ~$3.33 |
+| Chat message | 3 | ~$0.12 |
+| Keyword generation | 2 | ~$0.08 |
+
+### Check Balance
+
+```bash
+curl https://app.productclank.com/api/v1/agents/credits/balance \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "balance": 1200,
+  "user_id": "uuid",
+  "agent_id": "uuid",
+  "agent_name": "MyAgent",
+  "lifetime_purchased": 5000,
+  "lifetime_used": 3800,
+  "lifetime_bonus": 0
+}
+```
+
+### Top Up Credits
+
+#### Option A: Using x402 Protocol (Recommended)
+
+```typescript
+import { wrapFetchWithPayment } from "@x402/fetch";
+import { createWalletClient, http } from "viem";
+import { base } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+
+const account = privateKeyToAccount(process.env.AGENT_PRIVATE_KEY);
+const walletClient = createWalletClient({
+  account,
+  chain: base,
+  transport: http(),
+});
+
+const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
+
+const topup = await x402Fetch(
+  "https://app.productclank.com/api/v1/agents/credits/topup",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_KEY",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ bundle: "medium" })  // $50 → 1200 credits
+  }
+);
+
+const result = await topup.json();
+// { success: true, credits_added: 1200, new_balance: 1200, bundle: "medium", payment: {...} }
+```
+
+**Dependencies:**
+```bash
+npm install @x402/fetch viem
+```
+
+#### Option B: Direct USDC Transfer
+
+```typescript
+// Step 1: Send USDC on Base to payment address
+// - Token: USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+// - Network: Base (chain ID 8453)
+// - To: 0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68
+// - Amount: Exact bundle price (e.g., 50 USDC for medium)
+
+// Step 2: Submit with transaction hash
+const topup = await fetch(
+  "https://app.productclank.com/api/v1/agents/credits/topup",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_KEY",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      bundle: "medium",
+      payment_tx_hash: "0x..."  // Your confirmed tx hash
+    })
+  }
+);
+```
+
+### View Transaction History
+
+```bash
+curl "https://app.productclank.com/api/v1/agents/credits/history?limit=50&offset=0" \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "id": "uuid",
+      "type": "topup_purchase",
+      "amount": 1200,
+      "balance_after": 2700,
+      "description": "Credit top-up: medium bundle",
+      "created_at": "2026-02-20T18:00:00Z"
+    },
+    {
+      "id": "uuid",
+      "type": "ai_usage",
+      "amount": -576,
+      "balance_after": 2124,
+      "operation_type": "generate-posts",
+      "campaign_id": "CP-042",
+      "description": "generate-posts: 48 item(s)",
+      "created_at": "2026-02-20T18:05:00Z"
+    }
+  ],
+  "total": 2,
+  "limit": 50,
+  "offset": 0
+}
+```
 
 All payments are in USDC on Base network.
 
@@ -369,7 +485,7 @@ Communiply discovers opportunities from multiple sources:
 
 ### Community Coordination
 After campaign creation:
-1. AI discovers 50-500 relevant conversations (depending on package)
+1. AI discovers relevant conversations (consumes 12 credits per post discovered + reply generated)
 2. Generates contextual replies for each opportunity
 3. Community members browse opportunities in dashboard
 4. They claim replies, customize if needed, and post from personal accounts
@@ -390,7 +506,33 @@ After campaign creation:
 ```typescript
 // 1. User asks: "I want to create a Twitter campaign for my DeFi app launch"
 
-// 2. Agent gathers requirements
+// 2. Check credit balance first
+const balanceRes = await fetch(
+  "https://app.productclank.com/api/v1/agents/credits/balance",
+  {
+    headers: { "Authorization": "Bearer pck_live_YOUR_KEY" }
+  }
+);
+const { balance } = await balanceRes.json();
+
+// 3. Top up if needed (targeting 100 posts = ~1200 credits)
+if (balance < 1200) {
+  const topupRes = await x402Fetch(
+    "https://app.productclank.com/api/v1/agents/credits/topup",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer pck_live_YOUR_KEY",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ bundle: "medium" })  // $50 → 1200 credits
+    }
+  );
+  const { credits_added, new_balance } = await topupRes.json();
+  console.log(`✅ Topped up ${credits_added} credits (new balance: ${new_balance})`);
+}
+
+// 4. Gather campaign requirements
 const campaignRequest = {
   product_id: "abc-123-def", // From ProductClank
   title: "DeFi App Launch Week",
@@ -401,7 +543,7 @@ const campaignRequest = {
     "crypto staking"
   ],
   search_context: "People discussing DeFi platforms, yield farming strategies, and crypto staking opportunities",
-  selected_package: "growth", // $499
+  estimated_posts: 100,  // For cost estimation
   mention_accounts: ["@mydefiapp"],
   reply_style_tags: ["professional", "technical", "helpful"],
   reply_length: "short",
@@ -410,8 +552,8 @@ const campaignRequest = {
   require_verified: false
 };
 
-// 3. Create campaign with x402 payment
-const result = await x402Fetch(
+// 5. Create campaign (no payment required - credits deducted during operations)
+const result = await fetch(
   "https://app.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
@@ -423,36 +565,45 @@ const result = await x402Fetch(
   }
 ).then(r => r.json());
 
-// 4. Inform user of success
+// 6. Inform user of success
 console.log(`
 ✅ Campaign "${result.campaign.title}" created successfully!
 
 📊 Campaign Details:
    - Campaign ID: ${result.campaign.campaign_number}
    - Status: ${result.campaign.status}
-   - Funded: ${result.campaign.is_funded ? 'Yes' : 'No'}
+   - Active: Yes
 
-💰 Payment:
-   - Method: ${result.payment.method}
-   - Amount: $${result.payment.amount_usdc} USDC
-   - Network: Base
+💳 Credit Estimate:
+   - Estimated cost: ${result.cost_estimate.estimated_credits} credits (~${result.cost_estimate.posts_requested} posts)
+   - Current balance: ${result.cost_estimate.current_balance} credits
+   - Sufficient credits: ${result.cost_estimate.sufficient_credits ? 'Yes' : 'No'}
 
 🔗 Next Steps:
    - View dashboard: https://app.productclank.com/communiply/campaigns/${result.campaign.id}
-   - AI is now discovering relevant conversations
+   - AI is now discovering relevant conversations (12 credits per post)
    - Community members can claim and execute reply opportunities
    - Track real-time analytics and engagement
+   - Monitor credit usage: https://app.productclank.com/api/v1/agents/credits/history
 
-Your campaign will actively monitor Twitter for the next 30 days and coordinate community engagement automatically.
+Your campaign will actively monitor Twitter and coordinate community engagement. Credits are consumed automatically as operations are performed.
 `);
 ```
 
 ## Troubleshooting
 
-### "Payment verification failed"
+### "Low credit balance" warning
+- Campaign created successfully but may run out of credits
+- Top up via `/api/v1/agents/credits/topup`
+- Check balance regularly via `/api/v1/agents/credits/balance`
+- Operations will pause if balance reaches zero
+
+### "Payment verification failed" (during credit top-up)
 - Ensure USDC balance is sufficient
 - For direct transfer: verify tx hash is correct and confirmed
 - For x402: ensure wallet has `signTypedData` capability
+- Transaction must be recent (within 1 hour)
+- Each transaction hash can only be used once
 
 ### "Product not found"
 - Verify product_id exists on ProductClank
@@ -461,6 +612,10 @@ Your campaign will actively monitor Twitter for the next 30 days and coordinate 
 ### "Invalid API key"
 - Ensure key starts with `pck_live_`
 - Contact ProductClank team to verify key status
+
+### "Rate limit exceeded"
+- Default limit: 10 campaigns per day
+- Wait until next day or contact ProductClank for higher limits
 
 ### "Rate limit exceeded"
 - Default limit: 10 campaigns/day
