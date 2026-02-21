@@ -72,7 +72,7 @@ Complete API specification including:
 - Authentication requirements
 - Request/response formats
 - All payment methods (x402, direct transfer, trusted agents)
-- Package pricing
+- Credit bundles and operation costs
 - Rate limits
 - Error codes and handling
 
@@ -161,7 +161,7 @@ const response = await x402Fetch(
       title: "Launch Week Campaign",
       keywords: ["AI tools", "productivity apps"],
       search_context: "People discussing AI productivity tools",
-      selected_package: "test", // $0.01 for testing
+      estimated_posts: 10, // Estimate for cost calculation
     }),
   }
 );
@@ -170,14 +170,29 @@ const result = await response.json();
 console.log("Campaign:", result.campaign);
 ```
 
-## Payment Packages
+## Credit Bundles
 
-| Package | Price | Description |
-|---------|-------|-------------|
-| test | $0.01 | For development and testing |
-| starter | $99 | Small campaign, ideal for launches |
-| growth | $499 | Medium campaign, sustained growth |
-| scale | $2,000 | Large campaign, enterprise-level |
+ProductClank uses a credit-based pay-per-use system. Buy credits once, use them across multiple campaigns:
+
+| Bundle | Price | Credits | Rate | Approx. Posts* |
+|--------|-------|---------|------|----------------|
+| nano | $2 | 50 | 25 cr/$ | ~4 |
+| micro | $10 | 200 | 20 cr/$ | ~16 |
+| small | $25 | 550 | 22 cr/$ | ~45 |
+| medium | $50 | 1,200 | 24 cr/$ | ~100 |
+| large | $100 | 2,600 | 26 cr/$ | ~216 |
+| enterprise | $500 | 14,000 | 28 cr/$ | ~1,166 |
+
+*Based on 12 credits per post (discover + generate reply)
+
+### Operation Costs
+
+| Operation | Credits | Est. Cost |
+|-----------|---------|-----------|
+| Discover post + generate reply | 12 | ~$0.50 |
+| Generate reply only | 8 | ~$0.33 |
+| Regenerate reply | 5 | ~$0.21 |
+| Tweet boost (10 AI replies) | 80 | ~$3.33 |
 
 All payments in USDC on Base network (chain ID 8453).
 
@@ -278,7 +293,7 @@ A: Yes, via the web dashboard at [app.productclank.com/communiply/campaigns/](ht
 A: Use the direct USDC transfer method. Send USDC to the payment address and provide the tx hash.
 
 **Q: Is there a test environment?**
-A: Yes, use the "test" package ($0.01) on production. There's no separate test API.
+A: Use the "nano" bundle ($2 for 50 credits) for testing on production. There's no separate test API—just buy a small amount of credits to try it out.
 
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.

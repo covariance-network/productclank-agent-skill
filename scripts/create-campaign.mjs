@@ -53,7 +53,7 @@ const campaignData = {
     "automation software"
   ],
   search_context: "People discussing AI productivity tools and automation challenges",
-  selected_package: "test", // $0.01 for testing
+  estimated_posts: 4, // 4 posts × 12 credits = 48 credits (fits in nano bundle)
   mention_accounts: ["@productclank"],
   reply_style_tags: ["friendly", "helpful"],
   reply_length: "short",
@@ -81,16 +81,22 @@ function validateCampaignData(data) {
     errors.push("search_context is required");
   }
 
-  if (!["test", "starter", "growth", "scale"].includes(data.selected_package)) {
-    errors.push("selected_package must be one of: test, starter, growth, scale");
-  }
-
   return errors;
 }
 
-// Create campaign using x402 protocol
-async function createCampaignWithX402(data) {
-  console.log("💳 Using x402 protocol payment...");
+// Check credit balance
+async function checkCreditBalance() {
+  const response = await fetch(`${API_BASE_URL}/credits/balance`, {
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+    },
+  });
+  return response.json();
+}
+
+// Top up credits using x402 protocol
+async function topUpCreditsWithX402(bundle) {
+  console.log(`💳 Topping up credits with ${bundle} bundle using x402 protocol...`);
 
   const account = privateKeyToAccount(PRIVATE_KEY);
   const walletClient = createWalletClient({
@@ -101,7 +107,23 @@ async function createCampaignWithX402(data) {
 
   const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
-  const response = await x402Fetch(`${API_BASE_URL}/agents/campaigns`, {
+  const response = await x402Fetch(`${API_BASE_URL}/credits/topup`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ bundle }),
+  });
+
+  return response.json();
+}
+
+// Create campaign (credits deducted automatically)
+async function createCampaign(data) {
+  console.log("🔨 Creating campaign...");
+
+  const response = await fetch(`${API_BASE_URL}/agents/campaigns`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${API_KEY}`,
@@ -113,24 +135,49 @@ async function createCampaignWithX402(data) {
   return response.json();
 }
 
-// Create campaign using direct USDC transfer
-async function createCampaignWithDirectTransfer(data) {
-  console.log("💸 Using direct USDC transfer...");
+// Top up credits using direct USDC transfer
+async function topUpCreditsWithDirectTransfer(bundle) {
+  console.log("💸 Using direct USDC transfer for credit top-up...");
   console.log(`📜 Transaction hash: ${PAYMENT_TX_HASH}`);
 
-  const response = await fetch(`${API_BASE_URL}/agents/campaigns`, {
+  const response = await fetch(`${API_BASE_URL}/credits/topup`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      ...data,
+      bundle,
       payment_tx_hash: PAYMENT_TX_HASH,
     }),
   });
 
   return response.json();
+}
+
+// Recommend bundle based on estimated posts
+function recommendBundle(estimatedPosts) {
+  const creditsNeeded = estimatedPosts * 12; // 12 credits per post
+
+  if (creditsNeeded <= 50) return "nano";
+  if (creditsNeeded <= 200) return "micro";
+  if (creditsNeeded <= 550) return "small";
+  if (creditsNeeded <= 1200) return "medium";
+  if (creditsNeeded <= 2600) return "large";
+  return "enterprise";
+}
+
+// Get bundle details
+function getBundleDetails(bundle) {
+  const bundles = {
+    nano: { credits: 50, price: 2 },
+    micro: { credits: 200, price: 10 },
+    small: { credits: 550, price: 25 },
+    medium: { credits: 1200, price: 50 },
+    large: { credits: 2600, price: 100 },
+    enterprise: { credits: 14000, price: 500 },
+  };
+  return bundles[bundle];
 }
 
 // Main execution
@@ -148,22 +195,54 @@ async function main() {
   }
 
   // Display campaign details
+  const estimatedPosts = campaignData.estimated_posts || 50;
+  const estimatedCredits = estimatedPosts * 12;
+  const recommendedBundle = recommendBundle(estimatedPosts);
+  const bundleDetails = getBundleDetails(recommendedBundle);
+
   console.log("📋 Campaign Details:");
   console.log(`   - Title: ${campaignData.title}`);
   console.log(`   - Keywords: ${campaignData.keywords.join(", ")}`);
-  console.log(`   - Package: ${campaignData.selected_package}`);
+  console.log(`   - Estimated Posts: ${estimatedPosts}`);
+  console.log(`   - Estimated Credits: ~${estimatedCredits}`);
+  console.log(`   - Recommended Bundle: ${recommendedBundle} ($${bundleDetails.price} = ${bundleDetails.credits} credits)`);
   console.log("");
 
-  // Create campaign
-  console.log("🔨 Creating campaign...");
+  // Check credit balance
+  console.log("💳 Checking credit balance...");
   try {
-    let result;
+    const balanceData = await checkCreditBalance();
+    console.log(`   Current balance: ${balanceData.credits} credits`);
 
-    if (PAYMENT_TX_HASH) {
-      result = await createCampaignWithDirectTransfer(campaignData);
+    // Top up if needed
+    if (balanceData.credits < estimatedCredits) {
+      console.log(`\n⚠️  Insufficient credits (need ${estimatedCredits}, have ${balanceData.credits})`);
+      console.log(`   Topping up with ${recommendedBundle} bundle...`);
+
+      let topupResult;
+      if (PAYMENT_TX_HASH) {
+        topupResult = await topUpCreditsWithDirectTransfer(recommendedBundle);
+      } else {
+        topupResult = await topUpCreditsWithX402(recommendedBundle);
+      }
+
+      if (topupResult.success) {
+        console.log(`\n✅ Credits Topped Up!`);
+        console.log(`   Added: ${topupResult.credits_added} credits`);
+        console.log(`   New balance: ${topupResult.new_balance} credits`);
+        console.log(`   Amount paid: $${topupResult.amount_usdc} USDC`);
+        console.log("");
+      } else {
+        console.error(`\n❌ Top-up Failed: ${topupResult.error}`);
+        console.error(`   Message: ${topupResult.message}`);
+        process.exit(1);
+      }
     } else {
-      result = await createCampaignWithX402(campaignData);
+      console.log(`   ✅ Sufficient credits available\n`);
     }
+
+    // Create campaign
+    const result = await createCampaign(campaignData);
 
     // Handle response
     if (result.success) {
@@ -172,25 +251,14 @@ async function main() {
       console.log(`   - ID: ${result.campaign.campaign_number}`);
       console.log(`   - Title: ${result.campaign.title}`);
       console.log(`   - Status: ${result.campaign.status}`);
-      console.log(`   - Funded: ${result.campaign.is_funded ? 'Yes' : 'No'}`);
-      console.log("");
-      console.log("💰 Payment:");
-      console.log(`   - Method: ${result.payment.method}`);
-      console.log(`   - Amount: $${result.payment.amount_usdc} USDC`);
-      console.log(`   - Network: Base`);
-      if (result.payment.payer) {
-        console.log(`   - Payer: ${result.payment.payer}`);
-      }
-      if (result.payment.tx_hash) {
-        console.log(`   - Tx Hash: ${result.payment.tx_hash}`);
-      }
+      console.log(`   - Estimated Cost: ~${estimatedCredits} credits`);
       console.log("");
       console.log("🔗 View Campaign:");
       console.log(`   https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
       console.log("");
       console.log("🎯 Next Steps:");
       console.log("   1. AI is discovering relevant conversations");
-      console.log("   2. Generating contextual replies for opportunities");
+      console.log("   2. Generating contextual replies for opportunities (12 credits/post)");
       console.log("   3. Community can claim and execute replies");
       console.log("   4. Track engagement in real-time via dashboard");
       console.log("");
@@ -199,18 +267,15 @@ async function main() {
       console.error(`Error: ${result.error}`);
       console.error(`Message: ${result.message}`);
 
-      if (result.error === "payment_required" && result.payment_methods) {
-        console.error("\n💡 Payment Required:");
-        console.error(`   Amount: $${result.amount_usdc} USDC`);
-        console.error(`   Package: ${result.package}`);
-        console.error("\n   Payment Options:");
-        console.error("   1. x402 Protocol:");
-        console.error("      - Set AGENT_PRIVATE_KEY environment variable");
-        console.error("      - Ensure wallet has USDC on Base");
-        console.error("   2. Direct Transfer:");
-        console.error(`      - Send ${result.amount_usdc} USDC to ${result.payment_methods.direct_transfer.pay_to}`);
-        console.error(`      - Network: ${result.payment_methods.direct_transfer.network}`);
-        console.error("      - Set PAYMENT_TX_HASH with your transaction hash");
+      if (result.error === "insufficient_credits" && result.topup_options) {
+        console.error("\n💡 Insufficient Credits:");
+        console.error(`   Required: ${result.required_credits} credits`);
+        console.error(`   Available: ${result.available_credits} credits`);
+        console.error("\n   Top-up Options:");
+        result.topup_options.forEach(option => {
+          const marker = option.recommended ? " (recommended)" : "";
+          console.error(`   - ${option.bundle}: ${option.credits} credits for $${option.price}${marker}`);
+        });
       } else if (result.error === "rate_limit_exceeded") {
         console.error("\n💡 Rate limit exceeded. Try again tomorrow or contact ProductClank for higher limits.");
       } else if (result.error === "unauthorized") {

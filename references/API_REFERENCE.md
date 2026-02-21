@@ -54,7 +54,6 @@ PAYMENT-SIGNATURE: <base64-encoded-payment-payload>
 | `title` | string | Campaign title | `"Launch Week Buzz"` |
 | `keywords` | string[] | Non-empty array of keywords for discovery | `["AI tools", "productivity"]` |
 | `search_context` | string | Description of target conversations | `"People discussing AI productivity tools"` |
-| `selected_package` | enum | Package tier | `"test" \| "starter" \| "growth" \| "scale"` |
 
 **Optional Fields:**
 
@@ -69,6 +68,7 @@ PAYMENT-SIGNATURE: <base64-encoded-payment-payload>
 | `min_engagement_count` | number | Minimum engagement for target posts | `null` | `10` |
 | `max_post_age_days` | number | Maximum age of posts to target | `null` | `7` |
 | `require_verified` | boolean | Only target verified accounts | `false` | `true` |
+| `estimated_posts` | number | Estimated posts for cost calculation | `null` | `50` |
 | `payment_tx_hash` | string | USDC transfer tx hash (alternative to x402) | `null` | `"0x..."` |
 
 **Custom Reply Guidelines Example:**
@@ -90,7 +90,6 @@ PAYMENT-SIGNATURE: <base64-encoded-payment-payload>
     "crypto staking"
   ],
   "search_context": "People discussing DeFi platforms, yield farming strategies, and looking for better staking opportunities",
-  "selected_package": "growth",
   "mention_accounts": ["@mydefiapp", "@founder"],
   "reply_style_tags": ["professional", "technical", "helpful"],
   "reply_style_account": "@VitalikButerin",
@@ -99,7 +98,8 @@ PAYMENT-SIGNATURE: <base64-encoded-payment-payload>
   "min_follower_count": 1000,
   "min_engagement_count": 5,
   "max_post_age_days": 3,
-  "require_verified": false
+  "require_verified": false,
+  "estimated_posts": 50
 }
 ```
 
@@ -131,15 +131,40 @@ Campaign created successfully.
 ```
 
 **402 Payment Required**
-Payment needed to create campaign. This is normal on first request without payment.
+Insufficient credits. Top up required to create campaign.
 
 ```json
 {
   "success": false,
-  "error": "payment_required",
-  "message": "Payment required to create campaign",
-  "amount_usdc": 499,
-  "package": "growth",
+  "error": "insufficient_credits",
+  "message": "Insufficient credits to create campaign",
+  "required_credits": 600,
+  "available_credits": 50,
+  "estimated_cost_breakdown": {
+    "post_discovery_and_reply": {
+      "credits_per_post": 12,
+      "estimated_posts": 50,
+      "total_credits": 600
+    }
+  },
+  "topup_options": [
+    {
+      "bundle": "nano",
+      "credits": 50,
+      "price_usdc": 2
+    },
+    {
+      "bundle": "small",
+      "credits": 550,
+      "price_usdc": 25,
+      "recommended": true
+    },
+    {
+      "bundle": "medium",
+      "credits": 1200,
+      "price_usdc": 50
+    }
+  ],
   "payment_methods": {
     "x402": {
       "description": "x402 protocol payment (recommended for wallets with private key access)",
@@ -147,7 +172,7 @@ Payment needed to create campaign. This is normal on first request without payme
         "scheme": "exact",
         "network": "eip155:8453",
         "payTo": "0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68",
-        "amount": "499000000",
+        "amount": "25000000",
         "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "maxTimeoutSeconds": 300,
         "extra": {
@@ -159,7 +184,7 @@ Payment needed to create campaign. This is normal on first request without payme
     "direct_transfer": {
       "description": "Send USDC directly to payment address, then re-submit with payment_tx_hash in request body",
       "pay_to": "0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68",
-      "amount_usdc": 499,
+      "amount_usdc": 25,
       "network": "Base (chain ID 8453)",
       "asset": "USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)"
     }
@@ -182,7 +207,7 @@ Missing or invalid fields.
 {
   "success": false,
   "error": "validation_error",
-  "message": "Invalid selected_package. Must be one of: test, starter, growth, scale"
+  "message": "Insufficient credits. Required: 600 credits, Available: 50 credits"
 }
 ```
 
@@ -303,23 +328,53 @@ For wallets without private key access (smart contracts, MPC, custodial).
 **Requirements:**
 - Ability to send USDC on Base
 - Transaction confirmation time < 1 hour
-- Exact package amount or higher
+- Exact credit bundle amount
 
 **Flow:**
-1. Send USDC on Base to: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
+1. Check credit balance using GET /credits/balance endpoint
+2. If insufficient, send USDC on Base to: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
    - Token: USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
    - Network: Base (chain ID 8453)
-   - Amount: Exact package price or higher
-2. Wait for transaction confirmation
-3. Send POST request with `payment_tx_hash` in request body
+   - Amount: Exact credit bundle price (e.g., $25 for small bundle = 550 credits)
+3. Wait for transaction confirmation
+4. Top up credits using POST /credits/topup with `payment_tx_hash`
+5. Create campaign (credits will be deducted automatically)
 
 **Example:**
 
 ```typescript
-// Step 1: Send USDC via your wallet (Bankr, Safe, etc.)
+// Step 1: Check credit balance
+const balanceResponse = await fetch(
+  "https://app.productclank.com/api/v1/credits/balance",
+  {
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_KEY"
+    }
+  }
+);
+const { credits } = await balanceResponse.json();
+
+// Step 2: If insufficient, send USDC via your wallet (Bankr, Safe, etc.)
+// For small bundle: $25 USDC = 550 credits
 const txHash = "0xabc123...";
 
-// Step 2: Create campaign with tx hash
+// Step 3: Top up credits with tx hash
+const topupResponse = await fetch(
+  "https://app.productclank.com/api/v1/credits/topup",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_KEY",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      bundle: "small", // or nano, micro, medium, large, enterprise
+      payment_tx_hash: txHash
+    })
+  }
+);
+
+// Step 4: Create campaign (credits deducted automatically)
 const response = await fetch(
   "https://app.productclank.com/api/v1/agents/campaigns",
   {
@@ -333,8 +388,7 @@ const response = await fetch(
       title: "...",
       keywords: ["..."],
       search_context: "...",
-      selected_package: "starter",
-      payment_tx_hash: txHash // Include tx hash
+      estimated_posts: 50
     })
   }
 );
@@ -343,7 +397,7 @@ const response = await fetch(
 **Validation:**
 - Transaction must be confirmed on Base
 - Must be a USDC transfer to payment address
-- Amount >= package price
+- Amount must match exact credit bundle price
 - Transaction must be recent (< 1 hour)
 - Each tx hash can only be used once (prevents replay)
 
@@ -360,19 +414,133 @@ Whitelisted agents skip payment entirely.
 
 ---
 
-## Packages & Pricing
+## Credit System & Pricing
 
-| Package | Price (USDC) | Base Units (6 decimals) | Description |
-|---------|--------------|-------------------------|-------------|
-| `test` | $0.01 | 10000 | For development and testing |
-| `starter` | $99 | 99000000 | Small campaign |
-| `growth` | $499 | 499000000 | Medium campaign |
-| `scale` | $2,000 | 2000000000 | Large campaign |
+### Credit Bundles
+
+| Bundle | Credits | Price (USDC) | Base Units (6 decimals) | Best For |
+|--------|---------|--------------|-------------------------|----------|
+| `nano` | 50 | $2 | 2000000 | Testing and small experiments |
+| `micro` | 200 | $10 | 10000000 | Single campaign trial |
+| `small` | 550 | $25 | 25000000 | 1-2 medium campaigns |
+| `medium` | 1,200 | $50 | 50000000 | Multiple campaigns |
+| `large` | 2,600 | $100 | 100000000 | Heavy usage |
+| `enterprise` | 14,000 | $500 | 500000000 | Agency/high volume |
+
+### Operation Costs
+
+| Operation | Credits | Description |
+|-----------|---------|-------------|
+| Post Discovery + Reply | 12 | AI finds post and generates contextual reply |
+| Reply Only | 8 | Generate reply for your provided post |
+| Regenerate Reply | 5 | Generate alternative reply for existing post |
+| Tweet Boost | 80 | Amplify your own tweet via community replies |
+
+### Example Campaign Costs
+
+- **Small campaign** (30-40 posts): ~360-480 credits → `small` bundle ($25)
+- **Medium campaign** (80-100 posts): ~960-1,200 credits → `medium` bundle ($50)
+- **Large campaign** (200+ posts): ~2,400+ credits → `large` bundle ($100)
 
 All payments are in USDC on Base network (chain ID 8453).
 
 **Payment Address:** `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
 **USDC Contract:** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+
+---
+
+## Credit Management Endpoints
+
+### GET /api/v1/credits/balance
+
+Check your current credit balance.
+
+#### Request Headers
+```http
+Authorization: Bearer pck_live_YOUR_API_KEY
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "credits": 550,
+  "last_topup": "2026-02-20T15:30:00Z",
+  "total_spent": 1450
+}
+```
+
+### POST /api/v1/credits/topup
+
+Top up credits with a credit bundle purchase.
+
+#### Request Headers
+```http
+Authorization: Bearer pck_live_YOUR_API_KEY
+Content-Type: application/json
+```
+
+#### Request Body
+```json
+{
+  "bundle": "small",
+  "payment_tx_hash": "0x..." // Optional for x402
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "credits_added": 550,
+  "new_balance": 1100,
+  "bundle": "small",
+  "amount_usdc": 25,
+  "tx_hash": "0x..."
+}
+```
+
+### GET /api/v1/credits/history
+
+View your credit transaction history.
+
+#### Request Headers
+```http
+Authorization: Bearer pck_live_YOUR_API_KEY
+```
+
+#### Query Parameters
+- `limit` (optional): Number of transactions to return (default: 50, max: 200)
+- `offset` (optional): Pagination offset (default: 0)
+
+#### Response
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "id": "tx-123",
+      "type": "topup",
+      "credits": 550,
+      "amount_usdc": 25,
+      "bundle": "small",
+      "timestamp": "2026-02-20T15:30:00Z",
+      "tx_hash": "0x..."
+    },
+    {
+      "id": "tx-124",
+      "type": "campaign_creation",
+      "credits": -600,
+      "campaign_id": "campaign-uuid",
+      "campaign_number": "CP-042",
+      "timestamp": "2026-02-20T16:00:00Z"
+    }
+  ],
+  "total": 127,
+  "limit": 50,
+  "offset": 0
+}
+```
 
 ---
 
@@ -454,17 +622,31 @@ After successful creation, campaigns go through these stages:
 - **List key value props**: "Mention our 24/7 support, 99.9% uptime, and SOC2 compliance"
 - **Set boundaries**: "Don't make pricing promises or commit to features not yet shipped"
 
-### Package Selection
-- **test ($0.01)**: Development, testing, proof-of-concept
-- **starter ($99)**: Product launches, single campaigns, testing strategy
-- **growth ($499)**: Sustained campaigns, ongoing brand advocacy
-- **scale ($2000)**: Enterprise campaigns, high-volume engagement
+### Credit Management
+- **Check balance first**: Always verify you have sufficient credits before creating campaigns
+- **Estimate costs**: Use `estimated_posts` field to get cost breakdown before committing
+- **Buy in bulk**: Larger bundles offer better value per credit
+- **Monitor usage**: Review /credits/history regularly to track spending patterns
+
+### Bundle Selection
+- **nano ($2/50cr)**: Testing, proof-of-concept, 4 posts
+- **micro ($10/200cr)**: Single small campaign, ~16 posts
+- **small ($25/550cr)**: 1-2 medium campaigns, ~45 posts
+- **medium ($50/1200cr)**: Multiple campaigns, ~100 posts
+- **large ($100/2600cr)**: Heavy monthly usage, ~216 posts
+- **enterprise ($500/14000cr)**: Agency/high-volume operations, ~1,166 posts
 
 ---
 
 ## Error Handling
 
 ### Payment Errors
+
+**"Insufficient credits"**
+- Check your balance: GET /credits/balance
+- Top up credits: POST /credits/topup
+- Use recommended bundle from error response
+- Ensure payment tx is confirmed on Base
 
 **"Payment verification failed"**
 - Check USDC balance
@@ -473,8 +655,8 @@ After successful creation, campaigns go through these stages:
 - For x402: ensure wallet supports `signTypedData`
 
 **"This transaction has already been used"**
-- Each tx hash can only be used once
-- Send a new USDC transfer for each campaign
+- Each tx hash can only be used once for top-ups
+- Send a new USDC transfer for each bundle purchase
 
 ### Product Errors
 
