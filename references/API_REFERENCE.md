@@ -106,7 +106,7 @@ PAYMENT-SIGNATURE: <base64-encoded-payment-payload>
 #### Response Codes
 
 **200 OK - Success**
-Campaign created successfully.
+Campaign created successfully. No credits are deducted at this point — call `generate-posts` to trigger discovery and deduct credits.
 
 ```json
 {
@@ -126,6 +126,11 @@ Campaign created successfully.
     "network": "base",
     "payer": "0xAgentWalletAddress",
     "tx_hash": "0x..." // only for direct_transfer method
+  },
+  "next_step": {
+    "action": "generate_posts",
+    "endpoint": "POST /api/v1/agents/campaigns/{id}/generate-posts",
+    "description": "Call this endpoint to discover Twitter conversations and generate replies. Credits are deducted at this step."
   }
 }
 ```
@@ -266,6 +271,82 @@ Server error during campaign creation.
 
 ---
 
+### POST /api/v1/agents/campaigns/{campaignId}/generate-posts
+
+Trigger Twitter/X conversation discovery and reply generation for an existing campaign. This is when credits are deducted. Call this after creating a campaign — optionally after sharing the campaign URL with the user for review.
+
+#### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `campaignId` | string (UUID) | The campaign ID returned from campaign creation |
+
+#### Request Headers
+```http
+Authorization: Bearer pck_live_YOUR_API_KEY
+```
+
+#### Request Body
+
+No request body required.
+
+#### Response Codes
+
+**200 OK - Success**
+Posts discovered and replies generated. Credits are deducted.
+
+```json
+{
+  "success": true,
+  "message": "Posts generated successfully",
+  "postsGenerated": 48,
+  "repliesGenerated": 48,
+  "errors": [],
+  "batchNumber": 1,
+  "credits": {
+    "creditsUsed": 576,
+    "creditsRemaining": 624
+  }
+}
+```
+
+**402 Payment Required**
+Insufficient credits to generate posts.
+
+```json
+{
+  "success": false,
+  "error": "insufficient_credits",
+  "message": "Insufficient credits to generate posts"
+}
+```
+
+**Fix:** Top up credits via `POST /api/v1/agents/credits/topup` before calling generate-posts.
+
+**403 Forbidden**
+Campaign does not belong to your agent.
+
+```json
+{
+  "success": false,
+  "error": "forbidden",
+  "message": "You do not have access to this campaign"
+}
+```
+
+**404 Not Found**
+Campaign not found.
+
+```json
+{
+  "success": false,
+  "error": "not_found",
+  "message": "Campaign not found"
+}
+```
+
+---
+
 ## Payment Methods
 
 ### 1. x402 Protocol Payment (Recommended)
@@ -338,7 +419,9 @@ For wallets without private key access (smart contracts, MPC, custodial).
    - Amount: Exact credit bundle price (e.g., $25 for small bundle = 550 credits)
 3. Wait for transaction confirmation
 4. Top up credits using POST /credits/topup with `payment_tx_hash`
-5. Create campaign (credits will be deducted automatically)
+5. Create campaign (no credits deducted at this step)
+6. (Optional) Share campaign URL with user for review
+7. Call POST /agents/campaigns/{id}/generate-posts (credits deducted here)
 
 **Example:**
 
@@ -374,7 +457,7 @@ const topupResponse = await fetch(
   }
 );
 
-// Step 4: Create campaign (credits deducted automatically)
+// Step 4: Create campaign (no credits deducted yet)
 const response = await fetch(
   "https://api.productclank.com/api/v1/agents/campaigns",
   {
@@ -390,6 +473,19 @@ const response = await fetch(
       search_context: "...",
       estimated_posts: 50
     })
+  }
+);
+
+const campaign = await response.json();
+
+// Step 5: Generate posts (credits deducted here)
+const generateResponse = await fetch(
+  `https://api.productclank.com/api/v1/agents/campaigns/${campaign.campaign.id}/generate-posts`,
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_KEY"
+    }
   }
 );
 ```
@@ -584,17 +680,29 @@ To use the Agent API, you must register your agent with ProductClank.
 
 ## Campaign Lifecycle
 
-After successful creation, campaigns go through these stages:
+Campaigns follow a 2-step creation flow before becoming active:
 
-1. **Active** — Campaign is live, AI discovering conversations
-2. **Discovering** — AI actively scraping Twitter for opportunities
+**Step 1: Create campaign** (`POST /api/v1/agents/campaigns`)
+- Campaign record is created
+- No credits are deducted
+- Campaign URL is available for review
+
+**Step 2: Generate posts** (`POST /api/v1/agents/campaigns/{id}/generate-posts`)
+- Twitter/X discovery is triggered
+- Credits are deducted (12 credits per post discovered + reply generated)
+- Reply opportunities become available to community members
+
+After generate-posts is called, campaigns go through these stages:
+
+1. **Active** — Campaign exists, waiting for generate-posts to be called
+2. **Discovering** — AI actively scraping Twitter for opportunities (triggered by generate-posts)
 3. **Generating** — AI creating contextual replies for discovered posts
 4. **Live** — Reply opportunities available to community members
 5. **Engaging** — Community claiming and executing replies
 6. **Completed** — Campaign reached goal or time limit
 
 **Typical Timeline:**
-- Discovery: 1-24 hours (depends on keyword volume)
+- Discovery: 1-24 hours after generate-posts is called (depends on keyword volume)
 - Reply Generation: 2-6 hours
 - Community Engagement: Ongoing (30 days default)
 

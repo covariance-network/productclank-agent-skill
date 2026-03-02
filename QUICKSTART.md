@@ -160,7 +160,7 @@ curl -X POST https://api.productclank.com/api/v1/agents/credits/topup \
 
 ## Step 3: Create Your First Campaign (1 minute)
 
-Now create a campaign - no payment required, credits are deducted automatically:
+Create a campaign — no credits are deducted at this point:
 
 ```bash
 curl -X POST https://api.productclank.com/api/v1/agents/campaigns \
@@ -198,18 +198,56 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns \
     "current_balance": 50,
     "sufficient_credits": true,
     "note": "Sufficient credits available"
+  },
+  "next_step": {
+    "action": "generate_posts",
+    "endpoint": "POST /api/v1/agents/campaigns/{id}/generate-posts",
+    "description": "Call this endpoint to discover Twitter conversations and generate replies. Credits are deducted at this step."
   }
 }
 ```
 
-✅ **Success:** Campaign is live! View it at:
+✅ **Success:** Campaign created! You can optionally share this URL with the user for review:
 `https://app.productclank.com/communiply/campaigns/YOUR_CAMPAIGN_ID`
 
 ❌ **Error:** Check product_id exists and all required fields are provided
 
 ---
 
-## Step 4: Monitor Your Credits (30 seconds)
+## Step 4: Generate Posts (Credits Deducted Here)
+
+Call `generate-posts` to trigger Twitter discovery and reply generation. This is when credits are actually consumed:
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/YOUR_CAMPAIGN_ID/generate-posts \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "message": "Posts generated successfully",
+  "postsGenerated": 4,
+  "repliesGenerated": 4,
+  "errors": [],
+  "batchNumber": 1,
+  "credits": {
+    "creditsUsed": 48,
+    "creditsRemaining": 2
+  }
+}
+```
+
+✅ **Success:** Posts and replies are generated! Community members can now claim and execute them.
+
+❌ **402 Error:** Insufficient credits — top up via `/api/v1/agents/credits/topup`
+❌ **403 Error:** Campaign does not belong to your agent
+❌ **404 Error:** Campaign not found — check the campaign ID
+
+---
+
+## Step 5: Monitor Your Credits (30 seconds)
 
 Check how many credits were consumed:
 
@@ -248,7 +286,7 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 }
 ```
 
-✅ **Success:** You can see all credit purchases and usage!
+✅ **Success:** You can see all credit purchases and usage including the generate-posts deduction!
 
 ---
 
@@ -390,7 +428,7 @@ if (balance < 120) {
   console.log(`✅ Added ${credits_added} credits (balance: ${new_balance})`);
 }
 
-// 3. Create campaign
+// 3. Create campaign (no credits deducted yet)
 console.log("🚀 Creating campaign...");
 const campaignRes = await fetch(
   "https://api.productclank.com/api/v1/agents/campaigns",
@@ -411,7 +449,17 @@ console.log(`✅ Campaign created: ${campaign.campaign_number}`);
 console.log(`📊 Estimated cost: ${cost_estimate.estimated_credits} credits`);
 console.log(`🔗 View: https://app.productclank.com/communiply/campaigns/${campaign.id}`);
 
-// 4. Monitor usage
+// 4. Generate posts (credits deducted here)
+console.log("⚡ Generating posts...");
+const generateRes = await fetch(
+  `https://api.productclank.com/api/v1/agents/campaigns/${campaign.id}/generate-posts`,
+  { method: "POST", headers: { "Authorization": headers["Authorization"] } }
+);
+const generateResult = await generateRes.json();
+console.log(`✅ Posts generated: ${generateResult.postsGenerated}`);
+console.log(`💳 Credits used: ${generateResult.credits.creditsUsed}, remaining: ${generateResult.credits.creditsRemaining}`);
+
+// 5. Monitor usage
 const historyRes = await fetch(
   "https://api.productclank.com/api/v1/agents/credits/history?limit=5",
   { headers }

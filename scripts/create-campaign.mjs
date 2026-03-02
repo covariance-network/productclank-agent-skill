@@ -119,7 +119,7 @@ async function topUpCreditsWithX402(bundle) {
   return response.json();
 }
 
-// Create campaign (credits deducted automatically)
+// Create campaign (no credits deducted at this step)
 async function createCampaign(data) {
   console.log("🔨 Creating campaign...");
 
@@ -131,6 +131,23 @@ async function createCampaign(data) {
     },
     body: JSON.stringify(data),
   });
+
+  return response.json();
+}
+
+// Generate posts for a campaign (credits deducted here)
+async function generatePosts(campaignId) {
+  console.log("⚡ Generating posts (credits will be deducted)...");
+
+  const response = await fetch(
+    `${API_BASE_URL}/agents/campaigns/${campaignId}/generate-posts`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+      },
+    }
+  );
 
   return response.json();
 }
@@ -241,28 +258,10 @@ async function main() {
       console.log(`   ✅ Sufficient credits available\n`);
     }
 
-    // Create campaign
+    // Create campaign (no credits deducted yet)
     const result = await createCampaign(campaignData);
 
-    // Handle response
-    if (result.success) {
-      console.log("\n✅ Campaign Created Successfully!\n");
-      console.log("📋 Campaign Details:");
-      console.log(`   - ID: ${result.campaign.campaign_number}`);
-      console.log(`   - Title: ${result.campaign.title}`);
-      console.log(`   - Status: ${result.campaign.status}`);
-      console.log(`   - Estimated Cost: ~${estimatedCredits} credits`);
-      console.log("");
-      console.log("🔗 View Campaign:");
-      console.log(`   https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-      console.log("");
-      console.log("🎯 Next Steps:");
-      console.log("   1. AI is discovering relevant conversations");
-      console.log("   2. Generating contextual replies for opportunities (12 credits/post)");
-      console.log("   3. Community can claim and execute replies");
-      console.log("   4. Track engagement in real-time via dashboard");
-      console.log("");
-    } else {
+    if (!result.success) {
       console.error(`\n❌ Campaign Creation Failed\n`);
       console.error(`Error: ${result.error}`);
       console.error(`Message: ${result.message}`);
@@ -283,6 +282,53 @@ async function main() {
       } else if (result.error === "not_found") {
         console.error("\n💡 Product not found. Verify product_id exists on ProductClank.");
         console.error("   Visit: https://app.productclank.com/products");
+      }
+
+      process.exit(1);
+    }
+
+    // Campaign created — share URL for review
+    const campaignUrl = `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`;
+    console.log("\n✅ Campaign Created!\n");
+    console.log("📋 Campaign Details:");
+    console.log(`   - ID: ${result.campaign.campaign_number}`);
+    console.log(`   - Title: ${result.campaign.title}`);
+    console.log(`   - Status: ${result.campaign.status}`);
+    console.log("");
+    console.log("🔗 Review Campaign (optional — share with user before generating posts):");
+    console.log(`   ${campaignUrl}`);
+    console.log("");
+
+    // Generate posts (credits deducted here)
+    const generateResult = await generatePosts(result.campaign.id);
+
+    if (generateResult.success) {
+      console.log("\n✅ Posts Generated Successfully!\n");
+      console.log("📝 Generation Results:");
+      console.log(`   - Posts discovered: ${generateResult.postsGenerated}`);
+      console.log(`   - Replies generated: ${generateResult.repliesGenerated}`);
+      console.log("");
+      console.log("💳 Credit Usage:");
+      console.log(`   - Credits used: ${generateResult.credits.creditsUsed}`);
+      console.log(`   - Credits remaining: ${generateResult.credits.creditsRemaining}`);
+      console.log("");
+      console.log("🔗 View Campaign:");
+      console.log(`   ${campaignUrl}`);
+      console.log("");
+      console.log("🎯 Next Steps:");
+      console.log("   1. Community can browse and claim reply opportunities");
+      console.log("   2. They post replies from their personal accounts");
+      console.log("   3. Track engagement in real-time via dashboard");
+      console.log("");
+    } else {
+      console.error(`\n❌ Generate Posts Failed\n`);
+      console.error(`Error: ${generateResult.error}`);
+      console.error(`Message: ${generateResult.message}`);
+
+      if (generateResult.error === "insufficient_credits") {
+        console.error("\n💡 Insufficient credits. Top up via /api/v1/agents/credits/topup then retry generate-posts.");
+        console.error(`   Campaign URL: ${campaignUrl}`);
+        console.error(`   Generate-posts endpoint: POST /api/v1/agents/campaigns/${result.campaign.id}/generate-posts`);
       }
 
       process.exit(1);

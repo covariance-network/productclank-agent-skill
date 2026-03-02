@@ -120,7 +120,7 @@ Optional refinements:
 
 ### Step 2: Create the Campaign
 
-Campaigns are created immediately (no upfront payment). Credits are consumed automatically as operations are performed.
+Campaigns are created immediately (no upfront payment). No credits are deducted at this stage — credits are only consumed when you call `generate-posts` in Step 3.
 
 ```typescript
 const response = await fetch(
@@ -154,12 +154,15 @@ if (result.success) {
   console.log(`💳 Estimated cost: ${result.cost_estimate.estimated_credits} credits`);
   console.log(`💰 Current balance: ${result.cost_estimate.current_balance} credits`);
   console.log(`✓ Sufficient credits: ${result.cost_estimate.sufficient_credits}`);
+  // Share this URL with the user for review before generating posts
+  const campaignUrl = `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`;
+  console.log(`🔗 Review campaign at: ${campaignUrl}`);
 } else {
   console.error(`❌ Error: ${result.error} - ${result.message}`);
 }
 ```
 
-**Response includes cost estimate:**
+**Response includes cost estimate and next step:**
 ```json
 {
   "success": true,
@@ -176,6 +179,11 @@ if (result.success) {
     "current_balance": 1200,
     "sufficient_credits": true,
     "note": "Sufficient credits available"
+  },
+  "next_step": {
+    "action": "generate_posts",
+    "endpoint": "POST /api/v1/agents/campaigns/{id}/generate-posts",
+    "description": "Call this endpoint to discover Twitter conversations and generate replies. Credits are deducted at this step."
   }
 }
 ```
@@ -195,7 +203,64 @@ if (result.success) {
 - `max_post_age_days` (optional): Maximum post age in days
 - `require_verified` (optional): Only verified accounts
 
-### Step 3: Handle the Response
+### Step 3: Generate Posts (Credits Deducted Here)
+
+After creating the campaign, call `generate-posts` to trigger discovery and reply generation. This is when credits are actually deducted.
+
+You may optionally share the campaign URL with the user for review before calling this step.
+
+```typescript
+const generateRes = await fetch(
+  `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_API_KEY",
+    },
+  }
+);
+
+const generateResult = await generateRes.json();
+
+if (generateResult.success) {
+  console.log(`✅ Posts generated: ${generateResult.postsGenerated}`);
+  console.log(`💬 Replies generated: ${generateResult.repliesGenerated}`);
+  console.log(`💳 Credits used: ${generateResult.credits.creditsUsed}`);
+  console.log(`💰 Credits remaining: ${generateResult.credits.creditsRemaining}`);
+} else {
+  console.error(`❌ Error: ${generateResult.message}`);
+}
+```
+
+**generate-posts endpoint:**
+- **Method:** `POST`
+- **Path:** `/api/v1/agents/campaigns/{campaignId}/generate-posts`
+- **Auth:** Bearer API key (same as other endpoints)
+- **Path param:** `campaignId` (UUID from campaign creation response)
+- **Request body:** None required
+
+**Success response:**
+```json
+{
+  "success": true,
+  "message": "Posts generated successfully",
+  "postsGenerated": 48,
+  "repliesGenerated": 48,
+  "errors": [],
+  "batchNumber": 1,
+  "credits": {
+    "creditsUsed": 576,
+    "creditsRemaining": 624
+  }
+}
+```
+
+**Error codes:**
+- `402` — Insufficient credits (top up via `/api/v1/agents/credits/topup`)
+- `403` — Campaign does not belong to your agent
+- `404` — Campaign not found
+
+### Step 4: Handle the Campaign Creation Response
 
 #### Success (200 OK)
 ```json
@@ -216,17 +281,20 @@ if (result.success) {
     "current_balance": 1200,
     "sufficient_credits": true,
     "note": "Sufficient credits available"
+  },
+  "next_step": {
+    "action": "generate_posts",
+    "endpoint": "POST /api/v1/agents/campaigns/{id}/generate-posts",
+    "description": "Call this endpoint to discover Twitter conversations and generate replies. Credits are deducted at this step."
   }
 }
 ```
 
 **Next steps:**
-- Campaign is live and actively discovering Twitter conversations
-- AI is generating replies for relevant posts (consumes 12 credits per post)
+- Share the campaign URL with the user for review (optional): `https://app.productclank.com/communiply/campaigns/{campaign.id}`
+- Call `POST /api/v1/agents/campaigns/{id}/generate-posts` to start discovery (credits deducted here)
 - Community members can claim and execute reply opportunities
-- Credits deducted automatically as operations are performed
-- View campaign dashboard: `https://app.productclank.com/communiply/campaigns/{campaign.id}`
-- Track analytics, engagement, and ROI in real-time
+- Track analytics, engagement, and ROI in real-time via the dashboard
 
 #### Low Credit Warning (200 OK, but warning in response)
 ```json
@@ -484,9 +552,9 @@ Communiply discovers opportunities from multiple sources:
 - **7-layer filtering**: Ensures only quality, relevant posts are surfaced
 
 ### Community Coordination
-After campaign creation:
-1. AI discovers relevant conversations (consumes 12 credits per post discovered + reply generated)
-2. Generates contextual replies for each opportunity
+After campaign creation and calling generate-posts:
+1. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger discovery (credits deducted here, 12 credits per post discovered + reply generated)
+2. AI generates contextual replies for each discovered opportunity
 3. Community members browse opportunities in dashboard
 4. They claim replies, customize if needed, and post from personal accounts
 5. Submit proof (tweet URL + optional screenshot)
@@ -552,7 +620,7 @@ const campaignRequest = {
   require_verified: false
 };
 
-// 5. Create campaign (no payment required - credits deducted during operations)
+// 5. Create campaign (no payment required - credits NOT yet deducted)
 const result = await fetch(
   "https://api.productclank.com/api/v1/agents/campaigns",
   {
@@ -565,28 +633,44 @@ const result = await fetch(
   }
 ).then(r => r.json());
 
-// 6. Inform user of success
+// 6. (Optional) Share campaign URL with user for review before generating posts
+const campaignUrl = `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`;
+console.log(`📊 Campaign created: ${result.campaign.campaign_number}`);
+console.log(`🔗 Review at: ${campaignUrl}`);
+console.log(`💳 Estimated cost: ${result.cost_estimate.estimated_credits} credits when generate-posts is called`);
+
+// 7. Call generate-posts to trigger discovery and reply generation (credits deducted here)
+const generateResult = await fetch(
+  `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+  {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    }
+  }
+).then(r => r.json());
+
+// 8. Inform user of success
 console.log(`
-✅ Campaign "${result.campaign.title}" created successfully!
+✅ Campaign "${result.campaign.title}" is live!
 
 📊 Campaign Details:
    - Campaign ID: ${result.campaign.campaign_number}
    - Status: ${result.campaign.status}
-   - Active: Yes
 
-💳 Credit Estimate:
-   - Estimated cost: ${result.cost_estimate.estimated_credits} credits (~${result.cost_estimate.posts_requested} posts)
-   - Current balance: ${result.cost_estimate.current_balance} credits
-   - Sufficient credits: ${result.cost_estimate.sufficient_credits ? 'Yes' : 'No'}
+📝 Posts Generated:
+   - Posts discovered: ${generateResult.postsGenerated}
+   - Replies generated: ${generateResult.repliesGenerated}
+
+💳 Credit Usage:
+   - Credits used: ${generateResult.credits.creditsUsed}
+   - Credits remaining: ${generateResult.credits.creditsRemaining}
 
 🔗 Next Steps:
-   - View dashboard: https://app.productclank.com/communiply/campaigns/${result.campaign.id}
-   - AI is now discovering relevant conversations (12 credits per post)
+   - View dashboard: ${campaignUrl}
    - Community members can claim and execute reply opportunities
    - Track real-time analytics and engagement
    - Monitor credit usage: https://api.productclank.com/api/v1/agents/credits/history
-
-Your campaign will actively monitor Twitter and coordinate community engagement. Credits are consumed automatically as operations are performed.
 `);
 ```
 

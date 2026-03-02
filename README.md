@@ -19,8 +19,10 @@ This skill is loaded automatically when an agent needs to create Twitter/X marke
 1. Gather campaign requirements from the user
 2. Authenticate with ProductClank API
 3. Buy credits with USDC on Base (x402 or direct transfer)
-4. Create the campaign (credits consumed automatically during operations)
-5. Return the campaign dashboard URL for tracking
+4. Create the campaign (no credits deducted at this step)
+5. (Optional) Share the campaign URL with the user for review
+6. Call generate-posts to trigger discovery and reply generation (credits deducted here)
+7. Return the campaign dashboard URL for tracking
 
 ### For Developers
 
@@ -148,6 +150,7 @@ const walletClient = createWalletClient({
 
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
+// Step 1: Create campaign (no credits deducted yet)
 const response = await x402Fetch(
   "https://api.productclank.com/api/v1/agents/campaigns",
   {
@@ -168,6 +171,22 @@ const response = await x402Fetch(
 
 const result = await response.json();
 console.log("Campaign:", result.campaign);
+console.log("View at:", `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
+
+// Step 2: Generate posts (credits deducted here)
+const generateRes = await fetch(
+  `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+  {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    },
+  }
+);
+
+const generateResult = await generateRes.json();
+console.log("Posts generated:", generateResult.postsGenerated);
+console.log("Credits used:", generateResult.credits.creditsUsed);
 ```
 
 ## Credit Bundles
@@ -284,7 +303,7 @@ See [LICENSE.txt](LICENSE.txt) for complete terms (if available).
 A: No, agents use API keys directly. The agent creates campaigns on behalf of users.
 
 **Q: What happens after a campaign is created?**
-A: The campaign immediately starts discovering relevant Twitter conversations. AI generates contextual replies, and community members can claim and execute them. Results are tracked in real-time via the dashboard.
+A: The campaign is created but discovery does not start automatically. You must call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter conversation discovery and reply generation. Credits are deducted at that point. You can optionally share the campaign URL with the user for review before calling generate-posts.
 
 **Q: Can I delete or pause campaigns?**
 A: Yes, via the web dashboard at [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
