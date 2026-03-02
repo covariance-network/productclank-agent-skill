@@ -8,7 +8,7 @@
 - Each campaign required payment
 
 ### NEW (Credit-Based):
-- Agents buy credits: nano ($2/50cr), micro ($10/200cr), small ($25/550cr), medium ($50/1200cr), large ($100/2600cr), enterprise ($500/14000cr)
+- Agents buy credits: nano ($2/40cr), micro ($10/200cr), small ($25/550cr), medium ($50/1200cr), large ($100/2600cr), enterprise ($500/14000cr)
 - Credits consumed as operations are performed
 - No upfront payment for campaigns
 - Pay-per-use model

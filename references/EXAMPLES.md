@@ -597,7 +597,7 @@ try {
 
 ## Testing with Nano Bundle
 
-Use the nano bundle ($2/50 credits) for development and testing.
+Use the nano bundle ($2/40 credits) for development and testing.
 
 ```typescript
 async function createTestCampaign() {
@@ -612,7 +612,7 @@ async function createTestCampaign() {
   );
   const { credits } = await balanceResponse.json();
 
-  if (credits < 50) {
+  if (credits < 40) {
     const x402Fetch = setupX402Fetch();
     await x402Fetch(
       "https://app.productclank.com/api/v1/credits/topup",
@@ -623,11 +623,11 @@ async function createTestCampaign() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          bundle: "nano", // $2 for 50 credits
+          bundle: "nano", // $2 for 40 credits
         }),
       }
     );
-    console.log("✅ Topped up with nano bundle (50 credits)");
+    console.log("✅ Topped up with nano bundle (40 credits)");
   }
 
   // Step 2: Create small test campaign
@@ -859,7 +859,7 @@ if (errors.length > 0) {
 // Calculate bundle details
 function getBundleDetails(bundle: CreditBundle): { credits: number; price: number } {
   const bundles = {
-    nano: { credits: 50, price: 2 },
+    nano: { credits: 40, price: 2 },
     micro: { credits: 200, price: 10 },
     small: { credits: 550, price: 25 },
     medium: { credits: 1200, price: 50 },
@@ -879,7 +879,7 @@ function estimateCampaignCost(estimatedPosts: number): number {
 function recommendBundle(estimatedPosts: number): CreditBundle {
   const creditsNeeded = estimateCampaignCost(estimatedPosts);
 
-  if (creditsNeeded <= 50) return "nano";
+  if (creditsNeeded <= 40) return "nano";
   if (creditsNeeded <= 200) return "micro";
   if (creditsNeeded <= 550) return "small";
   if (creditsNeeded <= 1200) return "medium";

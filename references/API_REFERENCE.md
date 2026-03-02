@@ -420,7 +420,7 @@ Whitelisted agents skip payment entirely.
 
 | Bundle | Credits | Price (USDC) | Base Units (6 decimals) | Best For |
 |--------|---------|--------------|-------------------------|----------|
-| `nano` | 50 | $2 | 2000000 | Testing and small experiments |
+| `nano` | 40 | $2 | 2000000 | Testing and small experiments |
 | `micro` | 200 | $10 | 10000000 | Single campaign trial |
 | `small` | 550 | $25 | 25000000 | 1-2 medium campaigns |
 | `medium` | 1,200 | $50 | 50000000 | Multiple campaigns |
@@ -629,7 +629,7 @@ After successful creation, campaigns go through these stages:
 - **Monitor usage**: Review /credits/history regularly to track spending patterns
 
 ### Bundle Selection
-- **nano ($2/50cr)**: Testing, proof-of-concept, 4 posts
+- **nano ($2/40cr)**: Testing, proof-of-concept, 3 posts
 - **micro ($10/200cr)**: Single small campaign, ~16 posts
 - **small ($25/550cr)**: 1-2 medium campaigns, ~45 posts
 - **medium ($50/1200cr)**: Multiple campaigns, ~100 posts

@@ -87,7 +87,7 @@ const response = await x402Fetch(
       "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ bundle: "nano" })  // $2 → 50 credits
+    body: JSON.stringify({ bundle: "nano" })  // $2 → 40 credits
   }
 );
 
@@ -256,7 +256,7 @@ curl "https://app.productclank.com/api/v1/agents/credits/history?limit=5" \
 
 | Bundle | Price | Credits | Rate | Posts (~12 cr/post) | Best For |
 |--------|-------|---------|------|---------------------|----------|
-| **nano** | $2 | 50 | 25 cr/$ | ~4 posts | **Testing the API** |
+| **nano** | $2 | 40 | 20 cr/$ | ~3 posts | **Testing the API** |
 | micro | $10 | 200 | 20 cr/$ | ~16 posts | Small test campaign |
 | small | $25 | 550 | 22 cr/$ | ~45 posts | Product launch |
 | medium | $50 | 1,200 | 24 cr/$ | ~100 posts | Medium campaign |

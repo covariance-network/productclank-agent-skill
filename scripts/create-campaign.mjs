@@ -159,7 +159,7 @@ async function topUpCreditsWithDirectTransfer(bundle) {
 function recommendBundle(estimatedPosts) {
   const creditsNeeded = estimatedPosts * 12; // 12 credits per post
 
-  if (creditsNeeded <= 50) return "nano";
+  if (creditsNeeded <= 40) return "nano";
   if (creditsNeeded <= 200) return "micro";
   if (creditsNeeded <= 550) return "small";
   if (creditsNeeded <= 1200) return "medium";
@@ -170,7 +170,7 @@ function recommendBundle(estimatedPosts) {
 // Get bundle details
 function getBundleDetails(bundle) {
   const bundles = {
-    nano: { credits: 50, price: 2 },
+    nano: { credits: 40, price: 2 },
     micro: { credits: 200, price: 10 },
     small: { credits: 550, price: 25 },
     medium: { credits: 1200, price: 50 },

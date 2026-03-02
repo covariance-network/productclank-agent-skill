@@ -176,7 +176,7 @@ ProductClank uses a credit-based pay-per-use system. Buy credits once, use them 
 
 | Bundle | Price | Credits | Rate | Approx. Posts* |
 |--------|-------|---------|------|----------------|
-| nano | $2 | 50 | 25 cr/$ | ~4 |
+| nano | $2 | 40 | 20 cr/$ | ~3 |
 | micro | $10 | 200 | 20 cr/$ | ~16 |
 | small | $25 | 550 | 22 cr/$ | ~45 |
 | medium | $50 | 1,200 | 24 cr/$ | ~100 |
@@ -293,7 +293,7 @@ A: Yes, via the web dashboard at [app.productclank.com/communiply/campaigns/](ht
 A: Use the direct USDC transfer method. Send USDC to the payment address and provide the tx hash.
 
 **Q: Is there a test environment?**
-A: Use the "nano" bundle ($2 for 50 credits) for testing on production. There's no separate test API—just buy a small amount of credits to try it out.
+A: Use the "nano" bundle ($2 for 40 credits) for testing on production. There's no separate test API—just buy a small amount of credits to try it out.
 
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.

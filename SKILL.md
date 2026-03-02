@@ -285,7 +285,7 @@ if (result.success) {
 
 | Bundle | Price | Credits | Rate | Posts (~12 cr/post) | Best For |
 |--------|-------|---------|------|---------------------|----------|
-| **nano** | $2 USDC | 50 credits | 25 cr/$ | ~4 posts | **Testing the API** |
+| **nano** | $2 USDC | 40 credits | 20 cr/$ | ~3 posts | **Testing the API** |
 | **micro** | $10 USDC | 200 credits | 20 cr/$ | ~16 posts | Small test campaign |
 | **small** | $25 USDC | 550 credits | 22 cr/$ | ~45 posts | Product launch |
 | **medium** | $50 USDC | 1,200 credits | 24 cr/$ | ~100 posts | Medium campaign |
