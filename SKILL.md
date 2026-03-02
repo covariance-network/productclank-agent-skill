@@ -5,7 +5,7 @@ license: Proprietary
 metadata:
   author: ProductClank
   version: "1.1.0"
-  api_endpoint: https://app.productclank.com/api/v1/agents/campaigns
+  api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
 compatibility: Credit-based pay-per-use system. Agents buy credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
@@ -94,7 +94,7 @@ Before creating a campaign, ensure you have:
 ### Step 0: Check Credit Balance (Optional but Recommended)
 
 ```bash
-curl https://app.productclank.com/api/v1/agents/credits/balance \
+curl https://api.productclank.com/api/v1/agents/credits/balance \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
 
 # Response: { balance: 1200, lifetime_purchased: 1200, lifetime_used: 0 }
@@ -124,7 +124,7 @@ Campaigns are created immediately (no upfront payment). Credits are consumed aut
 
 ```typescript
 const response = await fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
+  "https://api.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
     headers: {
@@ -306,7 +306,7 @@ if (result.success) {
 ### Check Balance
 
 ```bash
-curl https://app.productclank.com/api/v1/agents/credits/balance \
+curl https://api.productclank.com/api/v1/agents/credits/balance \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
 ```
 
@@ -344,7 +344,7 @@ const walletClient = createWalletClient({
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
 const topup = await x402Fetch(
-  "https://app.productclank.com/api/v1/agents/credits/topup",
+  "https://api.productclank.com/api/v1/agents/credits/topup",
   {
     method: "POST",
     headers: {
@@ -375,7 +375,7 @@ npm install @x402/fetch viem
 
 // Step 2: Submit with transaction hash
 const topup = await fetch(
-  "https://app.productclank.com/api/v1/agents/credits/topup",
+  "https://api.productclank.com/api/v1/agents/credits/topup",
   {
     method: "POST",
     headers: {
@@ -393,7 +393,7 @@ const topup = await fetch(
 ### View Transaction History
 
 ```bash
-curl "https://app.productclank.com/api/v1/agents/credits/history?limit=50&offset=0" \
+curl "https://api.productclank.com/api/v1/agents/credits/history?limit=50&offset=0" \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
 ```
 
@@ -494,7 +494,7 @@ After campaign creation:
 
 ## Support & Resources
 
-- **API Documentation**: [app.productclank.com/api/v1/docs](https://app.productclank.com/api/v1/docs)
+- **API Documentation**: [api.productclank.com/api/v1/docs](https://api.productclank.com/api/v1/docs)
 - **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
 - **Website**: [productclank.com](https://www.productclank.com)
 - **Twitter**: [@productclank](https://twitter.com/productclank)
@@ -508,7 +508,7 @@ After campaign creation:
 
 // 2. Check credit balance first
 const balanceRes = await fetch(
-  "https://app.productclank.com/api/v1/agents/credits/balance",
+  "https://api.productclank.com/api/v1/agents/credits/balance",
   {
     headers: { "Authorization": "Bearer pck_live_YOUR_KEY" }
   }
@@ -518,7 +518,7 @@ const { balance } = await balanceRes.json();
 // 3. Top up if needed (targeting 100 posts = ~1200 credits)
 if (balance < 1200) {
   const topupRes = await x402Fetch(
-    "https://app.productclank.com/api/v1/agents/credits/topup",
+    "https://api.productclank.com/api/v1/agents/credits/topup",
     {
       method: "POST",
       headers: {
@@ -554,7 +554,7 @@ const campaignRequest = {
 
 // 5. Create campaign (no payment required - credits deducted during operations)
 const result = await fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
+  "https://api.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
     headers: {
@@ -584,7 +584,7 @@ console.log(`
    - AI is now discovering relevant conversations (12 credits per post)
    - Community members can claim and execute reply opportunities
    - Track real-time analytics and engagement
-   - Monitor credit usage: https://app.productclank.com/api/v1/agents/credits/history
+   - Monitor credit usage: https://api.productclank.com/api/v1/agents/credits/history
 
 Your campaign will actively monitor Twitter and coordinate community engagement. Credits are consumed automatically as operations are performed.
 `);

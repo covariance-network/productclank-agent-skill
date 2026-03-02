@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Links to web UI for campaign management
 
 ### Technical Details
-- API Base URL: `https://app.productclank.com/api/v1`
+- API Base URL: `https://api.productclank.com/api/v1`
 - Payment Network: Base (chain ID 8453)
 - Payment Token: USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
 - Payment Address: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`

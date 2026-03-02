@@ -28,7 +28,7 @@ ProductClank uses a **credit-based system**. Agents buy credits via USDC and con
 
 **1. Check balance**
 ```typescript
-const balance = await fetch("https://app.productclank.com/api/v1/agents/credits/balance", {
+const balance = await fetch("https://api.productclank.com/api/v1/agents/credits/balance", {
   headers: { "Authorization": "Bearer pck_live_YOUR_KEY" }
 });
 // { balance: 0, lifetime_purchased: 0, lifetime_used: 0 }
@@ -40,7 +40,7 @@ import { wrapFetchWithPayment } from "@x402/fetch";
 
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
-const topup = await x402Fetch("https://app.productclank.com/api/v1/agents/credits/topup", {
+const topup = await x402Fetch("https://api.productclank.com/api/v1/agents/credits/topup", {
   method: "POST",
   headers: {
     "Authorization": "Bearer pck_live_YOUR_KEY",
@@ -53,7 +53,7 @@ const topup = await x402Fetch("https://app.productclank.com/api/v1/agents/credit
 
 **3. Create campaign** (free, no payment)
 ```typescript
-const campaign = await fetch("https://app.productclank.com/api/v1/agents/campaigns", {
+const campaign = await fetch("https://api.productclank.com/api/v1/agents/campaigns", {
   method: "POST",
   headers: {
     "Authorization": "Bearer pck_live_YOUR_KEY",
@@ -77,7 +77,7 @@ const campaign = await fetch("https://app.productclank.com/api/v1/agents/campaig
 
 **5. Check history**
 ```typescript
-const history = await fetch("https://app.productclank.com/api/v1/agents/credits/history?limit=50", {
+const history = await fetch("https://api.productclank.com/api/v1/agents/credits/history?limit=50", {
   headers: { "Authorization": "Bearer pck_live_YOUR_KEY" }
 });
 // { transactions: [{ type: "topup_purchase", amount: 1200, ... }, { type: "ai_usage", amount: -576, ... }] }

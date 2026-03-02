@@ -24,7 +24,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { wrapFetchWithPayment } from "@x402/fetch";
 
 // Configuration
-const API_BASE_URL = "https://app.productclank.com/api/v1";
+const API_BASE_URL = "https://api.productclank.com/api/v1";
 const API_KEY = process.env.PRODUCTCLANK_API_KEY;
 const PRIVATE_KEY = process.env.AGENT_PRIVATE_KEY;
 const PAYMENT_TX_HASH = process.env.PAYMENT_TX_HASH;

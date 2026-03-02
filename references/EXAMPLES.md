@@ -41,7 +41,7 @@ async function createBasicCampaign() {
   try {
     // Step 1: Check credit balance
     const balanceResponse = await fetch(
-      "https://app.productclank.com/api/v1/credits/balance",
+      "https://api.productclank.com/api/v1/credits/balance",
       {
         headers: {
           "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
@@ -55,7 +55,7 @@ async function createBasicCampaign() {
     if (credits < 600) {
       console.log(`⚠️  Insufficient credits. Topping up with 'small' bundle...`);
       const topupResponse = await x402Fetch(
-        "https://app.productclank.com/api/v1/credits/topup",
+        "https://api.productclank.com/api/v1/credits/topup",
         {
           method: "POST",
           headers: {
@@ -73,7 +73,7 @@ async function createBasicCampaign() {
 
     // Step 3: Create campaign (credits deducted automatically)
     const response = await fetch(
-      "https://app.productclank.com/api/v1/agents/campaigns",
+      "https://api.productclank.com/api/v1/agents/campaigns",
       {
         method: "POST",
         headers: {
@@ -142,7 +142,7 @@ const USDC_ABI = [
 async function topUpCreditsWithDirectTransfer() {
   // Step 1: Check current balance
   const balanceResponse = await fetch(
-    "https://app.productclank.com/api/v1/credits/balance",
+    "https://api.productclank.com/api/v1/credits/balance",
     {
       headers: {
         "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
@@ -171,7 +171,7 @@ async function topUpCreditsWithDirectTransfer() {
 
   // Step 3: Top up credits with tx hash
   const topupResponse = await fetch(
-    "https://app.productclank.com/api/v1/credits/topup",
+    "https://api.productclank.com/api/v1/credits/topup",
     {
       method: "POST",
       headers: {
@@ -199,7 +199,7 @@ async function topUpCreditsWithDirectTransfer() {
 
   // Step 4: Now create campaign
   const campaignResponse = await fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {
@@ -239,7 +239,7 @@ async function createAdvancedCampaign() {
   const x402Fetch = setupX402Fetch(); // See basic example
 
   const response = await x402Fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {
@@ -339,7 +339,7 @@ async function createCompetitorInterceptCampaign() {
   const x402Fetch = setupX402Fetch();
 
   const response = await x402Fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {
@@ -405,7 +405,7 @@ async function createLaunchWeekCampaign() {
   const x402Fetch = setupX402Fetch();
 
   const response = await x402Fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {
@@ -501,7 +501,7 @@ async function createCampaignWithRetry(
       console.log(`Attempt ${attempt}/${maxRetries}...`);
 
       const response = await x402Fetch(
-        "https://app.productclank.com/api/v1/agents/campaigns",
+        "https://api.productclank.com/api/v1/agents/campaigns",
         {
           method: "POST",
           headers: {
@@ -603,7 +603,7 @@ Use the nano bundle ($2/40 credits) for development and testing.
 async function createTestCampaign() {
   // Step 1: Top up with nano bundle if needed
   const balanceResponse = await fetch(
-    "https://app.productclank.com/api/v1/credits/balance",
+    "https://api.productclank.com/api/v1/credits/balance",
     {
       headers: {
         "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
@@ -615,7 +615,7 @@ async function createTestCampaign() {
   if (credits < 40) {
     const x402Fetch = setupX402Fetch();
     await x402Fetch(
-      "https://app.productclank.com/api/v1/credits/topup",
+      "https://api.productclank.com/api/v1/credits/topup",
       {
         method: "POST",
         headers: {
@@ -632,7 +632,7 @@ async function createTestCampaign() {
 
   // Step 2: Create small test campaign
   const response = await fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {
@@ -663,7 +663,7 @@ async function createTestCampaign() {
 // Check credit usage
 async function checkCreditHistory() {
   const response = await fetch(
-    "https://app.productclank.com/api/v1/credits/history?limit=10",
+    "https://api.productclank.com/api/v1/credits/history?limit=10",
     {
       headers: {
         "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
@@ -798,7 +798,7 @@ async function createCampaign(
   const x402Fetch = setupX402Fetch();
 
   const response = await x402Fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {
@@ -943,7 +943,7 @@ async function main() {
   // 4. Check credit balance and top up if needed
   console.log("Checking credit balance...");
   const balanceResponse = await fetch(
-    "https://app.productclank.com/api/v1/credits/balance",
+    "https://api.productclank.com/api/v1/credits/balance",
     {
       headers: {
         "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
@@ -962,7 +962,7 @@ async function main() {
     console.log(`Topping up with ${recommendedBundle} bundle (+${bundleDetails.credits} credits)...`);
 
     await x402Fetch(
-      "https://app.productclank.com/api/v1/credits/topup",
+      "https://api.productclank.com/api/v1/credits/topup",
       {
         method: "POST",
         headers: {
@@ -980,7 +980,7 @@ async function main() {
   // 5. Create campaign
   console.log("Creating campaign...");
   const response = await fetch(
-    "https://app.productclank.com/api/v1/agents/campaigns",
+    "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
       headers: {

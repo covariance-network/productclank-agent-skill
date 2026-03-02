@@ -30,7 +30,7 @@ Before you start, you'll need:
 First, verify your API key works and check your credit balance:
 
 ```bash
-curl https://app.productclank.com/api/v1/agents/credits/balance \
+curl https://api.productclank.com/api/v1/agents/credits/balance \
   -H "Authorization: Bearer pck_live_YOUR_API_KEY"
 ```
 
@@ -80,7 +80,7 @@ const walletClient = createWalletClient({
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
 const response = await x402Fetch(
-  "https://app.productclank.com/api/v1/agents/credits/topup",
+  "https://api.productclank.com/api/v1/agents/credits/topup",
   {
     method: "POST",
     headers: {
@@ -128,7 +128,7 @@ node buy-credits.mjs
 
 2. **Submit transaction hash:**
 ```bash
-curl -X POST https://app.productclank.com/api/v1/agents/credits/topup \
+curl -X POST https://api.productclank.com/api/v1/agents/credits/topup \
   -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -163,7 +163,7 @@ curl -X POST https://app.productclank.com/api/v1/agents/credits/topup \
 Now create a campaign - no payment required, credits are deducted automatically:
 
 ```bash
-curl -X POST https://app.productclank.com/api/v1/agents/campaigns \
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns \
   -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -214,7 +214,7 @@ curl -X POST https://app.productclank.com/api/v1/agents/campaigns \
 Check how many credits were consumed:
 
 ```bash
-curl "https://app.productclank.com/api/v1/agents/credits/history?limit=5" \
+curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
   -H "Authorization: Bearer pck_live_YOUR_API_KEY"
 ```
 
@@ -369,7 +369,7 @@ const headers = {
 
 // 1. Check balance
 const balanceRes = await fetch(
-  "https://app.productclank.com/api/v1/agents/credits/balance",
+  "https://api.productclank.com/api/v1/agents/credits/balance",
   { headers }
 );
 const { balance } = await balanceRes.json();
@@ -379,7 +379,7 @@ console.log(`💰 Current balance: ${balance} credits`);
 if (balance < 120) {
   console.log("⚡ Topping up credits...");
   const topupRes = await x402Fetch(
-    "https://app.productclank.com/api/v1/agents/credits/topup",
+    "https://api.productclank.com/api/v1/agents/credits/topup",
     {
       method: "POST",
       headers,
@@ -393,7 +393,7 @@ if (balance < 120) {
 // 3. Create campaign
 console.log("🚀 Creating campaign...");
 const campaignRes = await fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
+  "https://api.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
     headers,
@@ -413,7 +413,7 @@ console.log(`🔗 View: https://app.productclank.com/communiply/campaigns/${camp
 
 // 4. Monitor usage
 const historyRes = await fetch(
-  "https://app.productclank.com/api/v1/agents/credits/history?limit=5",
+  "https://api.productclank.com/api/v1/agents/credits/history?limit=5",
   { headers }
 );
 const { transactions } = await historyRes.json();

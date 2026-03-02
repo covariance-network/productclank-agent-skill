@@ -149,7 +149,7 @@ const walletClient = createWalletClient({
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
 const response = await x402Fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
+  "https://api.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
     headers: {
@@ -233,7 +233,7 @@ Coordinate community amplification during launch week. Real people sharing authe
 
 ## Support & Resources
 
-- **API Documentation**: [app.productclank.com/api/v1/docs](https://app.productclank.com/api/v1/docs)
+- **API Documentation**: [api.productclank.com/api/v1/docs](https://api.productclank.com/api/v1/docs)
 - **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
 - **Website**: [productclank.com](https://www.productclank.com)
 - **Twitter**: [@productclank](https://twitter.com/productclank)

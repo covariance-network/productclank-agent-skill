@@ -1,8 +1,8 @@
 # ProductClank Agent API v1 - Complete Reference
 
-**Base URL:** `https://app.productclank.com/api/v1`
+**Base URL:** `https://api.productclank.com/api/v1`
 
-**Live Documentation:** [app.productclank.com/api/v1/docs](https://app.productclank.com/api/v1/docs)
+**Live Documentation:** [api.productclank.com/api/v1/docs](https://api.productclank.com/api/v1/docs)
 
 ---
 
@@ -307,7 +307,7 @@ const walletClient = createWalletClient({
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
 const response = await x402Fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
+  "https://api.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
     headers: {
@@ -345,7 +345,7 @@ For wallets without private key access (smart contracts, MPC, custodial).
 ```typescript
 // Step 1: Check credit balance
 const balanceResponse = await fetch(
-  "https://app.productclank.com/api/v1/credits/balance",
+  "https://api.productclank.com/api/v1/credits/balance",
   {
     headers: {
       "Authorization": "Bearer pck_live_YOUR_KEY"
@@ -360,7 +360,7 @@ const txHash = "0xabc123...";
 
 // Step 3: Top up credits with tx hash
 const topupResponse = await fetch(
-  "https://app.productclank.com/api/v1/credits/topup",
+  "https://api.productclank.com/api/v1/credits/topup",
   {
     method: "POST",
     headers: {
@@ -376,7 +376,7 @@ const topupResponse = await fetch(
 
 // Step 4: Create campaign (credits deducted automatically)
 const response = await fetch(
-  "https://app.productclank.com/api/v1/agents/campaigns",
+  "https://api.productclank.com/api/v1/agents/campaigns",
   {
     method: "POST",
     headers: {
@@ -676,7 +676,7 @@ After successful creation, campaigns go through these stages:
 
 ## Support & Resources
 
-- **Live API Docs**: [app.productclank.com/api/v1/docs](https://app.productclank.com/api/v1/docs)
+- **Live API Docs**: [api.productclank.com/api/v1/docs](https://api.productclank.com/api/v1/docs)
 - **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
 - **Website**: [productclank.com](https://www.productclank.com)
 - **Twitter**: [@productclank](https://twitter.com/productclank)
