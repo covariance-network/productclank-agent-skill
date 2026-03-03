@@ -14,6 +14,8 @@ Practical code examples for common use cases when creating Communiply campaigns 
 6. [Error Handling & Retry Logic](#error-handling--retry-logic)
 7. [Testing with Test Package](#testing-with-test-package)
 8. [TypeScript Types](#typescript-types)
+9. [Tier 2: Research-Enhanced Campaign (Coming Soon)](#tier-2-research-enhanced-campaign-coming-soon)
+10. [Tier 3: Iterate & Optimize (Coming Soon)](#tier-3-iterate--optimize-coming-soon)
 
 ---
 
@@ -1239,3 +1241,186 @@ For more examples and use cases, see:
 - [SKILL.md](../SKILL.md) - Main skill documentation
 - [API_REFERENCE.md](./API_REFERENCE.md) - Complete API reference
 - [scripts/create-campaign.mjs](../scripts/create-campaign.mjs) - Ready-to-use script
+
+---
+
+## Tier 2: Research-Enhanced Campaign (Coming Soon)
+
+Example code for the research-enhanced workflow. These endpoints are not yet available.
+
+```typescript
+async function createResearchEnhancedCampaign() {
+  const API = "https://api.productclank.com/api/v1";
+  const headers = {
+    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  // Step 1: Generate keywords from natural language (2 credits)
+  console.log("🔍 Generating keywords...");
+  const keywordsRes = await fetch(`${API}/agents/generate-keywords`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      search_goals: "Content marketers looking for AI writing assistants",
+      product_name: "WriteAI",
+      product_tagline: "AI writing assistant for marketers",
+    }),
+  });
+  const { keywords } = await keywordsRes.json();
+  console.log(`✅ Generated ${keywords.length} keywords:`, keywords);
+
+  // Step 2: Create campaign with AI-generated keywords (10 credits)
+  console.log("🚀 Creating campaign...");
+  const campaignRes = await fetch(`${API}/agents/campaigns`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      product_id: "YOUR_PRODUCT_UUID",
+      title: "AI Writing Tools Campaign",
+      keywords,
+      search_context: "Marketers and content creators discussing AI writing tools",
+      reply_style_tags: ["helpful", "authentic"],
+      reply_length: "short",
+    }),
+  });
+  const { campaign } = await campaignRes.json();
+  console.log(`✅ Campaign created: ${campaign.campaign_number}`);
+
+  // Step 3: Run research analysis (free)
+  console.log("🔬 Running research analysis...");
+  const researchRes = await fetch(
+    `${API}/agents/campaigns/${campaign.id}/research`,
+    { method: "POST", headers }
+  );
+  const { analysis } = await researchRes.json();
+  console.log(`📊 Research complete:`);
+  console.log(`   - ${analysis.expandedKeywords.length} expanded keywords`);
+  console.log(`   - ${analysis.highIntentPhrases.length} high-intent phrases`);
+  console.log(`   - ${analysis.twitterLists.length} Twitter lists found`);
+  console.log(`   - ${analysis.competitors.length} competitors discovered`);
+
+  // Step 4: Select discovery sources based on research (free)
+  console.log("⚙️ Configuring discovery sources...");
+  await fetch(`${API}/agents/campaigns/${campaign.id}/verticals`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      enabledVerticals: ["keywords", "phrases", "lists"],
+      selectedTwitterListIds: analysis.twitterLists.slice(0, 5).map(l => l.id),
+    }),
+  });
+
+  // Step 5: Generate posts with enhanced targeting (12 credits/post)
+  console.log("⚡ Generating posts...");
+  const generateRes = await fetch(
+    `${API}/agents/campaigns/${campaign.id}/generate-posts`,
+    { method: "POST", headers }
+  );
+  const result = await generateRes.json();
+
+  console.log(`
+✅ Research-Enhanced Campaign Live!
+
+📋 Campaign: ${campaign.campaign_number}
+📝 Posts: ${result.postsGenerated} discovered, ${result.repliesGenerated} replies generated
+💳 Credits: ${result.credits.creditsUsed} used, ${result.credits.creditsRemaining} remaining
+🔗 View: https://app.productclank.com/communiply/${campaign.id}
+  `);
+
+  return campaign;
+}
+```
+
+---
+
+## Tier 3: Iterate & Optimize (Coming Soon)
+
+Example code for the iterate and optimize workflow. These endpoints are not yet available.
+
+```typescript
+async function iterateAndOptimizeCampaign(campaignId: string) {
+  const API = "https://api.productclank.com/api/v1";
+  const headers = {
+    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  // Step 1: Read generated posts and replies (free)
+  console.log("📖 Reading campaign results...");
+  const postsRes = await fetch(
+    `${API}/agents/campaigns/${campaignId}/posts?includeReplies=true&limit=20`,
+    { headers }
+  );
+  const { posts, total, availableTotal } = await postsRes.json();
+  console.log(`📊 ${total} posts total, ${availableTotal} available for community`);
+
+  // Analyze results
+  const avgRelevance = posts.reduce((sum, p) => sum + p.relevanceScore, 0) / posts.length;
+  console.log(`📈 Average relevance score: ${(avgRelevance * 100).toFixed(1)}%`);
+
+  // Step 2: Use AI refine to optimize (3 credits/message)
+  console.log("🤖 Asking AI for optimization suggestions...");
+  const refineRes = await fetch(
+    `${API}/agents/campaigns/${campaignId}/refine`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        messages: [{
+          role: "user",
+          content: "The replies are too formal and long. Make them shorter, more casual, and focus on personal experience rather than features.",
+        }],
+      }),
+    }
+  );
+  const refineResult = await refineRes.json();
+  console.log(`💬 AI: ${refineResult.message}`);
+  console.log(`⚡ Actions executed: ${refineResult.actions_executed.length}`);
+
+  // Step 3: Regenerate replies for top posts (5 credits/reply)
+  const topPostIds = posts.slice(0, 5).map(p => p.id);
+  console.log(`🔄 Regenerating replies for top ${topPostIds.length} posts...`);
+  const regenRes = await fetch(
+    `${API}/agents/campaigns/${campaignId}/regenerate-replies`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        postIds: topPostIds,
+        editRequest: "Shorter, more casual, share personal experience",
+      }),
+    }
+  );
+  const regenResult = await regenRes.json();
+  console.log(`✅ ${regenResult.repliesGenerated} replies regenerated`);
+
+  // Step 4: Generate more posts (12 credits/post)
+  console.log("⚡ Generating more posts with updated style...");
+  const moreRes = await fetch(
+    `${API}/agents/campaigns/${campaignId}/generate-posts`,
+    { method: "POST", headers }
+  );
+  const moreResult = await moreRes.json();
+  console.log(`✅ ${moreResult.postsGenerated} new posts generated`);
+
+  // Step 5: Read updated campaign stats (free)
+  const campaignRes = await fetch(
+    `${API}/agents/campaigns/${campaignId}`,
+    { headers }
+  );
+  const { campaign } = await campaignRes.json();
+
+  console.log(`
+📊 Campaign Stats After Optimization:
+   Posts found: ${campaign.total_posts_found}
+   Replies generated: ${campaign.total_replies_generated}
+   Community participations: ${campaign.total_participations}
+  `);
+
+  return campaign;
+}
+
+// Usage: iterate on an existing campaign
+// iterateAndOptimizeCampaign("your-campaign-uuid");
+```

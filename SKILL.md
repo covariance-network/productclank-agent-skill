@@ -91,6 +91,18 @@ Before creating a campaign, ensure you have:
 
 ## How to Create a Campaign
 
+### Choose Your Tier
+
+ProductClank supports three tiers of campaign sophistication. Start with Tier 1, and upgrade as your needs grow.
+
+| Tier | Name | Description | Cost | Status |
+|------|------|-------------|------|--------|
+| 1 | **Quick Launch** | Provide inputs → create → generate posts | ~70 credits ($2.92) | ✅ Available |
+| 2 | **Research-Enhanced** | AI keywords → create → research → select sources → generate | ~72-74 credits ($3.00) | 🔜 Coming Soon |
+| 3 | **Iterate & Optimize** | ...Tier 2 → read results → AI refine → regenerate → repeat | ~100-200 credits ($4-8) | 🔜 Coming Soon |
+
+**Tier 1 is documented below. Tier 2 & 3 endpoints are coming soon — specs are previewed at the end of this document.**
+
 ### Step 0: Check Credit Balance (Optional but Recommended)
 
 ```bash
@@ -711,3 +723,139 @@ For complete API reference with detailed examples, see:
 - [references/API_REFERENCE.md](references/API_REFERENCE.md) - Full API specification
 - [references/EXAMPLES.md](references/EXAMPLES.md) - Code examples for common scenarios
 - [scripts/create-campaign.mjs](scripts/create-campaign.mjs) - Helper script for quick campaign creation
+
+## Tier 2: Research-Enhanced Campaign (Coming Soon)
+
+Enhance campaigns with AI-powered research before generating posts. Research is free — it improves targeting quality.
+
+### Tier 2 Flow
+
+```
+1. POST /agents/generate-keywords           → 2 credits (optional, if user described goals in natural language)
+2. POST /agents/campaigns                   → 10 credits
+3. POST /agents/campaigns/{id}/research     → free (runs AI analysis)
+4. GET  /agents/campaigns/{id}/research     → free (review results)
+5. POST /agents/campaigns/{id}/verticals    → free (select discovery sources)
+6. POST /agents/campaigns/{id}/generate-posts → 12 credits/post
+```
+
+### Planned Endpoints
+
+**POST /agents/generate-keywords** (2 credits)
+- Input: `{ search_goals: string, product_name?: string, product_tagline?: string }`
+- Output: `{ keywords: string[], credits: { creditsUsed, creditsRemaining } }`
+- Uses Claude AI to generate 8-15 search keywords from natural language goals
+
+**POST /agents/campaigns/{id}/research** (free)
+- Input: none (uses campaign's keywords)
+- Output: `{ analysis: { expandedKeywords, highIntentPhrases, keyAccounts, twitterLists, hashtags, competitors } }`
+- Discovers competitors (AI), selects relevant Twitter lists, expands keywords, identifies high-intent phrases
+
+**POST /agents/campaigns/{id}/verticals** (free)
+- Input: `{ enabledVerticals: ["keywords", "phrases", "influencers", "lists", "competitors"] }`
+- Select which discovery sources to use from the research results
+
+**GET /agents/campaigns/{id}** (free)
+- Read campaign details, settings, and stats
+
+**GET /agents/campaigns** (free)
+- List all campaigns created by your agent
+
+### When to Use Tier 2
+- Exploring a new niche where you don't know the best keywords
+- Campaigns targeting 10+ posts where better targeting pays for itself
+- Want to leverage Twitter lists, influencer monitoring, or competitor-based discovery
+
+### Example Agent Conversation (Tier 2)
+```
+User: "I want to promote my AI writing tool to content marketers"
+Agent: "Let me research the best keywords and discovery sources for content marketing."
+       → POST /agents/generate-keywords { search_goals: "content marketers looking for AI writing tools" }
+       → Receives: ["AI writing assistant", "content creation tools", "copywriting AI", ...]
+Agent: "Got 12 keywords. Creating your campaign..."
+       → POST /agents/campaigns { keywords: [...], search_context: "..." }
+Agent: "Running research analysis to find the best discovery sources..."
+       → POST /agents/campaigns/{id}/research
+       → Receives: 8 Twitter lists, 5 competitors, 15 expanded keywords
+Agent: "Found great sources! Enabling keyword + influencer + list discovery..."
+       → POST /agents/campaigns/{id}/verticals { enabledVerticals: ["keywords", "influencers", "lists"] }
+Agent: "Generating posts with enhanced targeting..."
+       → POST /agents/campaigns/{id}/generate-posts
+```
+
+## Tier 3: Iterate & Optimize (Coming Soon)
+
+Full campaign lifecycle management. Read results, refine via AI chat, regenerate replies, and iterate.
+
+### Tier 3 Flow (after Tier 1 or 2 steps)
+
+```
+7.  GET  /agents/campaigns/{id}/posts             → free (review results)
+8.  POST /agents/campaigns/{id}/refine            → 3 credits/message (AI chat)
+9.  POST /agents/campaigns/{id}/regenerate-replies → 5 credits/reply
+10. PATCH /agents/campaigns/{id}                   → free (update settings)
+11. POST /agents/campaigns/{id}/generate-posts     → 12 credits/post (generate more)
+12. Repeat 7-11 as needed
+```
+
+### Planned Endpoints
+
+**GET /agents/campaigns/{id}/posts** (free)
+- Query: `status`, `limit`, `offset`, `includeReplies`, `filterClaimed`
+- Returns posts with author info, engagement metrics, replies, relevance scores
+
+**POST /agents/campaigns/{id}/regenerate-replies** (5 credits/reply)
+- Input: `{ postIds: string[], editRequest: string, applyToSystemPrompt?: boolean }`
+- Regenerate AI replies for specific posts with new instructions
+- Can optionally update permanent reply guidelines
+
+**POST /agents/campaigns/{id}/refine** (3 credits/message, synchronous)
+- Input: `{ messages: [{ role: "user"|"assistant", content: string }] }`
+- Output: `{ message: string, actions_executed: [{ action, result }], credits }`
+- AI campaign optimization assistant that can auto-execute actions:
+  - `update_keywords` — change campaign keywords
+  - `update_reply_guidelines` — change reply instructions
+  - `regenerate_replies` — regenerate specific replies
+  - `generate_posts` — discover more posts
+  - `run_discovery` — discover without reply generation
+  - `cleanup_posts` — remove old unclaimed posts
+  - `update_campaign_settings` — modify settings
+  - `update_visibility` — change campaign visibility
+
+**PATCH /agents/campaigns/{id}** (free)
+- Direct setting updates without AI chat: keywords, guidelines, filters, scheduling, visibility
+
+### When to Use Tier 3
+- Ongoing campaigns that need continuous optimization
+- A/B testing different reply styles or guidelines
+- Building automated feedback loops (read results → analyze → refine → regenerate)
+- Managing campaigns for multiple products
+
+### Example Agent Conversation (Tier 3)
+```
+Agent: "Your campaign generated 15 posts. Let me review the results..."
+       → GET /agents/campaigns/{id}/posts?includeReplies=true
+Agent: "The replies look good but could be more casual. Let me refine..."
+       → POST /agents/campaigns/{id}/refine
+         { messages: [{ role: "user", content: "Make replies more casual and shorter" }] }
+       → Response: { actions_executed: [{ action: "update_reply_guidelines", result: { success: true } }] }
+Agent: "Guidelines updated! Regenerating replies for the top 5 posts..."
+       → POST /agents/campaigns/{id}/regenerate-replies
+         { postIds: [...], editRequest: "shorter, more conversational tone" }
+Agent: "Done! 5 replies regenerated. Generating 10 more posts with the new style..."
+       → POST /agents/campaigns/{id}/generate-posts
+```
+
+## Credit Cost Summary (All Tiers)
+
+| Operation | Credits | Tier |
+|-----------|---------|------|
+| Create campaign | 10 | 1 |
+| Generate posts (discover + reply) | 12/post | 1 |
+| Generate keywords (AI) | 2 | 2 |
+| Research analysis | 0 (free) | 2 |
+| Select verticals | 0 (free) | 2 |
+| Read campaign/posts | 0 (free) | 3 |
+| Regenerate replies | 5/reply | 3 |
+| Refine chat (AI) | 3/message | 3 |
+| Update settings | 0 (free) | 3 |

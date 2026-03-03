@@ -347,6 +347,274 @@ Campaign not found.
 
 ---
 
+## Campaign Tiers
+
+The endpoints above cover **Tier 1 (Quick Launch)**. Tiers 2 and 3 add progressive capability.
+
+### Tier Overview
+
+| Tier | Name | Endpoints | Status |
+|------|------|-----------|--------|
+| 1 | Quick Launch | campaigns (POST), generate-posts (POST) | ✅ Available |
+| 2 | Research-Enhanced | generate-keywords, research, verticals, campaign (GET), campaigns (GET) | 🔜 Coming Soon |
+| 3 | Iterate & Optimize | posts (GET), regenerate-replies, refine, campaign (PATCH) | 🔜 Coming Soon |
+
+---
+
+## 🔜 Tier 2 Endpoints (Coming Soon)
+
+### POST /api/v1/agents/generate-keywords
+
+Generate AI-powered keywords from natural language search goals. **Cost: 2 credits.**
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `search_goals` | string | Yes | Natural language description of what to find |
+| `product_name` | string | No | Product name for context |
+| `product_tagline` | string | No | Product tagline for context |
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "keywords": ["AI writing tools", "content creation", "copywriting assistant", ...],
+  "credits": { "creditsUsed": 2, "creditsRemaining": 298 }
+}
+```
+
+### POST /api/v1/agents/campaigns/{campaignId}/research
+
+Run AI research analysis on an existing campaign. Returns expanded keywords, competitors, Twitter lists, high-intent phrases. **Cost: Free.**
+
+#### Request Body
+None required. Uses the campaign's existing keywords and product data.
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "campaignId": "uuid",
+  "analysis": {
+    "keywords": ["original", "keywords"],
+    "expandedKeywords": ["expanded keyword 1", "expanded keyword 2", ...],
+    "highIntentPhrases": ["looking for X alternative", "need help with Y", ...],
+    "keyAccounts": [
+      { "username": "influencer1", "name": "Name", "category": "AI/ML", "followerCount": 50000 }
+    ],
+    "twitterLists": [
+      { "id": "list-id", "name": "AI Builders", "url": "https://...", "memberCount": 500, "matchScore": 12 }
+    ],
+    "hashtags": ["#AItools", "#productivity"],
+    "competitors": [
+      { "name": "CompetitorX", "description": "...", "twitterHandle": "@competitor" }
+    ]
+  }
+}
+```
+
+### GET /api/v1/agents/campaigns/{campaignId}/research
+
+Retrieve cached research analysis results. **Cost: Free.**
+
+#### Response (200 OK)
+Same shape as POST response above.
+
+### POST /api/v1/agents/campaigns/{campaignId}/verticals
+
+Select which discovery sources to use from research results. **Cost: Free.**
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `enabledVerticals` | string[] | Yes | Subset of: `["keywords", "phrases", "influencers", "lists", "competitors"]` |
+| `selectedTwitterListIds` | string[] | No | Specific Twitter list IDs to use |
+| `selectedInfluencerUsernames` | string[] | No | Specific influencer @handles |
+| `selectedCompetitors` | string[] | No | Competitor names to monitor |
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "campaignId": "uuid",
+  "enabledVerticals": ["keywords", "phrases", "lists"],
+  "message": "Vertical selection saved. Ready to generate posts!"
+}
+```
+
+### GET /api/v1/agents/campaigns/{campaignId}
+
+Read campaign details, settings, and stats. **Cost: Free.**
+
+#### Response (200 OK)
+```json
+{
+  "campaign": {
+    "id": "uuid",
+    "campaign_id": "CP-042",
+    "title": "Launch Campaign",
+    "status": "active",
+    "is_active": true,
+    "keywords": ["AI tools", "productivity"],
+    "search_context": "...",
+    "reply_guidelines": "...",
+    "total_posts_found": 15,
+    "total_replies_generated": 15,
+    "total_participations": 3,
+    "created_at": "2026-03-01T12:00:00Z"
+  }
+}
+```
+
+### GET /api/v1/agents/campaigns
+
+List all campaigns created by this agent. **Cost: Free.**
+
+#### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | 20 | Max campaigns to return |
+| `offset` | number | 0 | Pagination offset |
+| `status` | string | "all" | Filter: "active", "cancelled", "all" |
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "campaigns": [
+    { "id": "uuid", "campaign_id": "CP-042", "title": "...", "status": "active", "created_at": "..." }
+  ],
+  "total": 5
+}
+```
+
+---
+
+## 🔜 Tier 3 Endpoints (Coming Soon)
+
+### GET /api/v1/agents/campaigns/{campaignId}/posts
+
+Read discovered posts with their generated replies. **Cost: Free.**
+
+#### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `status` | string | "filtered" | "filtered", "discovered", "rejected" |
+| `limit` | number | 10 | Max posts to return |
+| `offset` | number | 0 | Pagination offset |
+| `includeReplies` | boolean | true | Include generated replies |
+| `filterClaimed` | string | - | "claimed" or "unclaimed" |
+
+#### Response (200 OK)
+```json
+{
+  "posts": [
+    {
+      "id": "uuid",
+      "tweetId": "1234567890",
+      "tweetUrl": "https://x.com/user/status/1234567890",
+      "tweetText": "Looking for AI tools to help with...",
+      "author": {
+        "username": "techuser",
+        "displayName": "Tech User",
+        "followerCount": 5000,
+        "verified": false
+      },
+      "engagement": { "likeCount": 15, "retweetCount": 3, "replyCount": 7, "viewCount": 2500 },
+      "relevanceScore": 0.85,
+      "discoverySource": "keywords",
+      "replies": [
+        { "id": "uuid", "replyText": "Have you tried...", "isSelected": false, "isClaimed": false }
+      ]
+    }
+  ],
+  "total": 15,
+  "availableTotal": 12,
+  "claimedTotal": 3
+}
+```
+
+### POST /api/v1/agents/campaigns/{campaignId}/regenerate-replies
+
+Regenerate AI replies for specific posts with new instructions. **Cost: 5 credits per reply.**
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `postIds` | string[] | Yes | Array of post UUIDs to regenerate |
+| `editRequest` | string | Yes | Natural language instruction for how to change replies |
+| `applyToSystemPrompt` | boolean | No | Also update permanent reply guidelines (default: false) |
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "repliesGenerated": 5,
+  "credits": { "creditsUsed": 25, "creditsRemaining": 175 }
+}
+```
+
+### POST /api/v1/agents/campaigns/{campaignId}/refine
+
+AI campaign optimization chat. Synchronous — sends message, receives advice + auto-executed actions. **Cost: 3 credits per message** (+ additional credits for any actions triggered).
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `messages` | array | Yes | `[{ role: "user"|"assistant", content: string }]` |
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "I've updated the keywords to focus more on enterprise use cases and regenerated 3 replies with a more professional tone.",
+  "actions_executed": [
+    { "action": "update_keywords", "result": { "success": true, "data": { "newKeywords": ["enterprise AI", "..."] } } },
+    { "action": "regenerate_replies", "result": { "success": true, "data": { "repliesGenerated": 3 } } }
+  ],
+  "credits": { "creditsUsed": 18, "creditsRemaining": 157 }
+}
+```
+
+**Supported actions:** `update_keywords`, `update_reply_guidelines`, `regenerate_replies`, `generate_posts`, `run_discovery`, `cleanup_posts`, `update_campaign_settings`, `update_visibility`
+
+### PATCH /api/v1/agents/campaigns/{campaignId}
+
+Direct campaign setting updates without AI chat. **Cost: Free.**
+
+#### Request Body
+Any subset of updatable fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Campaign title |
+| `keywords` | string[] | Search keywords |
+| `search_context` | string | Target conversation description |
+| `reply_guidelines` | string | AI reply instructions |
+| `reply_style_account` | string | Twitter handle to mimic |
+| `posts_per_generation` | number | Posts per generate-posts call |
+| `exclude_agents` | boolean | Exclude bot accounts from discovery |
+| `default_post_visibility` | boolean | New posts visible to community |
+| `schedule_enabled` | boolean | Enable scheduled generation |
+| `schedule_frequency_per_day` | number | Generations per day |
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Campaign updated",
+  "campaign": { "id": "uuid", "title": "Updated Title" }
+}
+```
+
+---
+
 ## Payment Methods
 
 ### 1. x402 Protocol Payment (Recommended)

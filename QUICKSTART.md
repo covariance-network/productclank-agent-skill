@@ -2,6 +2,18 @@
 
 Get your first campaign running in 5 minutes.
 
+## Campaign Tiers
+
+ProductClank offers three tiers of campaign sophistication:
+
+| Tier | Name | What You Do | Status |
+|------|------|-------------|--------|
+| **1** | Quick Launch | Provide keywords → create → generate posts | ✅ Available |
+| **2** | Research-Enhanced | AI generates keywords → research analysis → smart targeting | 🔜 Coming Soon |
+| **3** | Iterate & Optimize | Read results → AI refine → regenerate → iterate | 🔜 Coming Soon |
+
+This guide covers **Tier 1** (Quick Launch). See [SKILL.md](./SKILL.md) for Tier 2 & 3 details.
+
 ---
 
 ## Prerequisites
@@ -479,5 +491,53 @@ Need help?
 - **Warpcast:** [warpcast.com/productclank](https://warpcast.com/productclank)
 
 ---
+
+## Tier 2 & 3 Preview (Coming Soon)
+
+### Tier 2: Research-Enhanced
+After creating a campaign, run AI research to improve targeting:
+
+```bash
+# Run research analysis (free)
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/research \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+
+# Review research results (free)
+curl https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/research \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+
+# Select discovery sources (free)
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/verticals \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabledVerticals": ["keywords", "phrases", "influencers", "lists"]}'
+
+# Generate posts with enhanced targeting (credits deducted)
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/generate-posts \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+```
+
+### Tier 3: Iterate & Optimize
+After generating posts, read results and iterate:
+
+```bash
+# Read posts and replies (free)
+curl "https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/posts?includeReplies=true" \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+
+# Regenerate replies with new instructions (5 credits/reply)
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/regenerate-replies \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"postIds": ["post-uuid-1", "post-uuid-2"], "editRequest": "Make replies shorter and more casual"}'
+
+# AI refine chat (3 credits/message, synchronous)
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/refine \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "The replies are too formal. Make them more conversational."}]}'
+```
+
+See [SKILL.md](./SKILL.md) and [references/API_REFERENCE.md](./references/API_REFERENCE.md) for full endpoint specs.
 
 **Ready to scale?** Check out the [full documentation](./SKILL.md) for advanced features, custom reply guidelines, and production best practices.
