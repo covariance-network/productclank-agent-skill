@@ -4,11 +4,11 @@ description: Create AI-powered Twitter/X brand advocacy campaigns on ProductClan
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "1.1.0"
+  version: "1.2.0"
   api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
-compatibility: Credit-based pay-per-use system. Agents buy credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
+compatibility: Credit-based pay-per-use system. Self-registration with 300 free credits. Agents buy more credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
 ---
 
 # ProductClank Communiply Campaign Creation
@@ -32,8 +32,8 @@ Communiply enables **real people** (your employees, users, and community members
 4. **Tracks results** — Real-time analytics on engagement, reach, and ROI
 
 ### Why It Works
-| When You Promote Yourself ❌ | When Others Recommend You ✅ |
-|------------------------------|------------------------------|
+| When You Promote Yourself | When Others Recommend You |
+|---------------------------|--------------------------|
 | Responses scream "advertisement" | Real users = authentic credibility |
 | People dismiss automatically | 10x more trustworthy |
 | Zero credibility in competitive conversations | Natural presence everywhere |
@@ -53,9 +53,9 @@ Communiply enables **real people** (your employees, users, and community members
 **Trigger:** Someone praises your brand
 **Result:** Third-party validation reinforces positive mentions
 
-### 4. Keyword Monitoring
-**Trigger:** "Best CRM for startups"
-**Result:** Contextual recommendations appear in high-intent searches
+### 4. Tweet Boost
+**Trigger:** Your product just shipped a big update
+**Result:** Community generates 10 authentic reply threads amplifying the announcement
 
 ## When to Use This Skill
 
@@ -66,73 +66,55 @@ Activate this skill when users mention:
 - "Competitor intercept" or "monitor competitor mentions"
 - "Scale word-of-mouth" or "authentic brand advocacy"
 - "ProductClank", "Communiply", or "Twitter engagement campaign"
+- "Boost this tweet" or "amplify this post"
 - Need to boost brand awareness, launch week buzz, or community engagement
 
-## Prerequisites
+## Getting Started
 
-Before creating a campaign, ensure you have:
+### Step 0: Register Your Agent
 
-1. **ProductClank API Key** (format: `pck_live_XXXXXXXX`)
-   - Contact ProductClank team to register your agent and receive a key
+**No manual approval needed.** Self-register to get an API key and **300 free credits** instantly:
 
-2. **Credit Balance**
-   - Buy credits via `/api/v1/agents/credits/topup` using USDC on Base
-   - Check balance via `/api/v1/agents/credits/balance`
-   - Credits consumed automatically as operations are performed (~12 credits per post)
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "YourAgentName",
+    "description": "Brief description of your agent"
+  }'
+```
 
-3. **Payment Method for Top-ups** (one of):
-   - **x402 Protocol**: Wallet with private key access + USDC on Base
-   - **Direct Transfer**: Any wallet that can send USDC on Base
-   - **Trusted Agent Status**: Whitelisted agents skip payment (contact ProductClank)
+Response includes:
+- `api_key`: Your `pck_live_*` key (shown once — save it immediately)
+- `credits.balance`: 300 free credits (~24 posts)
 
-4. **Product Registration**
-   - Your product must exist on ProductClank with a valid `product_id` (UUID)
-   - Visit [app.productclank.com/products](https://app.productclank.com/products) to browse products
+Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`, `user_id` (link to existing ProductClank user)
 
-## How to Create a Campaign
+### Step 1: Find Your Product
 
-### Choose Your Tier
+Search for a product to promote:
 
-ProductClank supports three tiers of campaign sophistication. Start with Tier 1, and upgrade as your needs grow.
+```bash
+curl "https://api.productclank.com/api/v1/agents/products/search?q=product+name" \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+```
 
-| Tier | Name | Description | Cost | Status |
-|------|------|-------------|------|--------|
-| 1 | **Quick Launch** | Provide inputs → create → generate posts | ~70 credits ($2.92) | ✅ Available |
-| 2 | **Research-Enhanced** | AI keywords → create → research → select sources → generate | ~72-74 credits ($3.00) | 🔜 Coming Soon |
-| 3 | **Iterate & Optimize** | ...Tier 2 → read results → AI refine → regenerate → repeat | ~100-200 credits ($4-8) | 🔜 Coming Soon |
+Returns product IDs, names, taglines, logos. Use the `id` field for campaign creation.
 
-**Tier 1 is documented below. Tier 2 & 3 endpoints are coming soon — specs are previewed at the end of this document.**
+> **No product yet?** Direct users to create one at [app.productclank.com/products](https://app.productclank.com/products)
 
-### Step 0: Check Credit Balance (Optional but Recommended)
+### Step 2: Check Credit Balance
 
 ```bash
 curl https://api.productclank.com/api/v1/agents/credits/balance \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
-
-# Response: { balance: 1200, lifetime_purchased: 1200, lifetime_used: 0 }
 ```
 
-If balance is low, top up credits first (see "Credit Management" section below).
+Response: `{ balance: 300, plan: "free", lifetime_purchased: 0, lifetime_used: 0, lifetime_bonus: 300 }`
 
-### Step 1: Gather Campaign Requirements
+### Step 3: Create a Campaign (10 credits)
 
-Ask the user for:
-- **Product context**: What product are you promoting? (Get product_id from ProductClank)
-- **Campaign goal**: What do you want to achieve? (e.g., "Launch week buzz", "Competitor intercept")
-- **Target keywords**: What topics should we monitor? (e.g., ["AI tools", "productivity apps"])
-- **Search context**: Describe target conversations (e.g., "People discussing AI productivity tools and automation")
-- **Estimated scale**: How many posts do you want to target? (~50 posts = ~600 credits)
-
-Optional refinements:
-- **Mention accounts**: Twitter handles to mention naturally (e.g., ["@productclank"])
-- **Reply style**: Tone tags (e.g., ["friendly", "technical", "casual"])
-- **Reply length**: "very-short" | "short" | "medium" | "long" | "mixed"
-- **Custom guidelines**: Specific instructions for AI reply generation
-- **Filters**: min_follower_count, min_engagement_count, max_post_age_days, require_verified
-
-### Step 2: Create the Campaign
-
-Campaigns are created immediately (no upfront payment). No credits are deducted at this stage — credits are only consumed when you call `generate-posts` in Step 3.
+Campaign creation costs **10 credits**. Post generation costs additional credits in the next step.
 
 ```typescript
 const response = await fetch(
@@ -148,8 +130,7 @@ const response = await fetch(
       title: "Launch Week Buzz Campaign",
       keywords: ["web3 tools", "crypto apps", "DeFi platforms"],
       search_context: "People discussing web3 tools, crypto products, and DeFi platforms",
-      estimated_posts: 50, // Optional: for cost estimation
-      mention_accounts: ["@productclank", "@0xCovariance"],
+      mention_accounts: ["@productclank"],
       reply_style_tags: ["friendly", "technical", "enthusiastic"],
       reply_length: "short",
       min_follower_count: 500,
@@ -159,22 +140,13 @@ const response = await fetch(
 );
 
 const result = await response.json();
-
-if (result.success) {
-  console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-  console.log(`📊 View at: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-  console.log(`💳 Estimated cost: ${result.cost_estimate.estimated_credits} credits`);
-  console.log(`💰 Current balance: ${result.cost_estimate.current_balance} credits`);
-  console.log(`✓ Sufficient credits: ${result.cost_estimate.sufficient_credits}`);
-  // Share this URL with the user for review before generating posts
-  const campaignUrl = `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`;
-  console.log(`🔗 Review campaign at: ${campaignUrl}`);
-} else {
-  console.error(`❌ Error: ${result.error} - ${result.message}`);
-}
+// result.campaign.id — use for generate-posts
+// result.campaign.url — share with user for review
+// result.credits.credits_used — 10
+// result.credits.credits_remaining — 290
 ```
 
-**Response includes cost estimate and next step:**
+**Response:**
 ```json
 {
   "success": true,
@@ -183,88 +155,56 @@ if (result.success) {
     "campaign_number": "CP-042",
     "title": "Launch Week Buzz Campaign",
     "status": "active",
-    "is_funded": true
+    "created_via": "api",
+    "creator_agent_id": "agent-uuid",
+    "is_funded": true,
+    "url": "https://app.productclank.com/communiply/uuid"
   },
-  "cost_estimate": {
-    "posts_requested": 50,
-    "estimated_credits": 600,
-    "current_balance": 1200,
-    "sufficient_credits": true,
-    "note": "Sufficient credits available"
+  "credits": {
+    "credits_used": 10,
+    "credits_remaining": 290,
+    "billing_user_id": "user-uuid"
   },
   "next_step": {
     "action": "generate_posts",
     "endpoint": "POST /api/v1/agents/campaigns/{id}/generate-posts",
-    "description": "Call this endpoint to discover Twitter conversations and generate replies. Credits are deducted at this step."
+    "description": "Generate posts for this campaign. Optionally share the campaign URL with the user for review first."
   }
 }
 ```
 
 **Campaign Fields:**
-- `product_id` (required): Product UUID
+- `product_id` (required): Product UUID from search
 - `title` (required): Campaign name
 - `keywords` (required): Array of keywords to monitor
 - `search_context` (required): Description of target conversations
-- `estimated_posts` (optional): Expected number of posts for cost estimation
 - `mention_accounts` (optional): Twitter handles to mention
 - `reply_style_tags` (optional): Tone tags (e.g., ["friendly", "technical"])
+- `reply_style_account` (optional): Twitter handle to mimic style
 - `reply_length` (optional): "very-short" | "short" | "medium" | "long" | "mixed"
-- `reply_guidelines` (optional): Custom instructions for AI
+- `reply_guidelines` (optional): Custom instructions for AI (overrides auto-generated)
 - `min_follower_count` (optional): Minimum followers (default: 100)
 - `min_engagement_count` (optional): Minimum engagement threshold
 - `max_post_age_days` (optional): Maximum post age in days
 - `require_verified` (optional): Only verified accounts
 
-### Step 3: Generate Posts (Credits Deducted Here)
+### Step 4: Generate Posts (12 credits/post)
 
-After creating the campaign, call `generate-posts` to trigger discovery and reply generation. This is when credits are actually deducted.
-
-You may optionally share the campaign URL with the user for review before calling this step.
+After creating the campaign, call `generate-posts` to trigger discovery and reply generation. You may optionally share the campaign URL with the user for review first.
 
 ```typescript
 const generateRes = await fetch(
-  `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+  `https://api.productclank.com/api/v1/agents/campaigns/${campaignId}/generate-posts`,
   {
     method: "POST",
-    headers: {
-      "Authorization": "Bearer pck_live_YOUR_API_KEY",
-    },
+    headers: { "Authorization": "Bearer pck_live_YOUR_API_KEY" },
   }
 );
 
 const generateResult = await generateRes.json();
-
-if (generateResult.success) {
-  console.log(`✅ Posts generated: ${generateResult.postsGenerated}`);
-  console.log(`💬 Replies generated: ${generateResult.repliesGenerated}`);
-  console.log(`💳 Credits used: ${generateResult.credits.creditsUsed}`);
-  console.log(`💰 Credits remaining: ${generateResult.credits.creditsRemaining}`);
-} else {
-  console.error(`❌ Error: ${generateResult.message}`);
-}
-```
-
-**generate-posts endpoint:**
-- **Method:** `POST`
-- **Path:** `/api/v1/agents/campaigns/{campaignId}/generate-posts`
-- **Auth:** Bearer API key (same as other endpoints)
-- **Path param:** `campaignId` (UUID from campaign creation response)
-- **Request body:** None required
-
-**Success response:**
-```json
-{
-  "success": true,
-  "message": "Posts generated successfully",
-  "postsGenerated": 48,
-  "repliesGenerated": 48,
-  "errors": [],
-  "batchNumber": 1,
-  "credits": {
-    "creditsUsed": 576,
-    "creditsRemaining": 624
-  }
-}
+// generateResult.postsGenerated — number of posts found
+// generateResult.credits.creditsUsed — 12 per post
+// generateResult.credits.creditsRemaining — remaining balance
 ```
 
 **Error codes:**
@@ -272,242 +212,172 @@ if (generateResult.success) {
 - `403` — Campaign does not belong to your agent
 - `404` — Campaign not found
 
-### Step 4: Handle the Campaign Creation Response
+### Step 5: Check Results
 
-#### Success (200 OK)
-```json
-{
-  "success": true,
-  "campaign": {
-    "id": "uuid-here",
-    "campaign_number": "CP-042",
-    "title": "Launch Week Buzz Campaign",
-    "status": "active",
-    "created_via": "api",
-    "creator_agent_id": "agent-uuid",
-    "is_funded": true
-  },
-  "cost_estimate": {
-    "posts_requested": 50,
-    "estimated_credits": 600,
-    "current_balance": 1200,
-    "sufficient_credits": true,
-    "note": "Sufficient credits available"
-  },
-  "next_step": {
-    "action": "generate_posts",
-    "endpoint": "POST /api/v1/agents/campaigns/{id}/generate-posts",
-    "description": "Call this endpoint to discover Twitter conversations and generate replies. Credits are deducted at this step."
-  }
-}
-```
-
-**Next steps:**
-- Share the campaign URL with the user for review (optional): `https://app.productclank.com/communiply/campaigns/{campaign.id}`
-- Call `POST /api/v1/agents/campaigns/{id}/generate-posts` to start discovery (credits deducted here)
-- Community members can claim and execute reply opportunities
-- Track analytics, engagement, and ROI in real-time via the dashboard
-
-#### Low Credit Warning (200 OK, but warning in response)
-```json
-{
-  "success": true,
-  "campaign": {...},
-  "cost_estimate": {
-    "posts_requested": 50,
-    "estimated_credits": 600,
-    "current_balance": 200,
-    "sufficient_credits": false,
-    "note": "Warning: Low credit balance. Consider topping up via /api/v1/agents/credits/topup"
-  }
-}
-```
-
-**Action:** Top up credits via `/api/v1/agents/credits/topup` to avoid interruptions.
-
-#### Rate Limit Exceeded (429)
-```json
-{
-  "success": false,
-  "error": "rate_limit_exceeded",
-  "message": "Daily campaign creation limit exceeded (10/day)
-    "x402": {
-      "description": "x402 protocol payment (recommended for wallets with private key access)",
-      "config": { /* x402 payment requirements */ }
-    },
-    "direct_transfer": {
-      "description": "Send USDC directly to payment address, then re-submit with payment_tx_hash in request body",
-      "pay_to": "0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68",
-      "amount_usdc": 99,
-      "network": "Base (chain ID 8453)",
-      "asset": "USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)"
-    }
-  }
-}
-```
-
-**Fix:** Wait until next day or contact ProductClank for higher limits.
-
-#### Unauthorized (401)
-```json
-{
-  "success": false,
-  "error": "unauthorized",
-  "message": "Invalid API key"
-}
-```
-
-**Fix:** Verify API key is correct and starts with `pck_live_`.
-
-## Credit Management
-
-### Credit Bundles (USDC on Base)
-
-| Bundle | Price | Credits | Rate | Posts (~12 cr/post) | Best For |
-|--------|-------|---------|------|---------------------|----------|
-| **nano** | $2 USDC | 40 credits | 20 cr/$ | ~3 posts | **Testing the API** |
-| **micro** | $10 USDC | 200 credits | 20 cr/$ | ~16 posts | Small test campaign |
-| **small** | $25 USDC | 550 credits | 22 cr/$ | ~45 posts | Product launch |
-| **medium** | $50 USDC | 1,200 credits | 24 cr/$ | ~100 posts | Medium campaign |
-| **large** | $100 USDC | 2,600 credits | 26 cr/$ | ~216 posts | Large campaign |
-| **enterprise** | $500 USDC | 14,000 credits | 28 cr/$ | ~1,166 posts | High volume |
-
-### Credit Costs per Operation
-
-| Operation | Credits | Cost @ $50 bundle (24 cr/$) |
-|-----------|---------|------------------------------|
-| Discover post + generate reply | 12 | ~$0.50 |
-| Generate reply only | 8 | ~$0.33 |
-| Regenerate reply | 5 | ~$0.21 |
-| Tweet boost (10 AI replies) | 80 | ~$3.33 |
-| Chat message | 3 | ~$0.12 |
-| Keyword generation | 2 | ~$0.08 |
-
-### Check Balance
+Get campaign status and stats:
 
 ```bash
-curl https://api.productclank.com/api/v1/agents/credits/balance \
+curl https://api.productclank.com/api/v1/agents/campaigns/{campaignId} \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
 ```
+
+Returns campaign details + `stats.posts_discovered`, `stats.replies_total`, `stats.replies_by_status`.
+
+## Tweet Boost
+
+Amplify a specific tweet with community engagement. Unlike campaigns (which discover tweets), boost targets a single tweet you provide.
+
+```typescript
+const response = await fetch(
+  "https://api.productclank.com/api/v1/agents/campaigns/boost",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_API_KEY",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      tweet_url: "https://x.com/productclank/status/123456789",
+      product_id: "PRODUCT_UUID",
+      action_type: "replies",  // "replies" | "likes" | "repost"
+    }),
+  }
+);
+```
+
+**Credit costs:**
+| Action | Items Generated | Credits |
+|--------|----------------|---------|
+| `replies` | 10 AI replies | 200 |
+| `likes` | 30 like tasks | 300 |
+| `repost` | 10 repost tasks | 300 |
 
 **Response:**
 ```json
 {
   "success": true,
-  "balance": 1200,
-  "user_id": "uuid",
-  "agent_id": "uuid",
-  "agent_name": "MyAgent",
-  "lifetime_purchased": 5000,
-  "lifetime_used": 3800,
-  "lifetime_bonus": 0
+  "campaign": {
+    "id": "uuid",
+    "campaign_number": "CP-043",
+    "action_type": "replies",
+    "is_reboost": false,
+    "url": "https://app.productclank.com/communiply/uuid"
+  },
+  "tweet": { "id": "123456789", "url": "https://x.com/...", "text": "...", "author": "..." },
+  "items_generated": 10,
+  "credits": { "credits_used": 200, "credits_remaining": 90 }
 }
 ```
 
+Re-boosting the same tweet generates fresh content without duplicates.
+
+## Credit Management
+
+### Credit Costs
+
+| Operation | Credits | Notes |
+|-----------|---------|-------|
+| Registration | +300 free | One-time signup bonus |
+| Create campaign | 10 | Deducted at creation |
+| Discover + generate reply | 12/post | Deducted at generate-posts |
+| Generate reply only | 8 | For pre-supplied posts |
+| Regenerate reply | 5 | Refresh existing reply |
+| Boost (replies) | 200 | 10 AI reply threads |
+| Boost (likes) | 300 | 30 like tasks |
+| Boost (repost) | 300 | 10 repost tasks |
+| Chat message | 3 | AI refinement (Tier 3) |
+| Keyword generation | 2 | AI keywords (Tier 2) |
+
+### Credit Bundles (USDC on Base)
+
+| Bundle | Price | Credits | Rate | ~Posts |
+|--------|-------|---------|------|--------|
+| **nano** | $2 | 40 | 20 cr/$ | ~3 |
+| **micro** | $10 | 200 | 20 cr/$ | ~16 |
+| **small** | $25 | 550 | 22 cr/$ | ~45 |
+| **medium** | $50 | 1,200 | 24 cr/$ | ~100 |
+| **large** | $100 | 2,600 | 26 cr/$ | ~216 |
+| **enterprise** | $500 | 14,000 | 28 cr/$ | ~1,166 |
+
 ### Top Up Credits
 
-#### Option A: Using x402 Protocol (Recommended)
-
+**x402 Protocol (Recommended):**
 ```typescript
 import { wrapFetchWithPayment } from "@x402/fetch";
-import { createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-
-const account = privateKeyToAccount(process.env.AGENT_PRIVATE_KEY);
-const walletClient = createWalletClient({
-  account,
-  chain: base,
-  transport: http(),
-});
-
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
 const topup = await x402Fetch(
   "https://api.productclank.com/api/v1/agents/credits/topup",
   {
     method: "POST",
-    headers: {
-      "Authorization": "Bearer pck_live_YOUR_KEY",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ bundle: "medium" })  // $50 → 1200 credits
-  }
-);
-
-const result = await topup.json();
-// { success: true, credits_added: 1200, new_balance: 1200, bundle: "medium", payment: {...} }
-```
-
-**Dependencies:**
-```bash
-npm install @x402/fetch viem
-```
-
-#### Option B: Direct USDC Transfer
-
-```typescript
-// Step 1: Send USDC on Base to payment address
-// - Token: USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-// - Network: Base (chain ID 8453)
-// - To: 0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68
-// - Amount: Exact bundle price (e.g., 50 USDC for medium)
-
-// Step 2: Submit with transaction hash
-const topup = await fetch(
-  "https://api.productclank.com/api/v1/agents/credits/topup",
-  {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer pck_live_YOUR_KEY",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      bundle: "medium",
-      payment_tx_hash: "0x..."  // Your confirmed tx hash
-    })
+    headers: { "Authorization": "Bearer pck_live_YOUR_KEY", "Content-Type": "application/json" },
+    body: JSON.stringify({ bundle: "medium" })
   }
 );
 ```
+
+**Direct USDC Transfer:**
+1. Send USDC on Base to `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
+2. Call `POST /api/v1/agents/credits/topup` with `{ bundle: "medium", payment_tx_hash: "0x..." }`
 
 ### View Transaction History
 
 ```bash
-curl "https://api.productclank.com/api/v1/agents/credits/history?limit=50&offset=0" \
+curl "https://api.productclank.com/api/v1/agents/credits/history?limit=50" \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "transactions": [
-    {
-      "id": "uuid",
-      "type": "topup_purchase",
-      "amount": 1200,
-      "balance_after": 2700,
-      "description": "Credit top-up: medium bundle",
-      "created_at": "2026-02-20T18:00:00Z"
-    },
-    {
-      "id": "uuid",
-      "type": "ai_usage",
-      "amount": -576,
-      "balance_after": 2124,
-      "operation_type": "generate-posts",
-      "campaign_id": "CP-042",
-      "description": "generate-posts: 48 item(s)",
-      "created_at": "2026-02-20T18:05:00Z"
-    }
-  ],
-  "total": 2,
-  "limit": 50,
-  "offset": 0
-}
+## Agent Management
+
+### View Agent Profile
+
+```bash
+curl https://api.productclank.com/api/v1/agents/me \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
 ```
 
-All payments are in USDC on Base network.
+Returns agent name, status, trusted flag, rate limits, and credit balance.
+
+### Rotate API Key
+
+If your key is compromised:
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/rotate-key \
+  -H "Authorization: Bearer pck_live_YOUR_CURRENT_KEY"
+```
+
+Returns new key. Old key is immediately invalidated.
+
+### List Your Campaigns
+
+```bash
+curl "https://api.productclank.com/api/v1/agents/campaigns?limit=20&status=active" \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+```
+
+### Campaign Delegates
+
+Add a ProductClank user as a delegator (gives them edit access in the web dashboard):
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/{campaignId}/delegates \
+  -H "Authorization: Bearer pck_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "user_id": "productclank-user-uuid" }'
+```
+
+### ERC-8004 Agent Import
+
+Pre-fill registration data from an ERC-8004 on-chain agent:
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/import \
+  -H "Content-Type: application/json" \
+  -d '{ "source": "erc8004", "erc8004_agent_id": "your-agent-id" }'
+```
+
+Returns agent metadata from 8004.org — use to pre-fill the `/register` call.
 
 ## Rate Limits
 
@@ -517,17 +387,17 @@ All payments are in USDC on Base network.
 ## Best Practices
 
 1. **Be Specific with Keywords**
-   - ✅ Good: ["AI productivity tools", "automation software", "workflow optimization"]
-   - ❌ Bad: ["AI", "tools", "software"]
+   - Good: ["AI productivity tools", "automation software", "workflow optimization"]
+   - Bad: ["AI", "tools", "software"]
 
 2. **Write Clear Search Context**
-   - ✅ Good: "People discussing challenges with project management and looking for better collaboration tools"
-   - ❌ Bad: "People talking about stuff"
+   - Good: "People discussing challenges with project management and looking for better collaboration tools"
+   - Bad: "People talking about stuff"
 
 3. **Set Appropriate Filters**
    - Use `min_follower_count` to target quality accounts (default: 100)
-   - Use `max_post_age_days` to ensure timely engagement (default: unlimited)
-   - Use `require_verified` for high-profile campaigns (default: false)
+   - Use `max_post_age_days` to ensure timely engagement
+   - Use `require_verified` for high-profile campaigns
 
 4. **Customize Reply Guidelines**
    - Provide specific brand voice instructions
@@ -535,315 +405,94 @@ All payments are in USDC on Base network.
    - Include do's and don'ts for messaging
 
 5. **Direct Users to Web UI**
-   - After creating a campaign via API, direct users to view it at:
-   - `https://app.productclank.com/communiply/campaigns/{campaign_id}`
+   - After creating a campaign, share: `https://app.productclank.com/communiply/{campaign_id}`
    - The web UI provides visual analytics, reply management, and community coordination
-
-## Advanced Features
-
-### Custom Reply Guidelines
-Instead of auto-generated guidelines, provide custom instructions:
-
-```typescript
-{
-  reply_guidelines: `
-    Reply as a developer who has used our product for 6+ months.
-    Focus on: ease of integration, excellent documentation, responsive support.
-    Avoid: marketing speak, over-promising, comparing to competitors directly.
-    Mention @productclank naturally when relevant.
-    Include our website (https://productclank.com) if it adds value.
-  `
-}
-```
-
-### Multi-Source Discovery
-Communiply discovers opportunities from multiple sources:
-- **Keyword searches**: Monitors Twitter for your specified keywords
-- **Influencer accounts**: Tracks high-engagement accounts in your niche
-- **Twitter Lists**: Monitors curated lists of relevant users
-- **7-layer filtering**: Ensures only quality, relevant posts are surfaced
-
-### Community Coordination
-After campaign creation and calling generate-posts:
-1. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger discovery (credits deducted here, 12 credits per post discovered + reply generated)
-2. AI generates contextual replies for each discovered opportunity
-3. Community members browse opportunities in dashboard
-4. They claim replies, customize if needed, and post from personal accounts
-5. Submit proof (tweet URL + optional screenshot)
-6. Earn rewards after verification
-
-## Support & Resources
-
-- **API Documentation**: [api.productclank.com/api/v1/docs](https://api.productclank.com/api/v1/docs)
-- **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
-- **Website**: [productclank.com](https://www.productclank.com)
-- **Twitter**: [@productclank](https://twitter.com/productclank)
-- **Warpcast**: [warpcast.com/productclank](https://warpcast.com/productclank)
-- **Contact**: For API keys, trusted agent status, or higher rate limits
 
 ## Complete Example Flow
 
 ```typescript
-// 1. User asks: "I want to create a Twitter campaign for my DeFi app launch"
+const API = "https://api.productclank.com/api/v1";
+const headers = { "Authorization": "Bearer pck_live_YOUR_KEY", "Content-Type": "application/json" };
 
-// 2. Check credit balance first
-const balanceRes = await fetch(
-  "https://api.productclank.com/api/v1/agents/credits/balance",
-  {
-    headers: { "Authorization": "Bearer pck_live_YOUR_KEY" }
-  }
-);
-const { balance } = await balanceRes.json();
+// 1. Check balance (300 free credits from registration)
+const { balance } = await fetch(`${API}/agents/credits/balance`, { headers }).then(r => r.json());
 
-// 3. Top up if needed (targeting 100 posts = ~1200 credits)
-if (balance < 1200) {
-  const topupRes = await x402Fetch(
-    "https://api.productclank.com/api/v1/agents/credits/topup",
-    {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer pck_live_YOUR_KEY",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ bundle: "medium" })  // $50 → 1200 credits
-    }
-  );
-  const { credits_added, new_balance } = await topupRes.json();
-  console.log(`✅ Topped up ${credits_added} credits (new balance: ${new_balance})`);
-}
+// 2. Find product
+const { products } = await fetch(`${API}/agents/products/search?q=MyProduct`, { headers }).then(r => r.json());
+const productId = products[0].id;
 
-// 4. Gather campaign requirements
-const campaignRequest = {
-  product_id: "abc-123-def", // From ProductClank
-  title: "DeFi App Launch Week",
-  keywords: [
-    "DeFi platforms",
-    "yield farming",
-    "decentralized finance",
-    "crypto staking"
-  ],
-  search_context: "People discussing DeFi platforms, yield farming strategies, and crypto staking opportunities",
-  estimated_posts: 100,  // For cost estimation
-  mention_accounts: ["@mydefiapp"],
-  reply_style_tags: ["professional", "technical", "helpful"],
-  reply_length: "short",
-  min_follower_count: 1000,
-  max_post_age_days: 3,
-  require_verified: false
-};
+// 3. Create campaign (10 credits)
+const { campaign } = await fetch(`${API}/agents/campaigns`, {
+  method: "POST", headers,
+  body: JSON.stringify({
+    product_id: productId,
+    title: "DeFi App Launch Week",
+    keywords: ["DeFi platforms", "yield farming", "crypto staking"],
+    search_context: "People discussing DeFi platforms and staking opportunities",
+    mention_accounts: ["@mydefiapp"],
+    reply_style_tags: ["professional", "helpful"],
+    reply_length: "short",
+    min_follower_count: 1000,
+    max_post_age_days: 3,
+  })
+}).then(r => r.json());
 
-// 5. Create campaign (no payment required - credits NOT yet deducted)
-const result = await fetch(
-  "https://api.productclank.com/api/v1/agents/campaigns",
-  {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(campaignRequest)
-  }
-).then(r => r.json());
+console.log(`Campaign: ${campaign.campaign_number} — Review: ${campaign.url}`);
 
-// 6. (Optional) Share campaign URL with user for review before generating posts
-const campaignUrl = `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`;
-console.log(`📊 Campaign created: ${result.campaign.campaign_number}`);
-console.log(`🔗 Review at: ${campaignUrl}`);
-console.log(`💳 Estimated cost: ${result.cost_estimate.estimated_credits} credits when generate-posts is called`);
+// 4. Generate posts (12 credits/post)
+const gen = await fetch(`${API}/agents/campaigns/${campaign.id}/generate-posts`, {
+  method: "POST", headers: { "Authorization": headers["Authorization"] }
+}).then(r => r.json());
 
-// 7. Call generate-posts to trigger discovery and reply generation (credits deducted here)
-const generateResult = await fetch(
-  `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-  {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-    }
-  }
-).then(r => r.json());
+console.log(`${gen.postsGenerated} posts, ${gen.credits.creditsUsed} credits used, ${gen.credits.creditsRemaining} remaining`);
 
-// 8. Inform user of success
-console.log(`
-✅ Campaign "${result.campaign.title}" is live!
-
-📊 Campaign Details:
-   - Campaign ID: ${result.campaign.campaign_number}
-   - Status: ${result.campaign.status}
-
-📝 Posts Generated:
-   - Posts discovered: ${generateResult.postsGenerated}
-   - Replies generated: ${generateResult.repliesGenerated}
-
-💳 Credit Usage:
-   - Credits used: ${generateResult.credits.creditsUsed}
-   - Credits remaining: ${generateResult.credits.creditsRemaining}
-
-🔗 Next Steps:
-   - View dashboard: ${campaignUrl}
-   - Community members can claim and execute reply opportunities
-   - Track real-time analytics and engagement
-   - Monitor credit usage: https://api.productclank.com/api/v1/agents/credits/history
-`);
+// 5. Check results
+const { stats } = await fetch(`${API}/agents/campaigns/${campaign.id}`, { headers }).then(r => r.json());
+console.log(`Discovered: ${stats.posts_discovered}, Replies: ${stats.replies_total}`);
 ```
 
 ## Troubleshooting
 
-### "Low credit balance" warning
-- Campaign created successfully but may run out of credits
-- Top up via `/api/v1/agents/credits/topup`
-- Check balance regularly via `/api/v1/agents/credits/balance`
-- Operations will pause if balance reaches zero
+| Issue | Fix |
+|-------|-----|
+| "Insufficient credits" | Campaign creation = 10 cr. Posts = 12 cr each. Top up at `/agents/credits/topup` |
+| "Product not found" | Search: `GET /agents/products/search?q=name` or create at app.productclank.com/products |
+| "Invalid API key" | Starts with `pck_live_`. Rotate with `POST /agents/rotate-key` if compromised |
+| "Rate limit exceeded" | 10 campaigns/day default. Contact ProductClank for more. |
+| "Payment verification failed" | USDC on Base (not ETH mainnet). Tx must be < 1 hour old. |
 
-### "Payment verification failed" (during credit top-up)
-- Ensure USDC balance is sufficient
-- For direct transfer: verify tx hash is correct and confirmed
-- For x402: ensure wallet has `signTypedData` capability
-- Transaction must be recent (within 1 hour)
-- Each transaction hash can only be used once
+## Support & Resources
 
-### "Product not found"
-- Verify product_id exists on ProductClank
-- Visit [app.productclank.com/products](https://app.productclank.com/products) to find valid products
-
-### "Invalid API key"
-- Ensure key starts with `pck_live_`
-- Contact ProductClank team to verify key status
-
-### "Rate limit exceeded"
-- Default limit: 10 campaigns per day
-- Wait until next day or contact ProductClank for higher limits
-
-### "Rate limit exceeded"
-- Default limit: 10 campaigns/day
-- Contact ProductClank for higher limits
-
-## Additional Resources
-
-For complete API reference with detailed examples, see:
-- [references/API_REFERENCE.md](references/API_REFERENCE.md) - Full API specification
-- [references/EXAMPLES.md](references/EXAMPLES.md) - Code examples for common scenarios
-- [scripts/create-campaign.mjs](scripts/create-campaign.mjs) - Helper script for quick campaign creation
+- **API Reference**: [references/API_REFERENCE.md](references/API_REFERENCE.md)
+- **Code Examples**: [references/EXAMPLES.md](references/EXAMPLES.md)
+- **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
+- **Twitter**: [@productclank](https://twitter.com/productclank)
+- **Warpcast**: [warpcast.com/productclank](https://warpcast.com/productclank)
 
 ## Tier 2: Research-Enhanced Campaign (Coming Soon)
 
-Enhance campaigns with AI-powered research before generating posts. Research is free — it improves targeting quality.
-
-### Tier 2 Flow
+Enhance campaigns with AI-powered research before generating posts.
 
 ```
-1. POST /agents/generate-keywords           → 2 credits (optional, if user described goals in natural language)
+1. POST /agents/generate-keywords           → 2 credits
 2. POST /agents/campaigns                   → 10 credits
-3. POST /agents/campaigns/{id}/research     → free (runs AI analysis)
-4. GET  /agents/campaigns/{id}/research     → free (review results)
-5. POST /agents/campaigns/{id}/verticals    → free (select discovery sources)
+3. POST /agents/campaigns/{id}/research     → free
+4. GET  /agents/campaigns/{id}/research     → free
+5. POST /agents/campaigns/{id}/verticals    → free
 6. POST /agents/campaigns/{id}/generate-posts → 12 credits/post
-```
-
-### Planned Endpoints
-
-**POST /agents/generate-keywords** (2 credits)
-- Input: `{ search_goals: string, product_name?: string, product_tagline?: string }`
-- Output: `{ keywords: string[], credits: { creditsUsed, creditsRemaining } }`
-- Uses Claude AI to generate 8-15 search keywords from natural language goals
-
-**POST /agents/campaigns/{id}/research** (free)
-- Input: none (uses campaign's keywords)
-- Output: `{ analysis: { expandedKeywords, highIntentPhrases, keyAccounts, twitterLists, hashtags, competitors } }`
-- Discovers competitors (AI), selects relevant Twitter lists, expands keywords, identifies high-intent phrases
-
-**POST /agents/campaigns/{id}/verticals** (free)
-- Input: `{ enabledVerticals: ["keywords", "phrases", "influencers", "lists", "competitors"] }`
-- Select which discovery sources to use from the research results
-
-**GET /agents/campaigns/{id}** (free)
-- Read campaign details, settings, and stats
-
-**GET /agents/campaigns** (free)
-- List all campaigns created by your agent
-
-### When to Use Tier 2
-- Exploring a new niche where you don't know the best keywords
-- Campaigns targeting 10+ posts where better targeting pays for itself
-- Want to leverage Twitter lists, influencer monitoring, or competitor-based discovery
-
-### Example Agent Conversation (Tier 2)
-```
-User: "I want to promote my AI writing tool to content marketers"
-Agent: "Let me research the best keywords and discovery sources for content marketing."
-       → POST /agents/generate-keywords { search_goals: "content marketers looking for AI writing tools" }
-       → Receives: ["AI writing assistant", "content creation tools", "copywriting AI", ...]
-Agent: "Got 12 keywords. Creating your campaign..."
-       → POST /agents/campaigns { keywords: [...], search_context: "..." }
-Agent: "Running research analysis to find the best discovery sources..."
-       → POST /agents/campaigns/{id}/research
-       → Receives: 8 Twitter lists, 5 competitors, 15 expanded keywords
-Agent: "Found great sources! Enabling keyword + influencer + list discovery..."
-       → POST /agents/campaigns/{id}/verticals { enabledVerticals: ["keywords", "influencers", "lists"] }
-Agent: "Generating posts with enhanced targeting..."
-       → POST /agents/campaigns/{id}/generate-posts
 ```
 
 ## Tier 3: Iterate & Optimize (Coming Soon)
 
-Full campaign lifecycle management. Read results, refine via AI chat, regenerate replies, and iterate.
-
-### Tier 3 Flow (after Tier 1 or 2 steps)
+Full campaign lifecycle management with AI refinement.
 
 ```
-7.  GET  /agents/campaigns/{id}/posts             → free (review results)
-8.  POST /agents/campaigns/{id}/refine            → 3 credits/message (AI chat)
+7.  GET  /agents/campaigns/{id}/posts             → free
+8.  POST /agents/campaigns/{id}/refine            → 3 credits/message
 9.  POST /agents/campaigns/{id}/regenerate-replies → 5 credits/reply
-10. PATCH /agents/campaigns/{id}                   → free (update settings)
-11. POST /agents/campaigns/{id}/generate-posts     → 12 credits/post (generate more)
+10. PATCH /agents/campaigns/{id}                   → free
+11. POST /agents/campaigns/{id}/generate-posts     → 12 credits/post
 12. Repeat 7-11 as needed
-```
-
-### Planned Endpoints
-
-**GET /agents/campaigns/{id}/posts** (free)
-- Query: `status`, `limit`, `offset`, `includeReplies`, `filterClaimed`
-- Returns posts with author info, engagement metrics, replies, relevance scores
-
-**POST /agents/campaigns/{id}/regenerate-replies** (5 credits/reply)
-- Input: `{ postIds: string[], editRequest: string, applyToSystemPrompt?: boolean }`
-- Regenerate AI replies for specific posts with new instructions
-- Can optionally update permanent reply guidelines
-
-**POST /agents/campaigns/{id}/refine** (3 credits/message, synchronous)
-- Input: `{ messages: [{ role: "user"|"assistant", content: string }] }`
-- Output: `{ message: string, actions_executed: [{ action, result }], credits }`
-- AI campaign optimization assistant that can auto-execute actions:
-  - `update_keywords` — change campaign keywords
-  - `update_reply_guidelines` — change reply instructions
-  - `regenerate_replies` — regenerate specific replies
-  - `generate_posts` — discover more posts
-  - `run_discovery` — discover without reply generation
-  - `cleanup_posts` — remove old unclaimed posts
-  - `update_campaign_settings` — modify settings
-  - `update_visibility` — change campaign visibility
-
-**PATCH /agents/campaigns/{id}** (free)
-- Direct setting updates without AI chat: keywords, guidelines, filters, scheduling, visibility
-
-### When to Use Tier 3
-- Ongoing campaigns that need continuous optimization
-- A/B testing different reply styles or guidelines
-- Building automated feedback loops (read results → analyze → refine → regenerate)
-- Managing campaigns for multiple products
-
-### Example Agent Conversation (Tier 3)
-```
-Agent: "Your campaign generated 15 posts. Let me review the results..."
-       → GET /agents/campaigns/{id}/posts?includeReplies=true
-Agent: "The replies look good but could be more casual. Let me refine..."
-       → POST /agents/campaigns/{id}/refine
-         { messages: [{ role: "user", content: "Make replies more casual and shorter" }] }
-       → Response: { actions_executed: [{ action: "update_reply_guidelines", result: { success: true } }] }
-Agent: "Guidelines updated! Regenerating replies for the top 5 posts..."
-       → POST /agents/campaigns/{id}/regenerate-replies
-         { postIds: [...], editRequest: "shorter, more conversational tone" }
-Agent: "Done! 5 replies regenerated. Generating 10 more posts with the new style..."
-       → POST /agents/campaigns/{id}/generate-posts
 ```
 
 ## Credit Cost Summary (All Tiers)
@@ -852,6 +501,8 @@ Agent: "Done! 5 replies regenerated. Generating 10 more posts with the new style
 |-----------|---------|------|
 | Create campaign | 10 | 1 |
 | Generate posts (discover + reply) | 12/post | 1 |
+| Tweet boost (replies) | 200 | 1 |
+| Tweet boost (likes/repost) | 300 | 1 |
 | Generate keywords (AI) | 2 | 2 |
 | Research analysis | 0 (free) | 2 |
 | Select verticals | 0 (free) | 2 |

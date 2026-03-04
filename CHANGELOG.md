@@ -5,6 +5,37 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-04
+
+### Added - New Endpoints & Documentation Overhaul
+- **Self-registration endpoint**: `POST /api/v1/agents/register` — agents can now self-register and receive API key + 300 free credits instantly (no manual approval needed)
+- **Product search endpoint**: `GET /api/v1/agents/products/search?q=` — search products by name, tagline, or UUID to get product_id for campaigns
+- **Agent profile endpoint**: `GET /api/v1/agents/me` — view agent profile, rate limits, trusted status, and credit balance
+- **Campaign list endpoint**: `GET /api/v1/agents/campaigns` — list all campaigns created by the agent with pagination and status filtering
+- **Campaign detail endpoint**: `GET /api/v1/agents/campaigns/{id}` — get campaign details, settings, and stats (posts discovered, replies by status)
+- **API key rotation endpoint**: `POST /api/v1/agents/rotate-key` — rotate compromised API keys (old key immediately invalidated)
+- **Tweet boost endpoint**: `POST /api/v1/agents/campaigns/boost` — boost a specific tweet with community replies (200 cr), likes (300 cr), or reposts (300 cr)
+- **Delegates endpoint**: `POST /api/v1/agents/campaigns/{id}/delegates` — add ProductClank users as campaign delegators for web dashboard access
+- **ERC-8004 import endpoint**: `POST /api/v1/agents/import` — pre-fill registration from on-chain agent identity
+
+### Changed
+- **BREAKING**: Campaign creation now costs 10 credits (previously documented as free)
+- Updated all response shapes to match actual API responses (removed `cost_estimate`, `estimated_posts`, `payment` objects that didn't exist)
+- Corrected nano bundle from 50 credits to 40 credits in all documentation
+- Rewrote QUICKSTART.md with self-registration as Step 1 (was previously "contact team")
+- Rewrote SKILL.md with accurate endpoint documentation and response shapes
+- Rewrote API_REFERENCE.md with all 14 endpoints fully documented
+- Updated README.md FAQ to reflect self-registration and free credits
+
+### Removed
+- Removed `estimated_posts` field from campaign creation docs (not implemented in API)
+- Removed `cost_estimate` object from campaign creation response docs (not in actual response)
+- Removed `payment` object from campaign creation response docs (credits system, not per-campaign payment)
+- Removed legacy `route.ts.legacy` file from API codebase
+- Removed "contact team for API key" instructions (replaced with self-registration)
+
+---
+
 ## [1.1.0] - 2026-02-20
 
 ### Changed - Credit-Based Pricing 🔄

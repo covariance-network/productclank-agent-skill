@@ -6,23 +6,22 @@ An [Agent Skill](https://agentskills.io) for creating Communiply campaigns on Pr
 
 This is an Agent Skill that enables AI agents to create community-driven brand advocacy campaigns on ProductClank. Agents can autonomously discover relevant Twitter/X conversations, generate authentic replies, and coordinate community members to amplify brands through genuine word-of-mouth.
 
-**ProductClank Communiply** solves the authenticity problem in social media marketing: when your brand promotes itself, people dismiss it as advertising. Communiply enables real people (employees, users, community members) to naturally recommend your brand in relevant conversations—creating authentic word-of-mouth at scale.
+**ProductClank Communiply** solves the authenticity problem in social media marketing: when your brand promotes itself, people dismiss it as advertising. Communiply enables real people (employees, users, community members) to naturally recommend your brand in relevant conversations — creating authentic word-of-mouth at scale.
 
 ## Quick Start
 
-**🚀 New to the API?** Start here: [QUICKSTART.md](QUICKSTART.md) - Get your first campaign running in 5 minutes!
+**New to the API?** Start here: [QUICKSTART.md](QUICKSTART.md) — Get your first campaign running in 5 minutes!
 
 ### For AI Agents
 
 This skill is loaded automatically when an agent needs to create Twitter/X marketing campaigns. The agent will:
 
-1. Gather campaign requirements from the user
-2. Authenticate with ProductClank API
-3. Buy credits with USDC on Base (x402 or direct transfer)
-4. Create the campaign (no credits deducted at this step)
-5. (Optional) Share the campaign URL with the user for review
-6. Call generate-posts to trigger discovery and reply generation (credits deducted here)
-7. Return the campaign dashboard URL for tracking
+1. Register itself via `POST /api/v1/agents/register` (gets API key + 300 free credits)
+2. Search for the product via `GET /api/v1/agents/products/search?q=name`
+3. Create the campaign via `POST /api/v1/agents/campaigns` (10 credits)
+4. (Optional) Share the campaign URL with the user for review
+5. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` (12 credits/post)
+6. Return the campaign dashboard URL for tracking
 
 ### For Developers
 
@@ -44,11 +43,72 @@ node scripts/create-campaign.mjs
 
 See [SKILL.md](SKILL.md) for complete documentation.
 
+## Getting Started
+
+### 1. Register Your Agent (Self-Service)
+
+No manual approval needed — register instantly:
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{"name": "MyAgent", "description": "AI agent for social media campaigns"}'
+```
+
+You'll receive:
+- **API key** (`pck_live_*`) — shown once, save immediately
+- **300 free credits** — enough for ~24 posts (no USDC needed to start)
+
+Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
+
+### 2. Find Your Product
+
+```bash
+curl "https://api.productclank.com/api/v1/agents/products/search?q=MyProduct" \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+```
+
+Don't have a product? Create one at [app.productclank.com/products](https://app.productclank.com/products)
+
+### 3. Create Your First Campaign
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns \
+  -H "Authorization: Bearer pck_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": "YOUR_PRODUCT_UUID",
+    "title": "Launch Campaign",
+    "keywords": ["AI tools", "productivity apps"],
+    "search_context": "People discussing AI productivity tools"
+  }'
+```
+
+### 4. Generate Posts
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/generate-posts \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+```
+
+### 5. Buy More Credits (When Free Credits Run Out)
+
+**Option A: x402 Protocol** (Recommended)
+- Requires: Wallet with private key access + USDC on Base
+- Payment happens automatically via `@x402/fetch`
+
+**Option B: Direct USDC Transfer**
+- Send USDC on Base to: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
+- Submit tx hash via `POST /api/v1/agents/credits/topup`
+
+**Option C: Trusted Agent Status**
+- Contact ProductClank for whitelisting (testing/partnerships)
+
 ## Directory Structure
 
 ```
-productclank-campaigns/
-├── QUICKSTART.md               # 🚀 5-minute quick start guide (START HERE!)
+productclank-agent-skill/
+├── QUICKSTART.md               # 5-minute quick start guide (START HERE!)
 ├── SKILL.md                    # Main skill documentation (loaded by agents)
 ├── README.md                   # This file
 ├── CHANGELOG.md                # Version history
@@ -59,159 +119,62 @@ productclank-campaigns/
     └── create-campaign.mjs     # Helper script for quick campaign creation
 ```
 
-## Files
+## API Endpoints
 
-### [SKILL.md](SKILL.md)
-The main skill file loaded by AI agents. Contains:
-- What Communiply is and how it works
-- When to use this skill
-- Step-by-step instructions for creating campaigns
-- Complete examples for x402 and direct transfer payment methods
-- Error handling and troubleshooting
+### Registration & Identity
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/agents/register` | Self-register, get API key + 300 free credits |
+| GET | `/agents/me` | View agent profile & rate limits |
+| POST | `/agents/rotate-key` | Rotate API key |
+| POST | `/agents/import` | Import ERC-8004 agent metadata |
 
-### [references/API_REFERENCE.md](references/API_REFERENCE.md)
-Complete API specification including:
-- Authentication requirements
-- Request/response formats
-- All payment methods (x402, direct transfer, trusted agents)
-- Credit bundles and operation costs
-- Rate limits
-- Error codes and handling
+### Products
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/agents/products/search?q=` | Search products by name/UUID |
 
-### [references/EXAMPLES.md](references/EXAMPLES.md)
-Practical code examples:
-- Basic campaign creation
-- Advanced campaigns with custom guidelines
-- Competitor intercept campaigns
-- Product launch campaigns
-- Error handling and retry logic
-- TypeScript types
+### Campaigns
+| Method | Endpoint | Cost | Description |
+|--------|----------|------|-------------|
+| POST | `/agents/campaigns` | 10 credits | Create campaign |
+| GET | `/agents/campaigns` | Free | List your campaigns |
+| GET | `/agents/campaigns/{id}` | Free | Campaign details & stats |
+| POST | `/agents/campaigns/{id}/generate-posts` | 12 cr/post | Trigger discovery & replies |
+| POST | `/agents/campaigns/{id}/delegates` | Free | Add campaign delegator |
+| POST | `/agents/campaigns/boost` | 200-300 cr | Boost a specific tweet |
 
-### [scripts/create-campaign.mjs](scripts/create-campaign.mjs)
-Ready-to-use script for creating campaigns. Supports both x402 protocol and direct USDC transfers.
+### Credits
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/agents/credits/balance` | Check credit balance |
+| POST | `/agents/credits/topup` | Buy credit bundle (USDC on Base) |
+| GET | `/agents/credits/history` | Transaction history |
 
-## Getting Started
+## Credit System
 
-### 1. Register Your Agent
+### Free Credits
+Every new agent gets **300 free credits** on registration — no payment needed to start.
 
-Contact ProductClank to receive an API key:
-- Twitter: [@productclank](https://twitter.com/productclank)
-- Warpcast: [warpcast.com/productclank](https://warpcast.com/productclank)
-- Website: [productclank.com](https://www.productclank.com)
+### Credit Costs
 
-Provide:
-- Agent name and description
-- Intended use case
-- Wallet address (for payments)
-- Estimated daily campaign volume
+| Operation | Credits |
+|-----------|---------|
+| Create campaign | 10 |
+| Discover post + generate reply | 12 |
+| Tweet boost (10 AI replies) | 200 |
+| Tweet boost (likes/repost) | 300 |
 
-### 2. Set Up Payment
+### Credit Bundles (USDC on Base)
 
-Choose a payment method:
-
-**Option A: x402 Protocol** (Recommended)
-- Requires: Wallet with private key access + USDC on Base
-- Set `AGENT_PRIVATE_KEY` environment variable
-- Payment happens automatically via x402 protocol
-
-**Option B: Direct USDC Transfer**
-- Requires: Any wallet that can send USDC on Base
-- Send USDC to payment address: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
-- Set `PAYMENT_TX_HASH` environment variable with tx hash
-
-**Option C: Trusted Agent Status**
-- Contact ProductClank for whitelisting
-- Skip payment entirely (for testing/partnerships)
-
-### 3. Create Your First Campaign
-
-Using the helper script:
-
-```bash
-# Edit the campaignData object in scripts/create-campaign.mjs
-# Then run:
-node scripts/create-campaign.mjs
-```
-
-Or programmatically:
-
-```javascript
-import { wrapFetchWithPayment } from "@x402/fetch";
-import { createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-
-const account = privateKeyToAccount(process.env.AGENT_PRIVATE_KEY);
-const walletClient = createWalletClient({
-  account,
-  chain: base,
-  transport: http(),
-});
-
-const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
-
-// Step 1: Create campaign (no credits deducted yet)
-const response = await x402Fetch(
-  "https://api.productclank.com/api/v1/agents/campaigns",
-  {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      product_id: "YOUR_PRODUCT_UUID",
-      title: "Launch Week Campaign",
-      keywords: ["AI tools", "productivity apps"],
-      search_context: "People discussing AI productivity tools",
-      estimated_posts: 10, // Estimate for cost calculation
-    }),
-  }
-);
-
-const result = await response.json();
-console.log("Campaign:", result.campaign);
-console.log("View at:", `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-
-// Step 2: Generate posts (credits deducted here)
-const generateRes = await fetch(
-  `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-  {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-    },
-  }
-);
-
-const generateResult = await generateRes.json();
-console.log("Posts generated:", generateResult.postsGenerated);
-console.log("Credits used:", generateResult.credits.creditsUsed);
-```
-
-## Credit Bundles
-
-ProductClank uses a credit-based pay-per-use system. Buy credits once, use them across multiple campaigns:
-
-| Bundle | Price | Credits | Rate | Approx. Posts* |
-|--------|-------|---------|------|----------------|
-| nano | $2 | 40 | 20 cr/$ | ~3 |
-| micro | $10 | 200 | 20 cr/$ | ~16 |
-| small | $25 | 550 | 22 cr/$ | ~45 |
-| medium | $50 | 1,200 | 24 cr/$ | ~100 |
-| large | $100 | 2,600 | 26 cr/$ | ~216 |
-| enterprise | $500 | 14,000 | 28 cr/$ | ~1,166 |
-
-*Based on 12 credits per post (discover + generate reply)
-
-### Operation Costs
-
-| Operation | Credits | Est. Cost |
-|-----------|---------|-----------|
-| Discover post + generate reply | 12 | ~$0.50 |
-| Generate reply only | 8 | ~$0.33 |
-| Regenerate reply | 5 | ~$0.21 |
-| Tweet boost (10 AI replies) | 80 | ~$3.33 |
+| Bundle | Price | Credits | ~Posts |
+|--------|-------|---------|--------|
+| nano | $2 | 40 | ~3 |
+| micro | $10 | 200 | ~16 |
+| small | $25 | 550 | ~45 |
+| medium | $50 | 1,200 | ~100 |
+| large | $100 | 2,600 | ~216 |
+| enterprise | $500 | 14,000 | ~1,166 |
 
 All payments in USDC on Base network (chain ID 8453).
 
@@ -223,104 +186,68 @@ All payments in USDC on Base network (chain ID 8453).
 ## Use Cases
 
 ### 1. Competitor Intercept
-Target conversations mentioning competitors. When people discuss alternatives, your community naturally suggests your product.
+Target conversations mentioning competitors. Community naturally suggests your product.
 
 ### 2. Problem-Based Targeting
-Find people expressing pain points your product solves. Timely, helpful suggestions when they need it most.
+Find people expressing pain points your product solves.
 
 ### 3. Brand Amplification
-When someone praises your brand, third-party validation reinforces positive mentions.
+Third-party validation reinforces positive mentions of your brand.
 
-### 4. Product Launches
-Coordinate community amplification during launch week. Real people sharing authentic excitement.
+### 4. Tweet Boost
+Amplify a specific tweet with 10 authentic community reply threads.
+
+### 5. Product Launches
+Coordinate community amplification during launch week.
 
 ## How Communiply Works
 
-1. **AI Discovers Opportunities** — Monitors Twitter/X 24/7 for relevant conversations based on keywords, competitors, problems
-2. **Generates Smart Replies** — Creates context-aware, value-adding responses (not sales pitches)
-3. **Community Amplifies** — Real people post from personal accounts, creating authentic third-party recommendations
+1. **AI Discovers Opportunities** — Monitors Twitter/X 24/7 for relevant conversations
+2. **Generates Smart Replies** — Context-aware, value-adding responses (not sales pitches)
+3. **Community Amplifies** — Real people post from personal accounts
 4. **Tracks Results** — Real-time analytics on engagement, reach, and ROI
 
-## Why It Works
+## FAQ
 
-| When You Promote Yourself ❌ | When Others Recommend You ✅ |
-|------------------------------|------------------------------|
-| Responses scream "advertisement" | Real users = authentic credibility |
-| People dismiss automatically | 10x more trustworthy |
-| Zero credibility in competitive conversations | Natural presence everywhere |
-| Limited reach—only your followers | Unlimited reach—wherever conversations happen |
+**Q: Do I need to contact anyone to get an API key?**
+A: No! Self-register via `POST /api/v1/agents/register`. API key + 300 free credits are provided instantly.
+
+**Q: Do I need USDC to start?**
+A: No. Registration includes 300 free credits — enough for ~24 posts. Buy more when you run out.
+
+**Q: What happens after a campaign is created?**
+A: Call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter discovery and reply generation. Credits are deducted at that point. Optionally share the campaign URL with the user for review first.
+
+**Q: How much does it cost to create a campaign?**
+A: 10 credits for campaign creation + 12 credits per post discovered. A typical 10-post test campaign costs ~130 credits.
+
+**Q: Can I list or check my campaigns via API?**
+A: Yes! `GET /api/v1/agents/campaigns` lists all your campaigns. `GET /api/v1/agents/campaigns/{id}` shows details and stats.
+
+**Q: What if I lose my API key?**
+A: Use `POST /api/v1/agents/rotate-key` with your current key to generate a new one. If you've lost access completely, contact ProductClank.
+
+**Q: Can I delete or pause campaigns?**
+A: Yes, via the web dashboard at [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
+
+**Q: Is there a test environment?**
+A: No separate test API — use the 300 free credits from registration to test on production.
+
+**Q: How do I increase rate limits?**
+A: Contact ProductClank with your use case and expected volume.
 
 ## Support & Resources
 
-- **API Documentation**: [api.productclank.com/api/v1/docs](https://api.productclank.com/api/v1/docs)
+- **API Documentation**: [references/API_REFERENCE.md](references/API_REFERENCE.md)
 - **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
 - **Website**: [productclank.com](https://www.productclank.com)
 - **Twitter**: [@productclank](https://twitter.com/productclank)
 - **Warpcast**: [warpcast.com/productclank](https://warpcast.com/productclank)
 
-## Installation for Agents
-
-If you're building an agent that uses this skill:
-
-```bash
-# Install as a dependency
-npm install @x402/fetch viem
-
-# Or with yarn
-yarn add @x402/fetch viem
-
-# Or with pnpm
-pnpm add @x402/fetch viem
-```
-
-Then load the skill from this directory or reference it via GitHub.
-
-## Validation
-
-Validate the skill format:
-
-```bash
-# Using skills-ref CLI
-skills-ref validate ./productclank-campaigns
-```
-
-## Contributing
-
-This skill is maintained by ProductClank. For issues or improvements:
-- Open an issue on GitHub
-- Contact via Twitter: [@productclank](https://twitter.com/productclank)
-- Email: Via contact form on [productclank.com](https://www.productclank.com)
-
-## License
-
-Proprietary. The API and service are proprietary to ProductClank. This skill documentation is provided as a convenience for AI agents to interact with the ProductClank API.
-
-See [LICENSE.txt](LICENSE.txt) for complete terms (if available).
-
-## FAQ
-
-**Q: Do I need a ProductClank account?**
-A: No, agents use API keys directly. The agent creates campaigns on behalf of users.
-
-**Q: What happens after a campaign is created?**
-A: The campaign is created but discovery does not start automatically. You must call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter conversation discovery and reply generation. Credits are deducted at that point. You can optionally share the campaign URL with the user for review before calling generate-posts.
-
-**Q: Can I delete or pause campaigns?**
-A: Yes, via the web dashboard at [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
-
-**Q: What if I don't have private keys for x402?**
-A: Use the direct USDC transfer method. Send USDC to the payment address and provide the tx hash.
-
-**Q: Is there a test environment?**
-A: Use the "nano" bundle ($2 for 40 credits) for testing on production. There's no separate test API—just buy a small amount of credits to try it out.
-
-**Q: How do I increase rate limits?**
-A: Contact ProductClank with your use case and expected volume.
-
 ## Version
 
-**Version:** 1.0.0
-**Last Updated:** 2026-02-20
+**Version:** 1.2.0
+**Last Updated:** 2026-03-04
 **Agent Skills Spec:** v1 (Anthropic)
 
 ---
