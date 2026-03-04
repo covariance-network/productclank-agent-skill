@@ -287,6 +287,7 @@ Re-boosting the same tweet generates fresh content without duplicates.
 | Boost (repost) | 300 | 10 repost tasks |
 | Chat message | 3 | AI refinement (Tier 3) |
 | Keyword generation | 2 | AI keywords (Tier 2) |
+| Review post (AI relevancy) | 2 | AI scores post against rules |
 
 ### Credit Bundles (USDC on Base)
 
@@ -506,6 +507,7 @@ Full campaign lifecycle management with AI refinement.
 | Generate keywords (AI) | 2 | 2 |
 | Research analysis | 0 (free) | 2 |
 | Select verticals | 0 (free) | 2 |
+| Review posts (AI relevancy) | 2/post | 1 |
 | Read campaign/posts | 0 (free) | 3 |
 | Regenerate replies | 5/reply | 3 |
 | Refine chat (AI) | 3/message | 3 |

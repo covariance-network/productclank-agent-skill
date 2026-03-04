@@ -318,6 +318,7 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 | **Generate reply only** | 8 | For pre-supplied posts |
 | **Regenerate reply** | 5 | Refresh existing replies |
 | **Tweet boost (10 AI replies)** | 200 | Boost a specific tweet |
+| **Review post (AI relevancy)** | 2 | AI scores post against rules |
 
 ## Credit Bundles (USDC on Base)
 

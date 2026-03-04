@@ -426,6 +426,7 @@ Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
 | `replies` | 10 AI replies | 200 |
 | `likes` | 30 like tasks | 300 |
 | `repost` | 10 repost tasks | 300 |
+| Review post | 1 post reviewed | 2 |
 
 ### Response (200)
 
