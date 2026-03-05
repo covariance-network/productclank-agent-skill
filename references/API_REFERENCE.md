@@ -405,6 +405,69 @@ None required. Optional: `{ "caller_user_id": "..." }` for trusted agents.
 
 ---
 
+## POST /api/v1/agents/campaigns/{campaignId}/review-posts
+
+AI-powered review of discovered posts against custom relevancy rules. Scores each post and deletes irrelevant ones. **Cost: 2 credits per post reviewed.**
+
+### Path Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `campaignId` | string (UUID) | Campaign ID |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `review_rules` | string | No* | Freeform relevancy rules for AI scoring. *Required if no rules saved on campaign. |
+| `threshold` | number | No | Score threshold (1-10). Posts below this are irrelevant. Default: `5` |
+| `dry_run` | boolean | No | If `true`, scores posts but does not delete. Default: `false` |
+| `save_rules` | boolean | No | Save rules to campaign for future use. Default: `true` |
+| `caller_user_id` | string | No | Trusted agents only — bill this user's credits |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "dry_run": false,
+  "summary": {
+    "total_reviewed": 87,
+    "deleted": 23,
+    "marked_irrelevant": 23,
+    "kept": 64,
+    "processing_time_ms": 142500
+  },
+  "results": [
+    {
+      "post_id": "uuid",
+      "score": 2,
+      "reason": "General industry news, not a builder announcing their own product",
+      "is_irrelevant": true,
+      "tweet_url": "https://x.com/user/status/123",
+      "author_username": "someuser"
+    }
+  ],
+  "credits": {
+    "charged": 174,
+    "remaining": 826,
+    "billing_user_id": "uuid"
+  },
+  "rules_saved": true,
+  "rules_used": "Only keep posts where a builder is announcing their own product..."
+}
+```
+
+### Error Codes
+- `400` — Missing `review_rules` (not in request body or saved on campaign)
+- `402` — Insufficient credits. Response includes `credits_required`, `credits_available`, `shortfall`
+- `403` — Campaign not owned by this agent
+- `404` — Campaign not found
+
+> **Note:** Both `dry_run: true` and `dry_run: false` consume credits, since AI scoring runs in both cases.
+
+---
+
 ## POST /api/v1/agents/campaigns/boost
 
 Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
@@ -426,7 +489,6 @@ Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
 | `replies` | 10 AI replies | 200 |
 | `likes` | 30 like tasks | 300 |
 | `repost` | 10 repost tasks | 300 |
-| Review post | 1 post reviewed | 2 |
 
 ### Response (200)
 

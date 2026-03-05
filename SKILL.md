@@ -223,6 +223,44 @@ curl https://api.productclank.com/api/v1/agents/campaigns/{campaignId} \
 
 Returns campaign details + `stats.posts_discovered`, `stats.replies_total`, `stats.replies_by_status`.
 
+### Step 6: Review Posts (2 credits/post) — Optional
+
+After generating posts, use AI review to bulk-score discovered posts against custom relevancy rules. Irrelevant posts are automatically deleted.
+
+```typescript
+const reviewRes = await fetch(
+  `https://api.productclank.com/api/v1/agents/campaigns/${campaignId}/review-posts`,
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer pck_live_YOUR_API_KEY",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      review_rules: "Only keep posts where a builder is announcing their own product or asking for feedback on a product they built. Remove general industry commentary, news reshares, and job postings.",
+      threshold: 5,        // Posts scoring below this are irrelevant (1-10 scale)
+      dry_run: false,      // true = preview only, false = delete irrelevant posts
+      save_rules: true,    // Save rules to campaign for future use
+    }),
+  }
+);
+
+const reviewResult = await reviewRes.json();
+// reviewResult.summary.total_reviewed — number of posts scored
+// reviewResult.summary.deleted — posts deleted (0 if dry_run)
+// reviewResult.summary.kept — posts that passed review
+// reviewResult.credits.charged — total credits used
+// reviewResult.credits.remaining — remaining balance
+```
+
+**Tip:** Run with `dry_run: true` first to preview which posts would be removed before committing. Both dry run and apply consume credits since AI scoring runs either way.
+
+**Error codes:**
+- `400` — Missing `review_rules` (not in request body or saved on campaign)
+- `402` — Insufficient credits (top up via `/api/v1/agents/credits/topup`)
+- `403` — Campaign does not belong to your agent
+- `404` — Campaign not found
+
 ## Tweet Boost
 
 Amplify a specific tweet with community engagement. Unlike campaigns (which discover tweets), boost targets a single tweet you provide.
