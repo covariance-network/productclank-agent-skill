@@ -180,7 +180,8 @@ const result = await response.json();
     "created_via": "api",
     "creator_agent_id": "agent-uuid",
     "is_funded": true,
-    "url": "https://app.productclank.com/communiply/uuid"
+    "url": "https://app.productclank.com/communiply/uuid",
+    "admin_url": "https://app.productclank.com/my-campaigns/communiply/uuid"
   },
   "credits": {
     "credits_used": 10,
@@ -321,7 +322,8 @@ const response = await fetch(
     "campaign_number": "CP-043",
     "action_type": "replies",
     "is_reboost": false,
-    "url": "https://app.productclank.com/communiply/uuid"
+    "url": "https://app.productclank.com/communiply/uuid",
+    "admin_url": "https://app.productclank.com/my-campaigns/communiply/uuid"
   },
   "tweet": { "id": "123456789", "url": "https://x.com/...", "text": "...", "author": "..." },
   "items_generated": 10,
@@ -477,9 +479,10 @@ This ensures you always have the latest endpoints, features, and credit costs wi
    - Mention key value propositions to highlight
    - Include do's and don'ts for messaging
 
-5. **Direct Users to Web UI**
-   - After creating a campaign, share: `https://app.productclank.com/communiply/{campaign_id}`
-   - The web UI provides visual analytics, reply management, and community coordination
+5. **Share Both Campaign URLs**
+   - **Admin dashboard** (for the campaign owner): `https://app.productclank.com/my-campaigns/communiply/{campaign_id}` — manage posts, view analytics, edit settings
+   - **Public campaign page** (for community participants): `https://app.productclank.com/communiply/{campaign_id}` — browse posts, claim replies, participate
+   - Always share both URLs with the user after creating a campaign
 
 ## Complete Example Flow
 

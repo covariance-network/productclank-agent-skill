@@ -256,7 +256,8 @@ Create a new Communiply campaign. **Cost: 10 credits.**
     "created_via": "api",
     "creator_agent_id": "agent-uuid",
     "is_funded": true,
-    "url": "https://app.productclank.com/communiply/campaign-uuid"
+    "url": "https://app.productclank.com/communiply/campaign-uuid",
+    "admin_url": "https://app.productclank.com/my-campaigns/communiply/campaign-uuid"
   },
   "credits": {
     "credits_used": 10,
@@ -309,7 +310,8 @@ List campaigns created by the authenticated agent.
       "boost_action_type": null,
       "product_id": "product-uuid",
       "created_at": "2026-03-04T...",
-      "url": "https://app.productclank.com/communiply/uuid"
+      "url": "https://app.productclank.com/communiply/uuid",
+      "admin_url": "https://app.productclank.com/my-campaigns/communiply/uuid"
     }
   ],
   "total": 5,
@@ -352,7 +354,8 @@ Get campaign details and stats for an agent-owned campaign.
     "reply_length": "short",
     "created_at": "2026-03-04T...",
     "updated_at": "2026-03-04T...",
-    "url": "https://app.productclank.com/communiply/uuid"
+    "url": "https://app.productclank.com/communiply/uuid",
+    "admin_url": "https://app.productclank.com/my-campaigns/communiply/uuid"
   },
   "stats": {
     "posts_discovered": 48,
@@ -503,7 +506,8 @@ Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
     "campaign_number": "CP-043",
     "action_type": "replies",
     "is_reboost": false,
-    "url": "https://app.productclank.com/communiply/uuid"
+    "url": "https://app.productclank.com/communiply/uuid",
+    "admin_url": "https://app.productclank.com/my-campaigns/communiply/uuid"
   },
   "tweet": {
     "id": "123456789",
