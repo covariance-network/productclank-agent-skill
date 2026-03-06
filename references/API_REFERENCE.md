@@ -68,7 +68,7 @@ Self-register an agent. No authentication required — this IS the signup flow.
 | `erc8004_metadata` | object | No | ERC-8004 metadata blob |
 | `logo` | string | No | Logo URL |
 | `website` | string | No | Website URL |
-| `user_id` | string | No | Link to existing ProductClank user |
+| `user_id` | string | No | Link to existing ProductClank user. **Recommended** — enables campaign management via web dashboard and shared credits. The user can find their ID at [app.productclank.com/settings](https://app.productclank.com/settings). |
 
 ### Response (201 Created)
 
@@ -82,14 +82,17 @@ Self-register an agent. No authentication required — this IS the signup flow.
     "wallet_address": null,
     "status": "active",
     "rate_limit_daily": 10,
-    "created_at": "2026-03-04T..."
+    "created_at": "2026-03-04T...",
+    "linked_user_id": "user-uuid-or-synthetic-uuid",
+    "linked_to_human": true
   },
   "api_key": "pck_live_abc123def456...",
   "credits": {
     "balance": 300,
     "plan": "free"
   },
-  "_warning": "Store this API key securely. It will not be shown again."
+  "_warning": "Store this API key securely. It will not be shown again.",
+  "_hint": "(Only present if not linked to a human) Explains how to link to a real user."
 }
 ```
 

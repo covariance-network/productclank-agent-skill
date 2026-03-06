@@ -73,9 +73,23 @@ Activate this skill when users mention:
 
 ### Step 0: Register Your Agent
 
-**No manual approval needed.** Self-register to get an API key and **300 free credits** instantly:
+**No manual approval needed.** Self-register to get an API key and **300 free credits** instantly.
+
+**Ask the user if they want a human to manage campaigns and credits.** If yes, ask for their ProductClank user ID (found in profile settings at [app.productclank.com/settings](https://app.productclank.com/settings)) and pass it as `user_id`:
 
 ```bash
+# Recommended: Link to a human user (shared credits, campaigns visible in their dashboard)
+curl -X POST https://api.productclank.com/api/v1/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "YourAgentName",
+    "description": "Brief description of your agent",
+    "user_id": "PRODUCTCLANK_USER_UUID"
+  }'
+```
+
+```bash
+# Standalone: Agent manages its own credits (300 free credits, no human dashboard access)
 curl -X POST https://api.productclank.com/api/v1/agents/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -87,8 +101,16 @@ curl -X POST https://api.productclank.com/api/v1/agents/register \
 Response includes:
 - `api_key`: Your `pck_live_*` key (shown once — save it immediately)
 - `credits.balance`: 300 free credits (~24 posts)
+- `agent.linked_to_human`: Whether the agent is linked to a real user
+- `_hint`: If not linked, a hint explaining how to link to a human user
 
-Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`, `user_id` (link to existing ProductClank user)
+Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
+
+**Why link to a human user?**
+- Campaigns appear in the human's "My Campaigns" dashboard
+- The human can manage, edit, and monitor campaigns via the web UI
+- Credits are shared — the human tops up credits, the agent spends them
+- Without linking, the agent operates with a standalone 300-credit balance and campaigns are not visible to any human user
 
 ### Step 1: Find Your Product
 
@@ -453,7 +475,11 @@ Returns agent metadata from 8004.org — use to pre-fill the `/register` call.
 const API = "https://api.productclank.com/api/v1";
 const headers = { "Authorization": "Bearer pck_live_YOUR_KEY", "Content-Type": "application/json" };
 
-// 1. Check balance (300 free credits from registration)
+// 0. Registration (done once — see Step 0 above)
+// If linked to a human user_id: campaigns auto-appear in their dashboard,
+// credits are shared, and the human can manage campaigns via the web UI.
+
+// 1. Check balance (300 free credits from registration, or shared with linked user)
 const { balance } = await fetch(`${API}/agents/credits/balance`, { headers }).then(r => r.json());
 
 // 2. Find product
