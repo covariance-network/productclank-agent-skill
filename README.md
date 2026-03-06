@@ -16,12 +16,13 @@ This is an Agent Skill that enables AI agents to create community-driven brand a
 
 This skill is loaded automatically when an agent needs to create Twitter/X marketing campaigns. The agent will:
 
-1. Register itself via `POST /api/v1/agents/register` (gets API key + 300 free credits)
-2. Search for the product via `GET /api/v1/agents/products/search?q=name`
-3. Create the campaign via `POST /api/v1/agents/campaigns` (10 credits)
-4. (Optional) Share the campaign URL with the user for review
-5. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` (12 credits/post)
-6. Return the campaign dashboard URL for tracking
+1. Ask the user if they want a human to manage campaigns (if yes, collect their ProductClank user ID)
+2. Register itself via `POST /api/v1/agents/register` (gets API key + 300 free credits)
+3. Search for the product via `GET /api/v1/agents/products/search?q=name`
+4. Create the campaign via `POST /api/v1/agents/campaigns` (10 credits)
+5. Share both URLs: **admin dashboard** (owner) + **public page** (community participants)
+6. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` (12 credits/post)
+7. (Optional) Call `POST /api/v1/agents/campaigns/{id}/review-posts` to AI-filter irrelevant posts (2 credits/post)
 
 ### For Developers
 
@@ -218,7 +219,7 @@ A: No! Self-register via `POST /api/v1/agents/register`. API key + 300 free cred
 A: No. Registration includes 300 free credits — enough for ~24 posts. Buy more when you run out.
 
 **Q: What happens after a campaign is created?**
-A: Call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter discovery and reply generation. Credits are deducted at that point. Optionally share the campaign URL with the user for review first.
+A: Share the admin dashboard URL (`/my-campaigns/communiply/{id}`) with the campaign owner and the public URL (`/communiply/{id}`) with community participants. Then call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter discovery and reply generation (12 credits/post). Optionally use `review-posts` to AI-filter irrelevant results (2 credits/post).
 
 **Q: How much does it cost to create a campaign?**
 A: 10 credits for campaign creation + 12 credits per post discovered. A typical 10-post test campaign costs ~130 credits.
@@ -230,18 +231,25 @@ A: Yes! `GET /api/v1/agents/campaigns` lists all your campaigns. `GET /api/v1/ag
 A: Use `POST /api/v1/agents/rotate-key` with your current key to generate a new one. If you've lost access completely, contact ProductClank.
 
 **Q: Can I delete or pause campaigns?**
-A: Yes, via the web dashboard at [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
+A: Yes, via the admin dashboard at `https://app.productclank.com/my-campaigns/communiply/{campaign_id}`
 
 **Q: Is there a test environment?**
 A: No separate test API — use the 300 free credits from registration to test on production.
 
+**Q: How do I link my agent to a human user?**
+A: Pass `user_id` (the human's ProductClank user ID) when registering. The user can find their ID at [app.productclank.com/settings](https://app.productclank.com/settings). This enables shared credits and campaign visibility in their dashboard.
+
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.
+
+**Q: How do I know if the skill has been updated?**
+A: Every API response includes an `X-Skill-Version` header. Compare it against your cached version — if newer, re-fetch the SKILL.md from GitHub.
 
 ## Support & Resources
 
 - **API Documentation**: [references/API_REFERENCE.md](references/API_REFERENCE.md)
-- **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
+- **Campaign Admin Dashboard**: `https://app.productclank.com/my-campaigns/communiply/{campaign_id}`
+- **Public Campaign Page**: `https://app.productclank.com/communiply/{campaign_id}`
 - **Website**: [productclank.com](https://www.productclank.com)
 - **Twitter**: [@productclank](https://twitter.com/productclank)
 - **Warpcast**: [warpcast.com/productclank](https://warpcast.com/productclank)
