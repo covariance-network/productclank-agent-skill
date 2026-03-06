@@ -59,7 +59,7 @@ You'll receive:
 - **API key** (`pck_live_*`) — shown once, save immediately
 - **300 free credits** — enough for ~24 posts (no USDC needed to start)
 
-Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
+Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`, `user_id` (link to existing ProductClank user for shared credits & dashboard access)
 
 ### 2. Find Your Product
 
@@ -141,6 +141,7 @@ productclank-agent-skill/
 | GET | `/agents/campaigns` | Free | List your campaigns |
 | GET | `/agents/campaigns/{id}` | Free | Campaign details & stats |
 | POST | `/agents/campaigns/{id}/generate-posts` | 12 cr/post | Trigger discovery & replies |
+| POST | `/agents/campaigns/{id}/review-posts` | 2 cr/post | AI relevancy review & cleanup |
 | POST | `/agents/campaigns/{id}/delegates` | Free | Add campaign delegator |
 | POST | `/agents/campaigns/boost` | 200-300 cr | Boost a specific tweet |
 
@@ -247,8 +248,8 @@ A: Contact ProductClank with your use case and expected volume.
 
 ## Version
 
-**Version:** 1.2.0
-**Last Updated:** 2026-03-04
+**Version:** 1.3.0
+**Last Updated:** 2026-03-06
 **Agent Skills Spec:** v1 (Anthropic)
 
 ---
