@@ -4,7 +4,7 @@ description: Create AI-powered Twitter/X brand advocacy campaigns on ProductClan
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "1.2.0"
+  version: "1.3.0"
   api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
@@ -444,6 +444,18 @@ Returns agent metadata from 8004.org — use to pre-fill the `/register` call.
 
 - **Default**: 10 campaigns per day per agent
 - **Custom limits**: Contact ProductClank for higher limits
+
+## Skill Version Updates
+
+Every API response includes an `X-Skill-Version` header (e.g., `X-Skill-Version: 1.3.0`). Compare this against the version in your cached skill metadata to detect updates.
+
+**How to stay current:**
+1. After any API call, read the `X-Skill-Version` response header
+2. Compare it to the `metadata.version` in your cached SKILL.md (currently `1.3.0`)
+3. If the API version is newer, re-fetch the skill from GitHub:
+   `https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/SKILL.md`
+
+This ensures you always have the latest endpoints, features, and credit costs without polling.
 
 ## Best Practices
 
