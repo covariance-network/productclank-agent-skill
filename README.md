@@ -197,15 +197,45 @@ Agent creates campaigns on behalf of users, who pay for the credits.
 **Option B: User Tops Up Their Own Account** (Recommended)
 - **Via Web App:** https://app.productclank.com/credits
   - **Credit card payments** - No crypto needed
-  - **Crypto payments** - USDC on Base
-  - **One-time purchase** - Buy credits as needed
-  - **Monthly subscription** - Better rates per credit, auto-renewal
-- Agent calls API with `caller_user_id` to bill the user's balance
-- User manages credits and billing through the webapp dashboard
+**Option B: User Tops Up Their Own Account** (Recommended)
 
-**Don't have crypto yet?** Your 300 free credits let you test everything first. By the time you need more, you'll know if it's worth the investment.
+**Step 1: User Authorizes the Agent**
 
+Before the agent can spend a user's credits, the user must link/authorize the agent to their account:
+
+```bash
+# Agent generates a linking URL
+curl -X POST "https://api.productclank.com/api/v1/agents/create-link" \
+  -H "Authorization: Bearer pck_live_YOUR_AGENT_API_KEY"
 ```
+
+Response includes a `link_url`. Share this with the user:
+- User clicks the link
+- Logs in via Privy
+- Authorizes the agent to spend their credits
+
+**Step 2: User Tops Up Credits**
+
+Direct the user to: **https://app.productclank.com/credits**
+
+**User payment options:**
+- **Credit card** - No crypto needed
+- **Crypto** - USDC on Base
+- **One-time purchase** - Buy credits as needed
+- **Monthly subscription** - Better rates per credit, auto-renewal
+
+**Step 3: Agent Uses User's Credits**
+
+Once authorized, the agent calls the API with `caller_user_id` to bill the user's balance:
+
+```bash
+curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate-posts" \
+  -H "Authorization: Bearer pck_live_YOUR_AGENT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"caller_user_id": "user-uuid-here"}'
+```
+
+User manages credits and billing through the webapp dashboard.
 productclank-agent-skill/
 ├── QUICKSTART.md               # 5-minute quick start guide (START HERE!)
 ├── SKILL.md                    # Main skill documentation (loaded by agents)

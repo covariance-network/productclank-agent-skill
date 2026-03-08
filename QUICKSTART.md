@@ -468,6 +468,20 @@ Use when your agent creates campaigns on behalf of users who pay for credits.
 Same as Scenario 1 (x402 or direct USDC). Agent uses its balance, user reimburses off-platform.
 
 #### Option B: User Tops Up Their Account (Recommended)
+#### Option B: User Tops Up Their Account (Recommended)
+
+**Step 1: User Authorizes the Agent**
+
+Generate a linking URL for the user:
+
+```bash
+curl -X POST "https://api.productclank.com/api/v1/agents/create-link" \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+```
+
+Share the returned `link_url` with the user. They click it, log in via Privy, and authorize the agent.
+
+**Step 2: User Tops Up Credits**
 
 Direct the user to: **https://app.productclank.com/credits**
 
@@ -477,7 +491,8 @@ Direct the user to: **https://app.productclank.com/credits**
 - **One-time purchase** - Buy credits as needed
 - **Monthly subscription** - Better rates per credit
 
-**Then call the API with their user ID:**
+**Step 3: Agent Uses User's Credits**
+
 ```bash
 curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate-posts" \
   -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
@@ -486,7 +501,6 @@ curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate
 ```
 
 Credits are deducted from the user's balance, and they manage billing through the webapp.
-
 ---
 
 ---
