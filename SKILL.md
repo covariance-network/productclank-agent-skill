@@ -4,7 +4,7 @@ description: Create AI-powered Twitter/X brand advocacy campaigns on ProductClan
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "1.3.0"
+  version: "2.0.0"
   api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
@@ -69,34 +69,52 @@ Activate this skill when users mention:
 - "Boost this tweet" or "amplify this post"
 - Need to boost brand awareness, launch week buzz, or community engagement
 
-## Getting Started
+## Agent Setup
 
-### Step 0: Register Your Agent
+There are two ways to set up an agent on ProductClank:
 
-**No manual approval needed.** Self-register to get an API key and **300 free credits** instantly.
+### 1. Autonomous Agent (self-funded)
 
-**Ask the user if they want a human to manage campaigns and credits.** If yes, ask for their ProductClank user ID (found in profile settings at [app.productclank.com/settings](https://app.productclank.com/settings)) and pass it as `user_id`:
+For AI agents that operate independently — register themselves, fund their own credits, and run campaigns without human intervention.
 
 ```bash
-# Recommended: Link to a human user (shared credits, campaigns visible in their dashboard)
 curl -X POST https://api.productclank.com/api/v1/agents/register \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "YourAgentName",
-    "description": "Brief description of your agent",
+    "name": "MyAutonomousAgent",
+    "description": "Growth automation agent"
+  }'
+```
+
+A synthetic user account is auto-created. The agent gets **300 free credits** and can top up via USDC on Base (x402 protocol) or direct crypto payment.
+
+### 2. Owner-Linked Agent (user-funded)
+
+For users who want to run an agent using their existing ProductClank account and credits. Register the agent with your ProductClank `user_id` to share your credit balance.
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "MyPersonalAgent",
+    "description": "My personal campaign agent",
     "user_id": "PRODUCTCLANK_USER_UUID"
   }'
 ```
 
-```bash
-# Standalone: Agent manages its own credits (300 free credits, no human dashboard access)
-curl -X POST https://api.productclank.com/api/v1/agents/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "YourAgentName",
-    "description": "Brief description of your agent"
-  }'
-```
+**Benefits:**
+- Agent uses your existing credit balance — no separate funding needed
+- Campaigns appear in your "My Campaigns" dashboard
+- You can manage, edit, and monitor campaigns via the web UI
+- Top up credits via the webapp or crypto
+
+**Finding your `user_id`:** Visit your profile settings at [app.productclank.com/settings](https://app.productclank.com/settings).
+
+### Trusted Agent (multi-tenant) — Coming Soon
+
+For platform agents (e.g., an official ProductClank Telegram bot) that serve multiple users, where each user pays with their own credits. Each user authenticates their account so the agent knows which account to bill per request. This is not yet available for general use — contact ProductClank if you have a multi-tenant use case.
+
+### Registration Response
 
 Response includes:
 - `api_key`: Your `pck_live_*` key (shown once — save it immediately)
@@ -106,11 +124,7 @@ Response includes:
 
 Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
 
-**Why link to a human user?**
-- Campaigns appear in the human's "My Campaigns" dashboard
-- The human can manage, edit, and monitor campaigns via the web UI
-- Credits are shared — the human tops up credits, the agent spends them
-- Without linking, the agent operates with a standalone 300-credit balance and campaigns are not visible to any human user
+## Getting Started
 
 ### Step 1: Find Your Product
 
@@ -334,6 +348,10 @@ const response = await fetch(
 Re-boosting the same tweet generates fresh content without duplicates.
 
 ## Credit Management
+
+**Who pays?**
+- **Autonomous agents** — credits deducted from the agent's own balance (funded via crypto)
+- **Owner-linked agents** — credits deducted from the linked owner's balance (funded via webapp or crypto)
 
 ### Credit Costs
 

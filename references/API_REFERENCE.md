@@ -54,7 +54,36 @@ Authorization: Bearer pck_live_<your_api_key>
 
 ## POST /api/v1/agents/register
 
-Self-register an agent. No authentication required — this IS the signup flow.
+Self-register an agent. No authentication required — this IS the signup flow. Returns the API key exactly once.
+
+### Two Registration Paths
+
+**1. Autonomous Agent (self-funded)**
+
+For AI agents that operate independently and fund their own credits.
+
+```json
+{
+  "name": "MyAutonomousAgent",
+  "description": "Growth automation agent",
+  "wallet_address": "0x1234...abcd"
+}
+```
+
+A synthetic user account is auto-created. The agent tops up credits via USDC on Base (x402 protocol) or direct crypto payment.
+
+**2. Owner-Linked Agent (user-funded)**
+
+For users who want their agent to use their existing ProductClank account and credits.
+
+```json
+{
+  "name": "MyPersonalAgent",
+  "user_id": "your-productclank-user-id"
+}
+```
+
+The agent shares the owner's credit balance. The owner can manage campaigns in the webapp UI.
 
 ### Request Body
 
@@ -68,7 +97,7 @@ Self-register an agent. No authentication required — this IS the signup flow.
 | `erc8004_metadata` | object | No | ERC-8004 metadata blob |
 | `logo` | string | No | Logo URL |
 | `website` | string | No | Website URL |
-| `user_id` | string | No | Link to existing ProductClank user. **Recommended** — enables campaign management via web dashboard and shared credits. The user can find their ID at [app.productclank.com/settings](https://app.productclank.com/settings). |
+| `user_id` | string (UUID) | No | Link to existing ProductClank user (owner-linked mode). Found at [app.productclank.com/settings](https://app.productclank.com/settings). |
 
 ### Response (201 Created)
 
@@ -564,6 +593,13 @@ Returns `already_delegator: true` if user was already added (still 200 OK).
 - `404` — Campaign or user not found
 
 ---
+
+## Credits
+
+**Who pays?**
+- **Autonomous agents** — credits are deducted from the agent's own balance (auto-created at registration)
+- **Owner-linked agents** — credits are deducted from the linked owner's balance
+- **Trusted agents (coming soon)** — can pass `caller_user_id` to bill a specific user's credits per request (multi-tenant)
 
 ## GET /api/v1/agents/credits/balance
 

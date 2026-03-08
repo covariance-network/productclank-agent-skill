@@ -16,13 +16,14 @@ This is an Agent Skill that enables AI agents to create community-driven brand a
 
 This skill is loaded automatically when an agent needs to create Twitter/X marketing campaigns. The agent will:
 
-1. Ask the user if they want a human to manage campaigns (if yes, collect their ProductClank user ID)
-2. Register itself via `POST /api/v1/agents/register` (gets API key + 300 free credits)
-3. Search for the product via `GET /api/v1/agents/products/search?q=name`
-4. Create the campaign via `POST /api/v1/agents/campaigns` (10 credits)
-5. Share both URLs: **admin dashboard** (owner) + **public page** (community participants)
-6. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` (12 credits/post)
-7. (Optional) Call `POST /api/v1/agents/campaigns/{id}/review-posts` to AI-filter irrelevant posts (2 credits/post)
+1. Register itself via `POST /api/v1/agents/register` — two paths:
+   - **Autonomous**: No `user_id` → gets own credit balance (self-funded via crypto)
+   - **Owner-linked**: With `user_id` → shares owner's credits, campaigns visible in their dashboard
+2. Search for the product via `GET /api/v1/agents/products/search?q=name`
+3. Create the campaign via `POST /api/v1/agents/campaigns` (10 credits)
+4. Share both URLs: **admin dashboard** (owner) + **public page** (community participants)
+5. Call `POST /api/v1/agents/campaigns/{id}/generate-posts` (12 credits/post)
+6. (Optional) Call `POST /api/v1/agents/campaigns/{id}/review-posts` to AI-filter irrelevant posts (2 credits/post)
 
 ### For Developers
 
@@ -46,21 +47,33 @@ See [SKILL.md](SKILL.md) for complete documentation.
 
 ## Getting Started
 
-### 1. Register Your Agent (Self-Service)
+### 1. Register Your Agent
 
-No manual approval needed — register instantly:
+Self-register via the API — no approval needed:
 
 ```bash
 curl -X POST https://api.productclank.com/api/v1/agents/register \
   -H "Content-Type: application/json" \
-  -d '{"name": "MyAgent", "description": "AI agent for social media campaigns"}'
+  -d '{"name": "MyAgent"}'
 ```
 
-You'll receive:
-- **API key** (`pck_live_*`) — shown once, save immediately
-- **300 free credits** — enough for ~24 posts (no USDC needed to start)
+Returns your API key instantly (shown once — store securely) + **300 free credits**.
 
-Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`, `user_id` (link to existing ProductClank user for shared credits & dashboard access)
+**Two registration paths:**
+
+| Path | When to Use | How |
+|------|-------------|-----|
+| **Autonomous** | AI agent that funds itself | Register without `user_id` → gets own credit balance |
+| **Owner-Linked** | User runs an agent with their own credits | Register with `user_id` → shares owner's credit balance |
+
+To register an owner-linked agent, add your ProductClank `user_id` (found in [profile settings](https://app.productclank.com/settings)):
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{"name": "MyAgent", "user_id": "your-user-id"}'
+```
+
+Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
 
 ### 2. Find Your Product
 
@@ -236,8 +249,11 @@ A: Yes, via the admin dashboard at `https://app.productclank.com/my-campaigns/co
 **Q: Is there a test environment?**
 A: No separate test API — use the 300 free credits from registration to test on production.
 
-**Q: How do I link my agent to a human user?**
-A: Pass `user_id` (the human's ProductClank user ID) when registering. The user can find their ID at [app.productclank.com/settings](https://app.productclank.com/settings). This enables shared credits and campaign visibility in their dashboard.
+**Q: What's the difference between autonomous and owner-linked agents?**
+A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI. Register with `user_id` to create an owner-linked agent.
+
+**Q: How do I link my agent to my account?**
+A: Pass your `user_id` (found at [app.productclank.com/settings](https://app.productclank.com/settings)) when registering. This enables shared credits and campaign visibility in your dashboard.
 
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.
@@ -256,8 +272,8 @@ A: Every API response includes an `X-Skill-Version` header. Compare it against y
 
 ## Version
 
-**Version:** 1.3.0
-**Last Updated:** 2026-03-06
+**Version:** 2.0.0
+**Last Updated:** 2026-03-08
 **Agent Skills Spec:** v1 (Anthropic)
 
 ---
