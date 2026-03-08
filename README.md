@@ -2,6 +2,55 @@
 
 An [Agent Skill](https://agentskills.io) for creating Communiply campaigns on ProductClank.
 
+## 🗺️ Which Endpoint Should I Use?
+
+**Quick decision tree:**
+
+```
+What do you want to do?
+│
+├─ Amplify a specific tweet RIGHT NOW
+│  └─> POST /agents/campaigns/boost
+│      • Cost: 200-300 credits
+│      • Result: 10 AI-generated reply threads OR likes/reposts
+│      • Time: Immediate (single action)
+│      • Best for: Product launches, announcements, one-time promotion
+│
+└─ Monitor conversations ongoing & respond when relevant
+   └─> POST /agents/campaigns (Communiply)
+       • Cost: 10 + (12 credits × posts discovered)
+       • Result: Continuous 24/7 monitoring & replies
+       • Time: Ongoing automated campaign
+       • Best for: Competitor intercept, problem targeting, brand monitoring
+```
+
+**Still not sure?** See the [Comparison Table](#campaign-types-comparison) below.
+
+---
+
+## 💰 Campaign Cost Estimator
+
+**Your 300 free credits can run:**
+
+| Campaign Type | Credits Needed | Posts Generated | Best For |
+|---------------|----------------|----------------|----------|
+| **Small test** | ~60 | 4 posts | Testing the API |
+| **Medium test** | ~130 | 10 posts | Proof of concept |
+| **Full test** | ~250 | 20 posts | Real campaign test |
+| **Tweet boost** | 200-300 | 10 replies OR engagement | One-time amplification |
+
+**Formula:** `Total = 10 (campaign) + (posts × 12) + (optional: review × 2)`
+
+**Example breakdown:**
+- Campaign creation: 10 credits
+- Discover + generate 20 posts: 20 × 12 = 240 credits
+- Review 20 posts (optional): 20 × 2 = 40 credits
+- **Total: 290 credits** ← Fits in free tier!
+
+**Need more?** See [Credit Bundles](#credit-bundles-usdc-on-base) below.
+
+---
+
 ## What is This?
 
 This is an Agent Skill that enables AI agents to create community-driven brand advocacy campaigns on ProductClank. Agents can autonomously discover relevant Twitter/X conversations, generate authentic replies, and coordinate community members to amplify brands through genuine word-of-mouth.
@@ -44,6 +93,28 @@ node scripts/create-campaign.mjs
 ```
 
 See [SKILL.md](SKILL.md) for complete documentation.
+
+## Campaign Types Comparison
+
+| Feature | Communiply | Boost |
+|---------|-----------|-------|
+| **Use case** | Ongoing monitoring & advocacy | One-time tweet amplification |
+| **Target** | Keyword-based conversations | Specific tweet URL |
+| **Cost** | 10 + (12 × posts) | 200-300 credits (fixed) |
+| **Discovery** | Continuous 24/7 scanning | Immediate burst |
+| **Replies** | As many as AI finds | Fixed (10 reply threads) |
+| **Timeline** | Ongoing campaign | One-shot action |
+| **Best for** | Competitor intercept, problem targeting | Launch announcements, specific posts |
+
+**When to use Communiply:**
+- "Monitor whenever someone mentions [competitor]"
+- "Find people asking about [problem your product solves]"
+- "Ongoing brand advocacy campaign"
+
+**When to use Boost:**
+- "We just launched v2.0, amplify this tweet"
+- "This announcement needs 10 replies ASAP"
+- "Boost this specific Product Hunt post"
 
 ## Getting Started
 
@@ -102,16 +173,20 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/ge
 
 ### 5. Buy More Credits (When Free Credits Run Out)
 
-**Option A: x402 Protocol** (Recommended)
+**Option A: x402 Protocol** (Recommended for Agents)
 - Requires: Wallet with private key access + USDC on Base
 - Payment happens automatically via `@x402/fetch`
+- Network: Base (Coinbase L2, chain ID 8453)
 
 **Option B: Direct USDC Transfer**
 - Send USDC on Base to: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
 - Submit tx hash via `POST /api/v1/agents/credits/topup`
 
-**Option C: Trusted Agent Status**
-- Contact ProductClank for whitelisting (testing/partnerships)
+**Option C: Credit Card** *(webapp only, coming soon)*
+- Top up via dashboard - no crypto needed
+- Link your agent first via `POST /agents/create-link`
+
+**Don't have crypto yet?** Your 300 free credits let you test everything first. By the time you need more, you'll know if it's worth the investment.
 
 ## Directory Structure
 
@@ -124,8 +199,15 @@ productclank-agent-skill/
 ├── references/
 │   ├── API_REFERENCE.md        # Complete API specification
 │   └── EXAMPLES.md             # Code examples for common use cases
-└── scripts/
-    └── create-campaign.mjs     # Helper script for quick campaign creation
+├── scripts/
+│   ├── create-campaign.mjs     # Helper: Create Communiply campaign
+│   ├── boost-tweet.mjs         # Helper: Boost specific tweet
+│   ├── review-posts.mjs        # Helper: AI review posts
+│   └── check-results.mjs       # Helper: Poll campaign stats
+└── examples/
+    ├── competitor-intercept.md # Use case walkthrough
+    ├── problem-targeting.md    # Use case walkthrough
+    └── tweet-boost.md          # Use case walkthrough
 ```
 
 ## API Endpoints
@@ -179,21 +261,39 @@ Every new agent gets **300 free credits** on registration — no payment needed 
 
 ### Credit Bundles (USDC on Base)
 
-| Bundle | Price | Credits | ~Posts |
-|--------|-------|---------|--------|
-| nano | $2 | 40 | ~3 |
-| micro | $10 | 200 | ~16 |
-| small | $25 | 550 | ~45 |
-| medium | $50 | 1,200 | ~100 |
-| large | $100 | 2,600 | ~216 |
-| enterprise | $500 | 14,000 | ~1,166 |
+| Bundle | Price | Credits | Rate | ~Posts | Best For |
+|--------|-------|---------|------|--------|----------|
+| **nano** | $2 | 40 | 20 cr/$ | ~3 | Extending free tier |
+| micro | $10 | 200 | 20 cr/$ | ~16 | Small test campaign |
+| small | $25 | 550 | 22 cr/$ | ~45 | Product launch |
+| medium | $50 | 1,200 | 24 cr/$ | ~100 | Medium campaign |
+| large | $100 | 2,600 | 26 cr/$ | ~216 | Large campaign |
+| enterprise | $500 | 14,000 | 28 cr/$ | ~1,166 | High volume |
 
 All payments in USDC on Base network (chain ID 8453).
 
-## Rate Limits
+## Rate Limits & Quotas
 
-- **Default**: 10 campaigns per day per agent
-- **Custom limits**: Contact ProductClank for higher limits
+| Resource | Default Limit | Upgrade Path |
+|----------|--------------|--------------|
+| Campaigns created | 10/day | Contact ProductClank |
+| API calls | 100/hour | Auto-scales with usage |
+| Campaign delegates | 5/campaign | Contact for more |
+| Credit balance | Unlimited | Buy more bundles |
+
+**What happens when you hit a limit:**
+```json
+{
+  "success": false,
+  "error": "rate_limit_exceeded",
+  "message": "Daily campaign limit reached (10/10)",
+  "retry_after": "2026-03-05T00:00:00Z",
+  "limit": 10,
+  "usage": 10
+}
+```
+
+**Need higher limits?** Contact ProductClank with your use case, expected volume, and business model. Typical turnaround: 24-48 hours.
 
 ## Use Cases
 
@@ -214,10 +314,77 @@ Coordinate community amplification during launch week.
 
 ## How Communiply Works
 
-1. **AI Discovers Opportunities** — Monitors Twitter/X 24/7 for relevant conversations
-2. **Generates Smart Replies** — Context-aware, value-adding responses (not sales pitches)
-3. **Community Amplifies** — Real people post from personal accounts
-4. **Tracks Results** — Real-time analytics on engagement, reach, and ROI
+```
+┌─────────────────────────────────────────┐
+│ 1. YOU: Create Campaign via API         │
+│    POST /agents/campaigns                │
+│    Cost: 10 credits                      │
+└────────────┬────────────────────────────┘
+             │
+             v
+┌─────────────────────────────────────────┐
+│ 2. YOU: Trigger Post Discovery          │
+│    POST /campaigns/{id}/generate-posts   │
+│    Cost: 12 credits/post                 │
+└────────────┬────────────────────────────┘
+             │
+             v
+┌─────────────────────────────────────────┐
+│ 3. AI: Scans Twitter 24/7               │
+│    • Finds conversations matching        │
+│      keywords ("AI tools", etc.)         │
+│    • Generates smart, helpful replies    │
+│    • No spammy sales pitches             │
+└────────────┬────────────────────────────┘
+             │
+             v
+┌─────────────────────────────────────────┐
+│ 4. COMMUNITY: Claims & Posts             │
+│    • Real people review replies          │
+│    • Choose which to post                │
+│    • Post from personal accounts         │
+│    • Earn rewards for engagement         │
+└────────────┬────────────────────────────┘
+             │
+             v
+┌─────────────────────────────────────────┐
+│ 5. RESULTS: Track Performance            │
+│    GET /campaigns/{id}                   │
+│    • Engagement stats                    │
+│    • Reach metrics                       │
+│    • ROI tracking                        │
+└─────────────────────────────────────────┘
+```
+
+**Key takeaway:** You trigger the discovery. AI monitors 24/7. Community executes. You track results.
+
+## Skill Version Detection
+
+Every API response includes an `X-Skill-Version` header. Agents should check this periodically and re-fetch if newer.
+
+**Recommended implementation:**
+
+```javascript
+// On agent startup (once/day max)
+const skillMeta = await fetch(
+  "https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/SKILL.md"
+).then(r => r.text()).then(text => 
+  text.match(/version: "(\d+\.\d+\.\d+)"/)?.[1]
+);
+
+const cachedVersion = localStorage.getItem("productclank-skill-version");
+
+if (skillMeta !== cachedVersion) {
+  console.log(`New skill version: ${skillMeta}`);
+  // Re-fetch SKILL.md
+  localStorage.setItem("productclank-skill-version", skillMeta);
+}
+```
+
+**When to check:**
+- On agent startup (once/day max)
+- When API returns deprecation warning headers
+- After major ProductClank announcements
 
 ## FAQ
 
@@ -254,8 +421,8 @@ A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.
 
-**Q: How do I know if the skill has been updated?**
-A: Every API response includes an `X-Skill-Version` header. Compare it against your cached version — if newer, re-fetch the SKILL.md from GitHub.
+**Q: Which endpoint should I use - Communiply or Boost?**
+A: See the [decision tree](#-which-endpoint-should-i-use) at the top of this README.
 
 ## Support & Resources
 
@@ -268,8 +435,8 @@ A: Every API response includes an `X-Skill-Version` header. Compare it against y
 
 ## Version
 
-**Version:** 2.0.0
-**Last Updated:** 2026-03-08
+**Version:** 2.1.0  
+**Last Updated:** 2026-03-08  
 **Agent Skills Spec:** v1 (Anthropic)
 
 ---

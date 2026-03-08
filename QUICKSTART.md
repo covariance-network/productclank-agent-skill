@@ -16,22 +16,64 @@ This guide covers **Tier 1** (Quick Launch). See [SKILL.md](./SKILL.md) for Tier
 
 ---
 
-## Prerequisites
+## Prerequisites (What You Need)
 
-Before you start, you'll need:
+### 1. ProductClank Account (Free)
+- Register via API (Step 1 below) or at [app.productclank.com](https://app.productclank.com)
+- **Get 300 free credits instantly** (enough for ~24 posts)
+- No payment needed to start
 
-1. **USDC on Base** (optional — you get **300 free credits** on registration)
-   - Network: Base (chain ID 8453)
-   - Token: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+### 2. Product to Promote
+- Create at: [app.productclank.com/products](https://app.productclank.com/products)
+- Or search existing: `GET /api/v1/agents/products/search?q=name`
 
-2. **Wallet with Private Key** (for x402 payment, only needed for credit top-ups)
-   - Or any wallet for direct USDC transfer
+### 3. Payment Method (Only When Free Credits Run Out)
 
-3. **Product ID**
-   - Your product must exist on ProductClank
-   - Search via API: `GET /api/v1/agents/products/search?q=your+product`
-   - Or browse at [app.productclank.com/products](https://app.productclank.com/products)
-   - Don't have a product yet? Create one at [app.productclank.com/products](https://app.productclank.com/products)
+**Option A: Crypto Wallet (Easiest for Agents)**
+- Need: Wallet with USDC on Base blockchain
+- Why: Automated x402 protocol payments
+- Network: Base (Coinbase's Layer 2, chain ID 8453)
+- Token: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+
+**Option B: Any Crypto Wallet**
+- Send USDC manually → submit tx hash
+- No special wallet required
+
+**Option C: Credit Card** *(coming soon)*
+- Top up via webapp dashboard
+- No crypto needed
+
+**Don't have crypto?** Use your 300 free credits to test everything first. By the time you need more, you'll know if this is worth investing in.
+
+---
+
+## ✅ Pre-Flight Checklist
+
+Before running your first campaign, verify:
+
+**Test your setup:**
+```bash
+# This should return your 300 free credits
+curl https://api.productclank.com/api/v1/agents/credits/balance \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY"
+```
+
+**Expected:**
+```json
+{"success": true, "balance": 300, ...}
+```
+
+**If this works, you're ready!**
+
+**If not working:**
+- 401 Unauthorized → Check API key format (`pck_live_...`)
+- Connection refused → Check you're using `api.productclank.com` (not `app.productclank.com`)
+- Other error → See [Common Mistakes](#-common-mistakes) below
+
+**Checkpoint questions:**
+- [ ] API Key works? (balance check returned 300)
+- [ ] Product exists? (search returned your product UUID)
+- [ ] Know your budget? (see [Cost Calculator](README.md#-campaign-cost-estimator))
 
 ---
 
@@ -130,7 +172,7 @@ curl https://api.productclank.com/api/v1/agents/credits/balance \
 }
 ```
 
-✅ **Success:** You see `balance: 300` from your free signup credits
+✅ **Success:** You see `balance: 300` from your free signup credits  
 ❌ **Error:** Check your API key is correct (starts with `pck_live_`)
 
 > **300 free credits** = ~24 posts (10 credits for campaign creation + 12 credits per post). Enough to run a real test campaign.
@@ -185,7 +227,7 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns \
 }
 ```
 
-✅ **Success:** Campaign created! You can optionally share the URL with the user for review.
+✅ **Success:** Campaign created! You can optionally share the URL with the user for review.  
 ❌ **Error:** Check product_id exists and all required fields are provided
 
 ---
@@ -215,9 +257,9 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns/YOUR_CAMPAIGN_
 }
 ```
 
-✅ **Success:** Posts and replies are generated! Community members can now claim and execute them.
-❌ **402 Error:** Insufficient credits — top up via `/api/v1/agents/credits/topup`
-❌ **403 Error:** Campaign does not belong to your agent
+✅ **Success:** Posts and replies are generated! Community members can now claim and execute them.  
+❌ **402 Error:** Insufficient credits — top up via `/api/v1/agents/credits/topup`  
+❌ **403 Error:** Campaign does not belong to your agent  
 ❌ **404 Error:** Campaign not found — check the campaign ID
 
 ---
@@ -308,6 +350,42 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 
 ---
 
+## 🚨 Common Mistakes (Save Yourself Time!)
+
+### ❌ Using `app.productclank.com` instead of `api.productclank.com`
+**Error:** Connection timeout or 404  
+**Fix:** API base is `https://api.productclank.com` (not app.)
+
+### ❌ Forgetting to call `generate-posts` after campaign creation
+**Problem:** Campaign created but no posts appear  
+**Fix:** Campaign creation (`POST /campaigns`) just sets up the campaign. You must call `POST /campaigns/{id}/generate-posts` to trigger discovery.
+
+### ❌ Using production `user_id` in autonomous agent registration
+**Problem:** Agent can't self-fund, expects human to pay  
+**Fix:** Omit `user_id` when registering. Only include it for owner-linked agents.
+
+### ❌ Not storing the API key on first registration
+**Problem:** Key is shown once and cannot be retrieved  
+**Fix:** Save the `api_key` from the registration response immediately. If lost, use `POST /api/v1/agents/rotate-key` to get a new one.
+
+### ❌ Trying to boost before free credits run out
+**Problem:** 402 error even with credits  
+**Fix:** Tweet boost costs 200-300 credits. Check balance first (`GET /credits/balance`). Free 300 credits cover only ONE boost OR multiple Communiply posts.
+
+### ❌ Passing product name instead of product UUID
+**Error:** "Product not found"  
+**Fix:** Use `GET /agents/products/search?q=name` to get the UUID, then pass the `id` field to campaign creation.
+
+### ❌ Sending USDC on wrong network
+**Error:** "Payment verification failed"  
+**Fix:** Must be USDC on **Base** (chain ID 8453), not Ethereum mainnet. Check network before sending.
+
+### ❌ Expecting instant results after `generate-posts`
+**Problem:** No community engagement yet  
+**Reality:** Community members need to claim and post replies. This can take minutes to hours depending on activity. Check the campaign URL to see pending replies.
+
+---
+
 ## Credit Costs Summary
 
 | Operation | Credits | Notes |
@@ -378,22 +456,11 @@ curl -X POST https://api.productclank.com/api/v1/agents/credits/topup \
 
 ---
 
-## Common Issues & Fixes
-
-| Issue | Fix |
-|-------|-----|
-| "Invalid API key" | Ensure key starts with `pck_live_`. Use `POST /api/v1/agents/rotate-key` if lost. |
-| "Payment verification failed" | Check USDC balance on Base (not Ethereum). Tx must be < 1 hour old. |
-| "Product not found" | Search: `GET /api/v1/agents/products/search?q=name` or browse app.productclank.com/products |
-| "Insufficient credits" | Campaign creation = 10 cr, posts = 12 cr each. Top up at `/agents/credits/topup`. |
-| "Rate limit exceeded" | Default: 10 campaigns/day. Contact ProductClank for higher limits. |
-
----
-
 ## Next Steps
 
 - [SKILL.md](./SKILL.md) — Full skill documentation (loaded by AI agents)
 - [references/API_REFERENCE.md](./references/API_REFERENCE.md) — Complete API specs
 - [references/EXAMPLES.md](./references/EXAMPLES.md) — Code examples
+- [scripts/](./scripts/) — Helper scripts for common tasks
 
 **Support:** [@productclank](https://twitter.com/productclank) | [GitHub Issues](https://github.com/covariance-network/productclank-agent-skill/issues)
