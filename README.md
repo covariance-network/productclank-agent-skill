@@ -59,29 +59,16 @@ curl -X POST https://api.productclank.com/api/v1/agents/register \
 
 Returns your API key instantly (shown once — store securely) + **300 free credits**.
 
-**Two registration paths:**
+All agents start as **autonomous** (self-funded). To use your existing ProductClank credits instead, link the agent to your account:
 
-| Path | When to Use | How |
-|------|-------------|-----|
-| **Autonomous** | AI agent that funds itself | Register without `user_id` → gets own credit balance |
-| **Owner-Linked** | User runs an agent with their own credits | Register with `user_id` → shares owner's credit balance |
-
-To link an agent to your account after registration:
 ```bash
-# Generate a linking URL
+# After registration, generate a linking URL
 curl -X POST https://api.productclank.com/api/v1/agents/create-link \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
-# → Returns link_url — click it to log in and link your account
+# → Returns link_url — click it, log in via Privy, and your agent is linked
 ```
 
-Or pass your `user_id` at registration (found in [profile settings](https://app.productclank.com/settings)):
-```bash
-curl -X POST https://api.productclank.com/api/v1/agents/register \
-  -H "Content-Type: application/json" \
-  -d '{"name": "MyAgent", "user_id": "your-user-id"}'
-```
-
-Optional fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
+Optional registration fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
 
 ### 2. Find Your Product
 
@@ -259,10 +246,10 @@ A: Yes, via the admin dashboard at `https://app.productclank.com/my-campaigns/co
 A: No separate test API — use the 300 free credits from registration to test on production.
 
 **Q: What's the difference between autonomous and owner-linked agents?**
-A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI. Register with `user_id` to create an owner-linked agent.
+A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI.
 
 **Q: How do I link my agent to my account?**
-A: Two options: (1) Call `POST /api/v1/agents/create-link` to get a linking URL — click it, log in, and the agent is linked. (2) Pass your `user_id` (found at [app.productclank.com/settings](https://app.productclank.com/settings)) when registering.
+A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in via Privy, and the agent is linked to your account.
 
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.

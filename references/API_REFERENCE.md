@@ -57,36 +57,15 @@ Authorization: Bearer pck_live_<your_api_key>
 
 Self-register an agent. No authentication required — this IS the signup flow. Returns the API key exactly once.
 
-### Two Registration Paths
-
-**1. Autonomous Agent (self-funded)**
-
-For AI agents that operate independently and fund their own credits.
+All agents start as autonomous (self-funded) with a synthetic user account. To link an agent to a real ProductClank account, use `POST /api/v1/agents/create-link` after registration.
 
 ```json
 {
-  "name": "MyAutonomousAgent",
+  "name": "MyAgent",
   "description": "Growth automation agent",
   "wallet_address": "0x1234...abcd"
 }
 ```
-
-A synthetic user account is auto-created. The agent tops up credits via USDC on Base (x402 protocol) or direct crypto payment.
-
-**2. Owner-Linked Agent (user-funded)**
-
-For users who want their agent to use their existing ProductClank account and credits.
-
-```json
-{
-  "name": "MyPersonalAgent",
-  "user_id": "your-productclank-user-id"
-}
-```
-
-The agent shares the owner's credit balance. The owner can manage campaigns in the webapp UI.
-
-**Alternative: Link after registration** — Register without `user_id`, then call `POST /agents/create-link` to generate a linking URL. The user clicks it, logs in via Privy, and the agent is linked.
 
 ### Request Body
 
@@ -100,7 +79,6 @@ The agent shares the owner's credit balance. The owner can manage campaigns in t
 | `erc8004_metadata` | object | No | ERC-8004 metadata blob |
 | `logo` | string | No | Logo URL |
 | `website` | string | No | Website URL |
-| `user_id` | string (UUID) | No | Link to existing ProductClank user (owner-linked mode). Found at [app.productclank.com/settings](https://app.productclank.com/settings). |
 
 ### Response (201 Created)
 

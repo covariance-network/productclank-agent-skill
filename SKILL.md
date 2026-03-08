@@ -90,11 +90,7 @@ A synthetic user account is auto-created. The agent gets **300 free credits** an
 
 ### 2. Owner-Linked Agent (user-funded)
 
-For users who want to run an agent using their existing ProductClank account and credits. There are two ways to link:
-
-**Option A: Link via deep link (recommended)**
-
-Register the agent first, then link it to your account:
+For users who want to run an agent using their existing ProductClank account and credits. After registering, link the agent to your account via a secure deep link:
 
 ```bash
 # 1. Register (creates a standalone agent)
@@ -111,26 +107,11 @@ curl -X POST https://api.productclank.com/api/v1/agents/create-link \
 
 The user clicks the `link_url`, logs in via Privy, and the agent is linked to their account. Works from any interface: terminal, Cursor, Claude Code, Telegram, etc.
 
-**Option B: Pass `user_id` at registration**
-
-If you already know your ProductClank `user_id`:
-
-```bash
-curl -X POST https://api.productclank.com/api/v1/agents/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "MyPersonalAgent",
-    "user_id": "PRODUCTCLANK_USER_UUID"
-  }'
-```
-
 **Benefits:**
 - Agent uses your existing credit balance — no separate funding needed
 - Campaigns appear in your "My Campaigns" dashboard
 - You can manage, edit, and monitor campaigns via the web UI
 - Top up credits via the webapp or crypto
-
-**Finding your `user_id`:** Visit your profile settings at [app.productclank.com/settings](https://app.productclank.com/settings).
 
 ### Trusted Agent (multi-tenant) — Coming Soon
 
