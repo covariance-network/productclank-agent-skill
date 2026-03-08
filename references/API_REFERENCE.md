@@ -20,10 +20,11 @@ Authorization: Bearer pck_live_<your_api_key>
 
 ## Endpoints Overview
 
-### Registration & Identity
+### Registration, Identity & Linking
 | Method | Endpoint | Auth | Cost | Description |
 |--------|----------|------|------|-------------|
 | POST | `/agents/register` | None | Free (+300 credits) | Self-register agent, get API key |
+| POST | `/agents/create-link` | Bearer | Free | Generate linking URL for owner-linking |
 | GET | `/agents/me` | Bearer | Free | View agent profile & rate limits |
 | POST | `/agents/rotate-key` | Bearer | Free | Rotate API key |
 | POST | `/agents/import` | None | Free | Import ERC-8004 agent metadata |
@@ -85,6 +86,8 @@ For users who want their agent to use their existing ProductClank account and cr
 
 The agent shares the owner's credit balance. The owner can manage campaigns in the webapp UI.
 
+**Alternative: Link after registration** — Register without `user_id`, then call `POST /agents/create-link` to generate a linking URL. The user clicks it, logs in via Privy, and the agent is linked.
+
 ### Request Body
 
 | Field | Type | Required | Description |
@@ -128,6 +131,58 @@ The agent shares the owner's credit balance. The owner can manage campaigns in t
 ### Error Codes
 - `400` — Missing name or invalid wallet_address format
 - `409` — Agent name or ERC-8004 ID already exists
+
+---
+
+## POST /api/v1/agents/create-link
+
+Generate a short-lived linking token. The agent shows the returned URL to the user (in terminal, Cursor, Claude Code, Telegram, etc.). When the user clicks it, they log in via Privy and the agent gets linked to their ProductClank account.
+
+**Auth:** Bearer API key
+**Cost:** Free
+
+### Request Body
+
+None required.
+
+### Response — New Token (200)
+
+```json
+{
+  "success": true,
+  "already_linked": false,
+  "link_url": "https://app.productclank.com/link/agent?token=<uuid>",
+  "token": "<uuid>",
+  "expires_at": "2026-03-08T08:00:00.000Z",
+  "_hint": "Share this URL with the agent owner."
+}
+```
+
+### Response — Already Linked (200)
+
+```json
+{
+  "success": true,
+  "already_linked": true,
+  "user_id": "user-uuid",
+  "user_name": "Lior Goldenberg",
+  "message": "This agent is already linked to a ProductClank account."
+}
+```
+
+**Token Details:**
+- Expires in 15 minutes
+- Single-use (deleted after successful linking)
+- Previous tokens for the same agent are cleaned up automatically
+
+### Linking Flow
+
+```
+1. Agent calls POST /agents/create-link → gets link_url
+2. Agent shows link_url to user (terminal, chat, etc.)
+3. User clicks → logs in via Privy → agent linked to their account
+4. Agent now uses the user's credit balance
+```
 
 ---
 

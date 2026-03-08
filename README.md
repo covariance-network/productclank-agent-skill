@@ -66,7 +66,15 @@ Returns your API key instantly (shown once — store securely) + **300 free cred
 | **Autonomous** | AI agent that funds itself | Register without `user_id` → gets own credit balance |
 | **Owner-Linked** | User runs an agent with their own credits | Register with `user_id` → shares owner's credit balance |
 
-To register an owner-linked agent, add your ProductClank `user_id` (found in [profile settings](https://app.productclank.com/settings)):
+To link an agent to your account after registration:
+```bash
+# Generate a linking URL
+curl -X POST https://api.productclank.com/api/v1/agents/create-link \
+  -H "Authorization: Bearer pck_live_YOUR_KEY"
+# → Returns link_url — click it to log in and link your account
+```
+
+Or pass your `user_id` at registration (found in [profile settings](https://app.productclank.com/settings)):
 ```bash
 curl -X POST https://api.productclank.com/api/v1/agents/register \
   -H "Content-Type: application/json" \
@@ -135,10 +143,11 @@ productclank-agent-skill/
 
 ## API Endpoints
 
-### Registration & Identity
+### Registration, Identity & Linking
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/agents/register` | Self-register, get API key + 300 free credits |
+| POST | `/agents/create-link` | Generate a linking URL for owner-linking |
 | GET | `/agents/me` | View agent profile & rate limits |
 | POST | `/agents/rotate-key` | Rotate API key |
 | POST | `/agents/import` | Import ERC-8004 agent metadata |
@@ -253,7 +262,7 @@ A: No separate test API — use the 300 free credits from registration to test o
 A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI. Register with `user_id` to create an owner-linked agent.
 
 **Q: How do I link my agent to my account?**
-A: Pass your `user_id` (found at [app.productclank.com/settings](https://app.productclank.com/settings)) when registering. This enables shared credits and campaign visibility in your dashboard.
+A: Two options: (1) Call `POST /api/v1/agents/create-link` to get a linking URL — click it, log in, and the agent is linked. (2) Pass your `user_id` (found at [app.productclank.com/settings](https://app.productclank.com/settings)) when registering.
 
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.
