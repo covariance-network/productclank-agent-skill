@@ -173,7 +173,12 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/ge
 
 ### 5. Buy More Credits (When Free Credits Run Out)
 
-**Option A: x402 Protocol** (Recommended for Agents)
+**Two funding scenarios:**
+
+#### Scenario 1: Autonomous Agents (Self-Funded)
+Agent manages its own credit balance and pays for campaigns independently.
+
+**Option A: x402 Protocol** (Recommended)
 - Requires: Wallet with private key access + USDC on Base
 - Payment happens automatically via `@x402/fetch`
 - Network: Base (Coinbase L2, chain ID 8453)
@@ -182,13 +187,23 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/ge
 - Send USDC on Base to: `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
 - Submit tx hash via `POST /api/v1/agents/credits/topup`
 
-**Option C: Credit Card** *(webapp only, coming soon)*
-- Top up via dashboard - no crypto needed
-- Link your agent first via `POST /agents/create-link`
+#### Scenario 2: Agent Running Campaigns for Users
+Agent creates campaigns on behalf of users, who pay for the credits.
+
+**Option A: Fund the Agent Account**
+- Same as Scenario 1 (x402 or direct USDC)
+- Agent uses its own balance, user reimburses agent off-platform
+
+**Option B: User Tops Up Their Own Account** (Recommended)
+- **Via Web App:** https://app.productclank.com/credits
+  - **Credit card payments** - No crypto needed
+  - **Crypto payments** - USDC on Base
+  - **One-time purchase** - Buy credits as needed
+  - **Monthly subscription** - Better rates per credit, auto-renewal
+- Agent calls API with `caller_user_id` to bill the user's balance
+- User manages credits and billing through the webapp dashboard
 
 **Don't have crypto yet?** Your 300 free credits let you test everything first. By the time you need more, you'll know if it's worth the investment.
-
-## Directory Structure
 
 ```
 productclank-agent-skill/
@@ -297,22 +312,32 @@ All payments in USDC on Base network (chain ID 8453).
 
 ## Use Cases
 
-### 1. Competitor Intercept
+### 1. Launch Campaigns with Community Rewards
+**Run a campaign to reward your community for amplifying your product announcements.**
+
+How it works:
+- Create a boost campaign for your launch tweet or product announcement
+- Community members submit their posts/engagement (retweets, likes, replies)
+- Reward participants with credits or points in YOUR system (loyalty program, token rewards, etc.)
+- Communiply handles all the discovery, reply generation, and tracking
+- You focus on converting the amplification into real customers
+
+**Example:** Product launch week - users earn 10 points per repost, 5 points per like. Top contributors get bonus rewards.
+
+### 2. Competitor Intercept
 Target conversations mentioning competitors. Community naturally suggests your product.
 
-### 2. Problem-Based Targeting
+### 3. Problem-Based Targeting
 Find people expressing pain points your product solves.
 
-### 3. Brand Amplification
+### 4. Brand Amplification
 Third-party validation reinforces positive mentions of your brand.
 
-### 4. Tweet Boost
+### 5. Tweet Boost
 Amplify a specific tweet with 10 authentic community reply threads.
 
-### 5. Product Launches
+### 6. Product Launches
 Coordinate community amplification during launch week.
-
-## How Communiply Works
 
 ```
 ┌─────────────────────────────────────────┐

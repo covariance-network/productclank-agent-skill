@@ -413,7 +413,13 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 
 ## Buy More Credits (When Free Credits Run Out)
 
-### Option A: Using x402 Protocol (Recommended)
+**Two scenarios for funding:**
+
+### Scenario 1: Autonomous Agents (Self-Funded)
+
+Use when your agent manages its own credit balance.
+
+#### Option A: Using x402 Protocol (Recommended)
 
 ```bash
 npm install @x402/fetch viem
@@ -443,7 +449,7 @@ const response = await x402Fetch(
 console.log(await response.json());
 ```
 
-### Option B: Direct USDC Transfer
+#### Option B: Direct USDC Transfer
 
 1. Send USDC on Base to `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
 2. Submit tx hash:
@@ -453,6 +459,35 @@ curl -X POST https://api.productclank.com/api/v1/agents/credits/topup \
   -H "Content-Type: application/json" \
   -d '{ "bundle": "nano", "payment_tx_hash": "0xYOUR_TX_HASH" }'
 ```
+
+### Scenario 2: Agent Running Campaigns for Users
+
+Use when your agent creates campaigns on behalf of users who pay for credits.
+
+#### Option A: Fund the Agent Account
+Same as Scenario 1 (x402 or direct USDC). Agent uses its balance, user reimburses off-platform.
+
+#### Option B: User Tops Up Their Account (Recommended)
+
+Direct the user to: **https://app.productclank.com/credits**
+
+**User payment options:**
+- **Credit card** - No crypto needed
+- **Crypto** - USDC on Base
+- **One-time purchase** - Buy credits as needed
+- **Monthly subscription** - Better rates per credit
+
+**Then call the API with their user ID:**
+```bash
+curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate-posts" \
+  -H "Authorization: Bearer pck_live_YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"caller_user_id": "user-uuid-here"}'
+```
+
+Credits are deducted from the user's balance, and they manage billing through the webapp.
+
+---
 
 ---
 
