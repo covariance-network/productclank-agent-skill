@@ -4,7 +4,7 @@ description: Create AI-powered Twitter/X brand advocacy campaigns on ProductClan
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "2.0.0"
+  version: "2.1.0"
   api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
@@ -41,21 +41,121 @@ Communiply enables **real people** (your employees, users, and community members
 
 ## Key Use Cases
 
-### 1. Competitor Intercept
+### 1. Launch Campaigns with Community Rewards
+**Run a campaign to reward your community for amplifying your product announcements.**
+- Create a boost campaign for your launch tweet or product announcement
+- Community members submit their posts/engagement (retweets, likes, replies)
+- Reward participants with credits or points in YOUR system (loyalty program, token rewards, etc.)
+- Communiply handles all the discovery, reply generation, and tracking
+
+**Example:** Product launch week — users earn 10 points per repost, 5 points per like. Top contributors get bonus rewards.
+
+### 2. Competitor Intercept
 **Trigger:** "Looking for Salesforce alternatives"
 **Result:** Community members suggest your product with authentic recommendations
 
-### 2. Problem-Based Targeting
+### 3. Problem-Based Targeting
 **Trigger:** "Struggling with email marketing"
 **Result:** Timely, helpful suggestions when people express pain points your product solves
 
-### 3. Brand Amplification
+### 4. Brand Amplification
 **Trigger:** Someone praises your brand
 **Result:** Third-party validation reinforces positive mentions
 
-### 4. Tweet Boost
+### 5. Tweet Boost
 **Trigger:** Your product just shipped a big update
 **Result:** Community generates 10 authentic reply threads amplifying the announcement
+
+### 6. Product Launches
+Coordinate community amplification during launch week.
+
+### Campaign Lifecycle
+
+```
+1. YOU: Create Campaign via API
+   POST /agents/campaigns (10 credits)
+         │
+         v
+2. YOU: Trigger Post Discovery
+   POST /campaigns/{id}/generate-posts (12 credits/post)
+         │
+         v
+3. AI: Scans Twitter 24/7
+   Finds conversations matching keywords, generates smart replies
+         │
+         v
+4. COMMUNITY: Claims & Posts
+   Real people review replies, post from personal accounts, earn rewards
+         │
+         v
+5. RESULTS: Track Performance
+   GET /campaigns/{id} — engagement stats, reach metrics, ROI
+```
+
+**Key takeaway:** You trigger the discovery. AI monitors 24/7. Community executes. You track results.
+
+## Which Endpoint Should I Use?
+
+**Quick decision tree:**
+
+```
+What do you want to do?
+│
+├─ Amplify a specific tweet RIGHT NOW
+│  └─> POST /agents/campaigns/boost
+│      • Cost: 200-300 credits
+│      • Result: 10 AI-generated reply threads OR likes/reposts
+│      • Time: Immediate (single action)
+│      • Best for: Product launches, announcements, one-time promotion
+│
+└─ Monitor conversations ongoing & respond when relevant
+   └─> POST /agents/campaigns (Communiply)
+       • Cost: 10 + (12 credits × posts discovered)
+       • Result: Continuous 24/7 monitoring & replies
+       • Time: Ongoing automated campaign
+       • Best for: Competitor intercept, problem targeting, brand monitoring
+```
+
+### Campaign Types Comparison
+
+| Feature | Communiply | Boost |
+|---------|-----------|-------|
+| **Use case** | Ongoing monitoring & advocacy | One-time tweet amplification |
+| **Target** | Keyword-based conversations | Specific tweet URL |
+| **Cost** | 10 + (12 × posts) | 200-300 credits (fixed) |
+| **Discovery** | Continuous 24/7 scanning | Immediate burst |
+| **Replies** | As many as AI finds | Fixed (10 reply threads) |
+| **Timeline** | Ongoing campaign | One-shot action |
+| **Best for** | Competitor intercept, problem targeting | Launch announcements, specific posts |
+
+**When to use Communiply:**
+- "Monitor whenever someone mentions [competitor]"
+- "Find people asking about [problem your product solves]"
+- "Ongoing brand advocacy campaign"
+
+**When to use Boost:**
+- "We just launched v2.0, amplify this tweet"
+- "This announcement needs 10 replies ASAP"
+- "Boost this specific Product Hunt post"
+
+## Campaign Cost Estimator
+
+**Your 300 free credits can run:**
+
+| Campaign Type | Credits Needed | Posts Generated | Best For |
+|---------------|----------------|----------------|----------|
+| **Small test** | ~60 | 4 posts | Testing the API |
+| **Medium test** | ~130 | 10 posts | Proof of concept |
+| **Full test** | ~250 | 20 posts | Real campaign test |
+| **Tweet boost** | 200-300 | 10 replies OR engagement | One-time amplification |
+
+**Formula:** `Total = 10 (campaign) + (posts × 12) + (optional: review × 2)`
+
+**Example breakdown:**
+- Campaign creation: 10 credits
+- Discover + generate 20 posts: 20 × 12 = 240 credits
+- Review 20 posts (optional): 20 × 2 = 40 credits
+- **Total: 290 credits** — Fits in free tier!
 
 ## When to Use This Skill
 
@@ -385,7 +485,13 @@ Re-boosting the same tweet generates fresh content without duplicates.
 
 ### Top Up Credits
 
-**x402 Protocol (Recommended):**
+There are two funding scenarios depending on your agent setup:
+
+#### Scenario 1: Autonomous Agent (self-funded)
+
+Agent manages its own credit balance and pays for campaigns independently.
+
+**Option A: x402 Protocol** (Recommended for agents with wallet access)
 ```typescript
 import { wrapFetchWithPayment } from "@x402/fetch";
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
@@ -400,9 +506,38 @@ const topup = await x402Fetch(
 );
 ```
 
-**Direct USDC Transfer:**
+**Option B: Direct USDC Transfer**
 1. Send USDC on Base to `0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68`
 2. Call `POST /api/v1/agents/credits/topup` with `{ bundle: "medium", payment_tx_hash: "0x..." }`
+
+#### Scenario 2: Agent Running Campaigns for Users (user-funded)
+
+Agent creates campaigns on behalf of users, who pay for the credits.
+
+**Step 1: User authorizes the agent**
+```bash
+# Agent generates a linking URL
+curl -X POST "https://api.productclank.com/api/v1/agents/create-link" \
+  -H "Authorization: Bearer pck_live_YOUR_AGENT_API_KEY"
+```
+Share the returned `link_url` with the user. They click it, log in via Privy, and authorize the agent.
+
+**Step 2: User tops up credits**
+Direct the user to: **https://app.productclank.com/credits**
+
+User payment options:
+- **Credit card** — No crypto needed
+- **Crypto** — USDC on Base
+- **Monthly subscription** — Better rates per credit, auto-renewal
+
+**Step 3: Agent uses user's credits**
+Once authorized, pass `caller_user_id` to bill the user's balance:
+```bash
+curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate-posts" \
+  -H "Authorization: Bearer pck_live_YOUR_AGENT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"caller_user_id": "user-uuid-here"}'
+```
 
 ### View Transaction History
 
@@ -463,20 +598,56 @@ curl -X POST https://api.productclank.com/api/v1/agents/import \
 
 Returns agent metadata from 8004.org — use to pre-fill the `/register` call.
 
-## Rate Limits
+## Rate Limits & Quotas
 
-- **Default**: 10 campaigns per day per agent
-- **Custom limits**: Contact ProductClank for higher limits
+| Resource | Default Limit | Upgrade Path |
+|----------|--------------|--------------|
+| Campaigns created | 10/day | Contact ProductClank |
+| API calls | 100/hour | Auto-scales with usage |
+| Campaign delegates | 5/campaign | Contact for more |
+| Credit balance | Unlimited | Buy more bundles |
+
+**What happens when you hit a limit:**
+```json
+{
+  "success": false,
+  "error": "rate_limit_exceeded",
+  "message": "Daily campaign limit reached (10/10)",
+  "retry_after": "2026-03-05T00:00:00Z",
+  "limit": 10,
+  "usage": 10
+}
+```
+
+**Need higher limits?** Contact ProductClank with your use case, expected volume, and business model.
 
 ## Skill Version Updates
 
-Every API response includes an `X-Skill-Version` header (e.g., `X-Skill-Version: 1.3.0`). Compare this against the version in your cached skill metadata to detect updates.
+Every API response includes an `X-Skill-Version` header (e.g., `X-Skill-Version: 2.1.0`). Compare this against the version in your cached skill metadata to detect updates.
 
 **How to stay current:**
 1. After any API call, read the `X-Skill-Version` response header
-2. Compare it to the `metadata.version` in your cached SKILL.md (currently `1.3.0`)
+2. Compare it to the `metadata.version` in your cached SKILL.md (currently `2.1.0`)
 3. If the API version is newer, re-fetch the skill from GitHub:
    `https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/SKILL.md`
+
+**Recommended implementation:**
+```javascript
+// On agent startup (once/day max)
+const skillMeta = await fetch(
+  "https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/SKILL.md"
+).then(r => r.text()).then(text =>
+  text.match(/version: "(\d+\.\d+\.\d+)"/)?.[1]
+);
+
+const cachedVersion = localStorage.getItem("productclank-skill-version");
+
+if (skillMeta !== cachedVersion) {
+  console.log(`New skill version: ${skillMeta}`);
+  // Re-fetch full SKILL.md and update cache
+  localStorage.setItem("productclank-skill-version", skillMeta);
+}
+```
 
 This ensures you always have the latest endpoints, features, and credit costs without polling.
 
@@ -561,6 +732,44 @@ console.log(`Discovered: ${stats.posts_discovered}, Replies: ${stats.replies_tot
 | "Invalid API key" | Starts with `pck_live_`. Rotate with `POST /agents/rotate-key` if compromised |
 | "Rate limit exceeded" | 10 campaigns/day default. Contact ProductClank for more. |
 | "Payment verification failed" | USDC on Base (not ETH mainnet). Tx must be < 1 hour old. |
+
+## FAQ
+
+**Q: Do I need to contact anyone to get an API key?**
+A: No! Self-register via `POST /api/v1/agents/register`. API key + 300 free credits are provided instantly.
+
+**Q: Do I need USDC to start?**
+A: No. Registration includes 300 free credits — enough for ~24 posts. Buy more when you run out.
+
+**Q: What happens after a campaign is created?**
+A: Share the admin dashboard URL (`/my-campaigns/communiply/{id}`) with the campaign owner and the public URL (`/communiply/{id}`) with community participants. Then call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter discovery and reply generation (12 credits/post). Optionally use `review-posts` to AI-filter irrelevant results (2 credits/post).
+
+**Q: How much does it cost to create a campaign?**
+A: 10 credits for campaign creation + 12 credits per post discovered. A typical 10-post test campaign costs ~130 credits.
+
+**Q: What's the difference between autonomous and owner-linked agents?**
+A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI.
+
+**Q: How do I link my agent to my account?**
+A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in via Privy, and the agent is linked to your account.
+
+**Q: Can I list or check my campaigns via API?**
+A: Yes! `GET /api/v1/agents/campaigns` lists all your campaigns. `GET /api/v1/agents/campaigns/{id}` shows details and stats.
+
+**Q: Can I delete or pause campaigns?**
+A: Yes, via the admin dashboard at `https://app.productclank.com/my-campaigns/communiply/{campaign_id}`
+
+**Q: Which endpoint should I use — Communiply or Boost?**
+A: See the [decision tree](#which-endpoint-should-i-use) at the top of this document.
+
+**Q: Is there a test environment?**
+A: No separate test API — use the 300 free credits from registration to test on production.
+
+**Q: What if I lose my API key?**
+A: Use `POST /api/v1/agents/rotate-key` with your current key to generate a new one. If you've lost access completely, contact ProductClank.
+
+**Q: How do I increase rate limits?**
+A: Contact ProductClank with your use case and expected volume.
 
 ## Support & Resources
 
