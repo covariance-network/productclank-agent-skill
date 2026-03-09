@@ -5,6 +5,53 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-03-08
+
+### Added - Owner-Linked Agents & Onboarding UX
+- **Agent-to-user linking endpoint**: `POST /api/v1/agents/create-link` — generates a short-lived deep link so users can link an agent to their ProductClank account via Privy login
+- **Owner-linked agent setup path**: Agents can now operate using a real user's credit balance instead of self-funding. Link via deep link from any interface (terminal, Cursor, Claude Code, Telegram)
+- **Decision tree in README**: "Which endpoint should I use?" flowchart helping agents choose between Communiply campaigns and Tweet Boost
+- **Campaign cost estimator**: Shows exactly what 300 free credits can buy (small/medium/full test, boost)
+- **Funding scenarios documentation**: Two clear paths — autonomous (self-funded) vs owner-linked (user-funded), with step-by-step instructions for each
+- **Launch campaign use case**: New use case showing how to run campaigns with community rewards
+- **Common mistakes section**: Onboarding improvements to reduce first-time errors
+- **Agent authorization step**: Documented `caller_user_id` delegation flow for user-funded campaigns
+
+### Changed
+- **BREAKING**: Restructured Agent Setup section in SKILL.md around two setup paths (Autonomous vs Owner-Linked) instead of a single registration flow
+- Rewrote README.md funding section with credit card option via webapp
+- Updated FAQ with autonomous vs owner-linked agent distinction
+- Bumped README version to 2.1.0
+
+---
+
+## [2.0.0] - 2026-03-08
+
+### Changed - Major Documentation Restructure
+- **BREAKING**: SKILL.md restructured around agent setup paths (Autonomous, Owner-Linked, Trusted) — agents loading this skill will see a different document structure
+- Bumped SKILL.md metadata version from 1.3.0 to 2.0.0
+
+---
+
+## [1.3.0] - 2026-03-06
+
+### Added - Review Posts & Skill Versioning
+- **Review posts endpoint**: `POST /api/v1/agents/campaigns/{id}/review-posts` — AI-powered relevancy scoring against custom rules (2 credits/post). Bulk-scores discovered posts and deletes irrelevant ones
+  - Supports `dry_run` mode to preview results before committing
+  - Supports `save_rules` to persist review rules on the campaign
+  - Supports `threshold` (1-10 scale) for relevancy cutoff
+- **Admin URL in campaign responses**: All campaign response objects now include `admin_url` (`/my-campaigns/communiply/{id}`) alongside the existing public `url` (`/communiply/{id}`)
+- **Skill version update mechanism**: API responses now include `X-Skill-Version` header. Agents can compare against cached SKILL.md version and re-fetch from GitHub when outdated
+- **`user_id` linking flow documentation**: Documented how agents can register with `user_id` to link to an existing ProductClank account at registration time
+- **Helper scripts**: `scripts/review-posts.mjs` for AI post review
+
+### Changed
+- Updated credit cost tables to include review-posts (2 credits/post)
+- Synced README with latest SKILL.md features
+- Bumped version references to 1.3.0
+
+---
+
 ## [1.2.0] - 2026-03-04
 
 ### Added - New Endpoints & Documentation Overhaul
@@ -38,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-02-20
 
-### Changed - Credit-Based Pricing 🔄
+### Changed - Credit-Based Pricing
 - **BREAKING**: Replaced campaign packages with credit-based pay-per-use system
 - Agents buy credits ($2-$500), consume as operations performed (12 cr/post)
 - No upfront payment for campaigns - credits deducted during generation
@@ -93,17 +140,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Upcoming
 
-### Planned for v1.1.0
-- Support for campaign management (pause, resume, delete) via API
+### Planned
+- **Tier 2: Research-Enhanced Campaigns** — AI keyword generation, research analysis, smart targeting
+- **Tier 3: Iterate & Optimize** — Read results, AI refinement chat, regenerate replies, full campaign lifecycle
+- **Trusted Agent (multi-tenant)** — Platform agents serving multiple users with per-user billing
 - Webhook support for campaign events
-- Campaign analytics API endpoints
 - Bulk campaign creation support
-
-### Under Consideration
-- Support for additional payment networks (Ethereum, Polygon, etc.)
-- Support for other payment tokens (ETH, native tokens)
 - Campaign templates for common use cases
-- Advanced filtering options (location, language, sentiment)
 
 ---
 
