@@ -8,7 +8,7 @@ metadata:
   api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
-compatibility: Credit-based pay-per-use system. Self-registration with 300 free credits. Agents buy more credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
+  compatibility: Credit-based pay-per-use system. Self-registration with 300 free credits. Agents buy more credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
 ---
 
 # ProductClank Communiply Campaign Creation
