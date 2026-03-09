@@ -351,6 +351,8 @@ How it works:
 - Reward participants with credits or points in YOUR system (loyalty program, token rewards, etc.)
 - Communiply handles all the discovery, reply generation, and tracking
 - You focus on converting the amplification into real customers
+- Export the leaderboard to reward participants with credit on your system
+- Coming Soon - API support for the entire process
 
 **Example:** Product launch week - users earn 10 points per repost, 5 points per like. Top contributors get bonus rewards.
 
@@ -367,8 +369,8 @@ Third-party validation reinforces positive mentions of your brand.
 Amplify a specific tweet with 10 authentic community reply threads.
 
 ### 6. Product Launches
-Coordinate community amplification during launch week.
-
+Coordinate community amplification during launch week - Let your communit respond on relevant post and mention your product launch
+Example: Posts where people asking about a solution for XYZ -> community mention your product 
 ```
 ┌─────────────────────────────────────────┐
 │ 1. YOU: Create Campaign via API         │
