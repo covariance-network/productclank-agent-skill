@@ -55,13 +55,5 @@ jobs:
           git commit -m "Update ProductClank skill to v${VERSION}"
           git push origin "$BRANCH" --force
 
-          # Check if PR already exists
-          EXISTING=$(gh pr list --repo BankrBot/skills --head "covariance-network:${BRANCH}" --json number --jq '.[0].number' 2>/dev/null || true)
-
-          if [ -z "$EXISTING" ]; then
-            gh pr create \
-              --repo BankrBot/skills \
-              --head "covariance-network:${BRANCH}" \
-              --title "Update ProductClank skill to v${VERSION}" \
-              --body "Automated sync from [productclank-agent-skill](https://github.com/covariance-network/productclank-agent-skill) v${VERSION}."
-          fi
+          echo "Branch pushed. Open a PR at:"
+          echo "https://github.com/covariance-network/skills/compare/main...${BRANCH}?expand=1"
