@@ -5,6 +5,32 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-10
+
+### Changed - Progressive Disclosure Restructure
+- **BREAKING**: SKILL.md completely rewritten following Anthropic's official skill spec (from `anthropics/claude-code` plugin-dev)
+- Reduced SKILL.md from 4,122 words to 1,076 words (spec target: 1,500-2,000)
+- Frontmatter `description` rewritten in third person with specific trigger phrases
+- Writing style changed from second person to imperative/infinitive form
+- Detailed content moved to reference files (progressive disclosure):
+  - `references/FAQ.md` — 12 Q&A pairs (was inline in SKILL.md)
+  - `references/FUNDING.md` — Credit bundles, payment scenarios, tier roadmap (was inline)
+  - Code examples remain in `references/EXAMPLES.md`
+  - Full endpoint docs remain in `references/API_REFERENCE.md`
+- SKILL.md now includes explicit "Additional Resources" section pointing to bundled files
+
+### Added
+- **5 new endpoints** documented in API_REFERENCE.md (were in codebase but undocumented):
+  - `GET /agents/by-user` — List agents linked to a user (public)
+  - `POST /agents/authorize` — Grant agent authorization to bill user credits (trusted only)
+  - `DELETE /agents/authorize` — Revoke agent authorization (trusted only)
+  - `POST /agents/telegram/create-link` — Generate Telegram linking token (trusted only)
+  - `GET /agents/telegram/lookup` — Look up user by Telegram ID (trusted only)
+- `review-posts` added to API_REFERENCE.md endpoint overview table (was documented below but missing from table)
+- Total documented endpoints: 19 (was 14)
+
+---
+
 ## [2.1.0] - 2026-03-08
 
 ### Added - Owner-Linked Agents & Onboarding UX
