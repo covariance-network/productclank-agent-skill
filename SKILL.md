@@ -4,7 +4,7 @@ description: This skill should be used when the user asks to "create a Twitter c
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.0.1"
+  version: "3.0.2"
   api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/campaigns/
