@@ -1,0 +1,67 @@
+name: Sync skill to BankrBot/skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "SKILL.md"
+      - "references/**"
+      - "scripts/**"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout skill repo
+        uses: actions/checkout@v4
+        with:
+          path: skill-source
+
+      - name: Checkout Bankr fork
+        uses: actions/checkout@v4
+        with:
+          repository: covariance-network/skills
+          token: ${{ secrets.BANKR_SYNC_TOKEN }}
+          path: bankr-fork
+
+      - name: Copy skill files
+        run: |
+          rm -rf bankr-fork/productclank
+          mkdir -p bankr-fork/productclank/references bankr-fork/productclank/scripts
+          cp skill-source/SKILL.md bankr-fork/productclank/
+          cp skill-source/references/*.md bankr-fork/productclank/references/ 2>/dev/null || true
+          cp skill-source/scripts/* bankr-fork/productclank/scripts/ 2>/dev/null || true
+
+      - name: Check for changes
+        id: diff
+        working-directory: bankr-fork
+        run: |
+          git diff --quiet && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Create PR
+        if: steps.diff.outputs.changed == 'true'
+        working-directory: bankr-fork
+        env:
+          GH_TOKEN: ${{ secrets.BANKR_SYNC_TOKEN }}
+        run: |
+          VERSION=$(grep -oP 'version: "\K[^"]+' skill-source/SKILL.md || echo "unknown")
+          BRANCH="sync-productclank-v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add productclank/
+          git commit -m "Update ProductClank skill to v${VERSION}"
+          git push origin "$BRANCH" --force
+
+          # Check if PR already exists
+          EXISTING=$(gh pr list --repo BankrBot/skills --head "covariance-network:${BRANCH}" --json number --jq '.[0].number' 2>/dev/null || true)
+
+          if [ -z "$EXISTING" ]; then
+            gh pr create \
+              --repo BankrBot/skills \
+              --head "covariance-network:${BRANCH}" \
+              --title "Update ProductClank skill to v${VERSION}" \
+              --body "Automated sync from [productclank-agent-skill](https://github.com/covariance-network/productclank-agent-skill) v${VERSION}."
+          fi
