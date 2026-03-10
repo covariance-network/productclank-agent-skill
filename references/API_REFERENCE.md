@@ -28,6 +28,15 @@ Authorization: Bearer pck_live_<your_api_key>
 | GET | `/agents/me` | Bearer | Free | View agent profile & rate limits |
 | POST | `/agents/rotate-key` | Bearer | Free | Rotate API key |
 | POST | `/agents/import` | None | Free | Import ERC-8004 agent metadata |
+| GET | `/agents/by-user` | None | Free | List agents linked to a user |
+| POST | `/agents/authorize` | Bearer (trusted) | Free | Grant agent authorization to bill user |
+| DELETE | `/agents/authorize` | Bearer (trusted) | Free | Revoke agent authorization |
+
+### Telegram Integration (Trusted Agents Only)
+| Method | Endpoint | Auth | Cost | Description |
+|--------|----------|------|------|-------------|
+| POST | `/agents/telegram/create-link` | Bearer (trusted) | Free | Generate Telegram linking token |
+| GET | `/agents/telegram/lookup` | Bearer (trusted) | Free | Look up user by Telegram ID |
 
 ### Products
 | Method | Endpoint | Auth | Cost | Description |
@@ -41,6 +50,7 @@ Authorization: Bearer pck_live_<your_api_key>
 | GET | `/agents/campaigns` | Bearer | Free | List agent's campaigns |
 | GET | `/agents/campaigns/{id}` | Bearer | Free | Get campaign details & stats |
 | POST | `/agents/campaigns/{id}/generate-posts` | Bearer | 12 credits/post | Trigger discovery & reply generation |
+| POST | `/agents/campaigns/{id}/review-posts` | Bearer | 2 credits/post | AI relevancy review & cleanup |
 | POST | `/agents/campaigns/{id}/delegates` | Bearer | Free | Add campaign delegator |
 | POST | `/agents/campaigns/boost` | Bearer | 200-300 credits | Boost a specific tweet |
 
@@ -814,6 +824,188 @@ import { wrapFetchWithPayment } from "@x402/fetch";
 const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 // Use x402Fetch like normal fetch — handles 402 responses automatically
 ```
+
+---
+
+## GET /api/v1/agents/by-user
+
+List all agents linked to a specific user. No authentication required.
+
+### Query Parameters
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `userId` | string | Yes | ProductClank user ID |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "agents": [
+    {
+      "id": "uuid",
+      "name": "MyAgent",
+      "description": "Growth automation agent",
+      "wallet_address": "0x...",
+      "status": "active",
+      "trusted": false,
+      "rate_limit_daily": 10,
+      "created_at": "2026-03-04T..."
+    }
+  ],
+  "count": 1
+}
+```
+
+### Error Codes
+- `400` — Missing `userId` query parameter
+
+---
+
+## POST /api/v1/agents/authorize
+
+Grant an agent authorization to bill a user's credits. **Trusted agents only.**
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `user_id` | string | Yes | ProductClank user ID to authorize |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "authorized": true,
+  "agent_id": "uuid",
+  "user_id": "uuid"
+}
+```
+
+### Error Codes
+- `400` — Missing `user_id`
+- `403` — Agent is not trusted
+- `404` — User not found
+
+---
+
+## DELETE /api/v1/agents/authorize
+
+Revoke an agent's authorization to bill a user's credits. **Trusted agents only.**
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `user_id` | string | Yes | ProductClank user ID to revoke |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "revoked": true,
+  "agent_id": "uuid",
+  "user_id": "uuid"
+}
+```
+
+### Error Codes
+- `400` — Missing `user_id`
+- `403` — Agent is not trusted
+- `404` — User not found
+
+---
+
+## POST /api/v1/agents/telegram/create-link
+
+Generate a short-lived linking token for a Telegram user. **Trusted agents only.** Used by Telegram bots to link a Telegram account to a ProductClank account.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `telegram_id` | number | Yes | Telegram user ID |
+| `telegram_username` | string | No | Telegram username |
+
+### Response — New Token (200)
+
+```json
+{
+  "success": true,
+  "already_linked": false,
+  "link_url": "https://app.productclank.com/link/telegram?token=<uuid>",
+  "token": "<uuid>",
+  "expires_at": "2026-03-08T08:15:00.000Z"
+}
+```
+
+### Response — Already Linked (200)
+
+```json
+{
+  "success": true,
+  "already_linked": true,
+  "user_id": "uuid",
+  "user_name": "User Name",
+  "message": "This Telegram account is already linked to a ProductClank account."
+}
+```
+
+**Token Details:**
+- Expires in 15 minutes
+- Single-use (previous tokens for same telegram_id are cleaned up)
+
+### Error Codes
+- `400` — Missing or invalid `telegram_id`
+- `403` — Agent is not trusted
+
+---
+
+## GET /api/v1/agents/telegram/lookup
+
+Look up a ProductClank user by their Telegram ID. Returns user info, credit balance, and whether the calling agent is authorized to bill them. **Trusted agents only.**
+
+### Query Parameters
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `telegram_id` | number | Yes | Telegram user ID |
+
+### Response — Not Linked (200)
+
+```json
+{
+  "success": true,
+  "linked": false,
+  "telegram_id": 123456789
+}
+```
+
+### Response — Linked (200)
+
+```json
+{
+  "success": true,
+  "linked": true,
+  "telegram_id": 123456789,
+  "user_id": "uuid",
+  "user_name": "User Name",
+  "telegram_username": "username",
+  "authorized": true,
+  "credits": {
+    "balance": 290
+  }
+}
+```
+
+The `authorized` field indicates whether this specific agent has an active (non-revoked) authorization to bill this user's credits.
+
+### Error Codes
+- `400` — Missing or invalid `telegram_id`
+- `403` — Agent is not trusted
 
 ---
 
