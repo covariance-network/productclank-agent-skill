@@ -36,7 +36,8 @@ jobs:
         id: diff
         working-directory: bankr-fork
         run: |
-          git diff --quiet && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+          git add productclank/
+          git diff --cached --quiet && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Create PR
         if: steps.diff.outputs.changed == 'true'
@@ -44,14 +45,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BANKR_SYNC_TOKEN }}
         run: |
-          VERSION=$(grep -oP 'version: "\K[^"]+' skill-source/SKILL.md || echo "unknown")
+          VERSION=$(grep -oP 'version: "\K[^"]+' ../skill-source/SKILL.md || echo "unknown")
           BRANCH="sync-productclank-v${VERSION}"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "$BRANCH"
-          git add productclank/
           git commit -m "Update ProductClank skill to v${VERSION}"
           git push origin "$BRANCH" --force
 
