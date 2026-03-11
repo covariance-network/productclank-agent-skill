@@ -102,15 +102,28 @@ Optional: `mention_accounts`, `reply_style_tags`, `reply_length` ("very-short"|"
 
 Response includes `campaign.url` (public) and `campaign.admin_url` (owner dashboard). Always share both URLs with the user.
 
-### 3. Generate posts (12 credits/post)
+### 3. Research — recommended (free)
+
+```bash
+POST /api/v1/agents/campaigns/{id}/research
+```
+
+Expands your keywords using AI, discovers influencer accounts, matches Twitter lists, and identifies competitors. Results cached for 7 days. The expanded keywords are **automatically used by `generate-posts`** for better targeting.
+
+```bash
+# Review research results
+GET /api/v1/agents/campaigns/{id}/research
+```
+
+### 4. Generate posts (12 credits/post)
 
 ```bash
 POST /api/v1/agents/campaigns/{id}/generate-posts
 ```
 
-Triggers Twitter discovery and AI reply generation. Credits deducted per post found.
+Triggers Twitter discovery and AI reply generation. Uses expanded keywords from research if available. Credits deducted per post found.
 
-### 4. Review posts — optional (2 credits/post)
+### 5. Review posts — optional (2 credits/post)
 
 ```bash
 POST /api/v1/agents/campaigns/{id}/review-posts
@@ -118,7 +131,25 @@ POST /api/v1/agents/campaigns/{id}/review-posts
 
 AI-scores posts against custom relevancy rules. Irrelevant posts are deleted. Run with `dry_run: true` first to preview. Both modes consume credits since AI scoring runs either way.
 
-### 5. Check results
+### 6. Read posts & replies — optional (free)
+
+```bash
+GET /api/v1/agents/campaigns/{id}/posts?include_replies=true
+```
+
+Returns discovered posts with their generated replies. Use to review before regenerating.
+
+### 7. Regenerate replies — optional (5 credits/reply)
+
+```bash
+POST /api/v1/agents/campaigns/{id}/regenerate-replies
+```
+
+Regenerate replies for specific posts with new instructions (e.g. "make shorter and more casual"). Cannot regenerate posts with claimed replies.
+
+Required fields: `post_ids[]`, `edit_request`
+
+### 8. Check results
 
 ```bash
 GET /api/v1/agents/campaigns/{id}
@@ -148,8 +179,11 @@ Re-boosting the same tweet generates fresh content without duplicates.
 |-----------|---------|
 | Registration | +300 free |
 | Create campaign | 10 |
+| Research analysis | 0 (free) |
 | Discover + generate reply | 12/post |
 | Review post (AI relevancy) | 2/post |
+| Read posts/campaigns | 0 (free) |
+| Regenerate reply | 5/reply |
 | Boost (replies) | 200 |
 | Boost (likes/repost) | 300 |
 
@@ -200,7 +234,7 @@ API responses include `X-Skill-Version` header. Compare against `metadata.versio
 ### Reference Files
 
 For detailed documentation, consult:
-- **`references/API_REFERENCE.md`** — Complete endpoint specification with request/response shapes for all 19 endpoints
+- **`references/API_REFERENCE.md`** — Complete endpoint specification with request/response shapes for all 23 endpoints
 - **`references/EXAMPLES.md`** — Full code examples for common workflows
 - **`references/FUNDING.md`** — Detailed funding scenarios, payment methods, credit bundles
 - **`references/FAQ.md`** — Common questions and answers
