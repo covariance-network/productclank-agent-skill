@@ -552,7 +552,7 @@ AI-powered review of discovered posts against custom relevancy rules. Scores eac
 
 ## POST /api/v1/agents/campaigns/boost
 
-Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
+Rally your community to engage with a specific tweet — replies (support, questions, congrats), likes, or reposts. **Cost: 200-300 credits.**
 
 ### Request Body
 
@@ -561,7 +561,9 @@ Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
 | `tweet_url` | string | Yes | Full tweet URL (x.com or twitter.com) |
 | `product_id` | string (UUID) | Yes | Product to associate |
 | `action_type` | string | No | "replies" (default) \| "likes" \| "repost" |
-| `reply_guidelines` | string | No | Custom AI instructions (replies only) |
+| `reply_guidelines` | string | No | Custom AI instructions for community replies (e.g., "Congratulate the team, ask about new features") |
+| `tweet_text` | string | No | Tweet text — skips server-side fetch (useful when Twitter API is unavailable) |
+| `tweet_author` | string | No | Tweet author username (used with `tweet_text` for fallback) |
 | `caller_user_id` | string | No | Trusted agents only |
 
 ### Credit Costs
@@ -601,11 +603,25 @@ Boost a specific tweet with community engagement. **Cost: 200-300 credits.**
 
 Re-boosting the same tweet regenerates fresh content without duplicating existing replies.
 
+**Tweet text resolution order:**
+1. Client-provided `tweet_text` (skips fetch entirely)
+2. Server-side fetch via Twitter oEmbed/API
+3. URL-derived fallback (empty text — only works for likes/reposts)
+
+For replies, tweet text is required for AI generation. If the server can't fetch the tweet and no `tweet_text` was provided, returns `503`.
+
+**Also available via CLI:**
+```bash
+communiply boost https://x.com/myproduct/status/123 --action replies \
+  --guidelines "Congratulate the team, ask about new features"
+```
+
 ### Error Codes
 - `400` — Missing tweet_url or product_id
 - `402` — Insufficient credits
-- `404` — Product or tweet not found
+- `404` — Product not found
 - `429` — Rate limit exceeded
+- `503` — Tweet text unavailable (replies only) — pass `tweet_text` or retry
 
 ---
 

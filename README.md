@@ -1,25 +1,33 @@
 # ProductClank Campaigns - Agent Skill
 
-An [Agent Skill](https://agentskills.io) for creating Communiply campaigns on ProductClank.
+An [Agent Skill](https://agentskills.io) and [CLI tool](https://github.com/covariance-network/communiply-cli) for community-powered engagement on ProductClank.
 
-## 🗺️ Which Endpoint Should I Use?
+## 🗺️ Which Tool Should I Use?
+
+**Three ways to use ProductClank:**
+
+| Tool | Best For | Install |
+|------|----------|---------|
+| **Agent Skill** | AI agents autonomously creating campaigns | Load [SKILL.md](SKILL.md) |
+| **CLI** | Developers boosting tweets from the terminal | `npm i -g @productclank/communiply-cli` |
+| **API** | Custom integrations, automation, cron jobs | See [API Reference](references/API_REFERENCE.md) |
 
 **Quick decision tree:**
 
 ```
 What do you want to do?
 │
-├─ Amplify a specific tweet RIGHT NOW
-│  └─> POST /agents/campaigns/boost
+├─ Rally community around YOUR tweet (replies, likes, reposts)
+│  └─> POST /agents/campaigns/boost  (or: communiply boost <url>)
 │      • Cost: 200-300 credits
-│      • Result: 10 AI-generated reply threads OR likes/reposts
-│      • Time: Immediate (single action)
-│      • Best for: Product launches, announcements, one-time promotion
+│      • Result: Community replies (support, questions, congrats), likes, or reposts
+│      • Time: Immediate (single API call)
+│      • Best for: Launch announcements, product updates, partnership posts
 │
-└─ Monitor conversations ongoing & respond when relevant
-   └─> POST /agents/campaigns (Communiply)
+└─ Find & join conversations about your product's topic
+   └─> POST /agents/campaigns (Communiply Discover)
        • Cost: 10 + (12 credits × posts discovered)
-       • Result: Continuous 24/7 monitoring & replies
+       • Result: AI discovers conversations, generates contextual replies
        • Time: Ongoing automated campaign
        • Best for: Competitor intercept, problem targeting, brand monitoring
 ```
@@ -96,25 +104,50 @@ See [SKILL.md](SKILL.md) for complete documentation.
 
 ## Campaign Types Comparison
 
-| Feature | Communiply | Boost |
-|---------|-----------|-------|
-| **Use case** | Ongoing monitoring & advocacy | One-time tweet amplification |
-| **Target** | Keyword-based conversations | Specific tweet URL |
+| Feature | Discover | Boost |
+|---------|----------|-------|
+| **Use case** | Find & join relevant conversations | Rally community around your tweet |
+| **Target** | Keyword-based conversations | Specific tweet URL you want engagement on |
 | **Cost** | 10 + (12 × posts) | 200-300 credits (fixed) |
 | **Discovery** | Continuous 24/7 scanning | Immediate burst |
-| **Replies** | As many as AI finds | Fixed (10 reply threads) |
+| **Community action** | Reply to others' conversations | Reply/like/repost your post |
 | **Timeline** | Ongoing campaign | One-shot action |
-| **Best for** | Competitor intercept, problem targeting | Launch announcements, specific posts |
+| **Best for** | Competitor intercept, problem targeting | Launch announcements, product updates |
+| **CLI** | Coming soon | `communiply boost <url>` |
 
-**When to use Communiply:**
+**When to use Discover:**
 - "Monitor whenever someone mentions [competitor]"
 - "Find people asking about [problem your product solves]"
 - "Ongoing brand advocacy campaign"
 
 **When to use Boost:**
-- "We just launched v2.0, amplify this tweet"
-- "This announcement needs 10 replies ASAP"
-- "Boost this specific Product Hunt post"
+- "Get my community to reply to my launch tweet"
+- "Get support and congratulations on this announcement"
+- "Get likes and reposts on my product update"
+
+## CLI (Communiply CLI)
+
+The fastest way to boost a tweet from the terminal:
+
+```bash
+# Install
+npm install -g @productclank/communiply-cli
+
+# Register (first time)
+communiply auth register MyAgent
+
+# Boost a tweet with community replies
+communiply boost https://x.com/myproduct/status/123 --action replies \
+  --guidelines "Congratulate the team, ask about new features"
+
+# Boost with likes or reposts
+communiply boost https://x.com/myproduct/status/123 --action likes
+communiply boost https://x.com/myproduct/status/123 --action reposts
+```
+
+Full CLI docs: [communiply-cli README](https://github.com/covariance-network/communiply-cli)
+
+---
 
 ## Getting Started
 
@@ -236,7 +269,7 @@ curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate
 ```
 
 User manages credits and billing through the webapp dashboard.
-productclank-agent-skill/
+productclank-agent-skill/          # Agent Skill (for AI agents)
 ├── QUICKSTART.md               # 5-minute quick start guide (START HERE!)
 ├── SKILL.md                    # Main skill documentation (loaded by agents)
 ├── README.md                   # This file
@@ -253,6 +286,9 @@ productclank-agent-skill/
     ├── competitor-intercept.md # Use case walkthrough
     ├── problem-targeting.md    # Use case walkthrough
     └── tweet-boost.md          # Use case walkthrough
+
+communiply-cli/                    # CLI Tool (for developers)
+└── See: https://github.com/covariance-network/communiply-cli
 ```
 
 ## API Endpoints
@@ -280,7 +316,7 @@ productclank-agent-skill/
 | POST | `/agents/campaigns/{id}/generate-posts` | 12 cr/post | Trigger discovery & replies |
 | POST | `/agents/campaigns/{id}/review-posts` | 2 cr/post | AI relevancy review & cleanup |
 | POST | `/agents/campaigns/{id}/delegates` | Free | Add campaign delegator |
-| POST | `/agents/campaigns/boost` | 200-300 cr | Boost a specific tweet |
+| POST | `/agents/campaigns/boost` | 200-300 cr | Rally community around a tweet (replies, likes, reposts) |
 
 ### Credits
 | Method | Endpoint | Description |
@@ -366,7 +402,7 @@ Find people expressing pain points your product solves.
 Third-party validation reinforces positive mentions of your brand.
 
 ### 5. Tweet Boost
-Amplify a specific tweet with 10 authentic community reply threads.
+Rally your community to engage with a specific tweet — replies showing support, questions, or congrats, plus likes and reposts.
 
 ### 6. Product Launches
 Coordinate community amplification during launch week - Let your communit respond on relevant post and mention your product launch
@@ -478,8 +514,11 @@ A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.
 
-**Q: Which endpoint should I use - Communiply or Boost?**
-A: See the [decision tree](#-which-endpoint-should-i-use) at the top of this README.
+**Q: Which endpoint should I use - Discover or Boost?**
+A: See the [decision tree](#-which-tool-should-i-use) at the top of this README. Short version: if you have a tweet URL you want community to rally behind → Boost. If you want to find conversations about your topic → Discover.
+
+**Q: Is there a CLI?**
+A: Yes! `npm install -g @productclank/communiply-cli`. Currently supports Boost; Discover coming soon. See [communiply-cli](https://github.com/covariance-network/communiply-cli).
 
 ## Support & Resources
 
@@ -492,8 +531,8 @@ A: See the [decision tree](#-which-endpoint-should-i-use) at the top of this REA
 
 ## Version
 
-**Version:** 2.1.0  
-**Last Updated:** 2026-03-08  
+**Version:** 3.1.0
+**Last Updated:** 2026-03-16
 **Agent Skills Spec:** v1 (Anthropic)
 
 ---

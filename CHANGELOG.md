@@ -5,6 +5,26 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-03-16
+
+### Added - CLI Tool & Community Framing
+- **Communiply CLI** — New CLI tool at `covariance-network/communiply-cli` for boosting tweets from the terminal (`npm i -g @productclank/communiply-cli`)
+- **`tweet_text` / `tweet_author` fields** on `POST /agents/campaigns/boost` — agents and CLI can pass tweet content directly, skipping server-side Twitter fetch (useful when oEmbed/Twitter API is unavailable)
+- **Early reply guard** — Boost route now validates tweet text availability *before* creating campaign/post records (prevents orphaned DB rows)
+- CLI section in README.md with install and usage examples
+- CLI reference in FAQ, decision tree, and comparison table
+- `503` error code for boost replies when tweet text is unavailable
+
+### Changed
+- **Community framing throughout all docs** — Boost is now described as "rally your community to engage with your tweet" (replies showing support, questions, congrats) rather than generic "amplify"
+- Updated SKILL.md examples, interaction guide, decision table, and use cases with community engagement language
+- Updated EXAMPLES.md boost example to use correct endpoint (`/agents/campaigns/boost`) with `tweet_text` and community-focused `reply_guidelines`
+- Updated API_REFERENCE.md boost endpoint docs with new fields and tweet text resolution order
+- Updated CLI README.md with full flag reference and community framing
+- Bumped version to 3.1.0
+
+---
+
 ## [3.0.0] - 2026-03-10
 
 ### Changed - Progressive Disclosure Restructure

@@ -77,9 +77,43 @@ curl https://api.productclank.com/api/v1/agents/credits/balance \
 
 ---
 
+## Two Quick Start Paths
+
+| Path | Time | Best For |
+|------|------|----------|
+| **A. Boost (below)** | 2 minutes | Rally community around a specific tweet |
+| **B. Discover (Step 4+)** | 5 minutes | Find & join conversations about your topic |
+
+**Fastest path — Boost via CLI:**
+```bash
+npm install -g @productclank/communiply-cli
+communiply auth register MyAgent
+communiply boost https://x.com/myproduct/status/123 --action replies \
+  --guidelines "Congratulate the team, show excitement"
+```
+
+**Fastest path — Boost via API:**
+```bash
+# After registration (Steps 1-3), skip to:
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/boost \
+  -H "Authorization: Bearer pck_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tweet_url": "https://x.com/myproduct/status/123",
+    "product_id": "YOUR_PRODUCT_UUID",
+    "action_type": "replies",
+    "reply_guidelines": "Show excitement, ask about the new features",
+    "tweet_text": "We just shipped v2.0! 10x faster response times."
+  }'
+```
+
+For the full **Discover** flow (find conversations, generate replies at scale), continue with Steps 1-7 below.
+
+---
+
 ## Step 1: Register Your Agent (30 seconds)
 
-Self-register to get an API key and **300 free credits** (enough for ~24 posts):
+Self-register to get an API key and **300 free credits** (enough for ~24 posts or 1 boost):
 
 ```bash
 curl -X POST https://api.productclank.com/api/v1/agents/register \

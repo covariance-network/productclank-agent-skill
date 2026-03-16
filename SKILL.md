@@ -1,253 +1,516 @@
 ---
 name: productclank-campaigns
-description: This skill should be used when the user asks to "create a Twitter campaign", "boost a tweet", "amplify a post", "run community-driven marketing", "intercept competitor mentions", "scale word-of-mouth", "turn users into brand advocates", or mentions "ProductClank", "Communiply", or "Twitter engagement campaign". Enables AI-powered brand advocacy on Twitter/X through community coordination.
+description: Two capabilities for Twitter/X growth — Boost (amplify a specific tweet with community engagement) and Discover (find relevant conversations and generate AI-powered replies at scale). Use Boost when the user has a tweet URL. Use Discover when the user wants to find and engage in conversations about their product.
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.0.2"
-  api_endpoint: https://api.productclank.com/api/v1/agents/campaigns
+  version: "3.0.0"
+  api_endpoint: https://app.productclank.com/api/v1/agents
   website: https://www.productclank.com
-  web_ui: https://app.productclank.com/communiply/campaigns/
-  compatibility: Credit-based pay-per-use system. Self-registration with 300 free credits. Agents buy more credits with USDC on Base (chain ID 8453). Supports x402 protocol and direct USDC transfers. Works with any wallet type.
+  web_ui: https://app.productclank.com/communiply/
+  cli: https://github.com/covariance-network/communiply-cli
+compatibility: Requires ProductClank credits. Credits can be purchased via the webapp or topped up via the API using USDC on Base (chain ID 8453).
 ---
 
-# ProductClank Communiply — Community-Driven Brand Advocacy
+# ProductClank — Twitter/X Growth for Builders
 
-Communiply solves the authenticity problem in social media marketing. Instead of a brand promoting itself (which people dismiss as advertising), real community members naturally recommend the brand in relevant Twitter/X conversations — creating genuine word-of-mouth at scale.
+Two capabilities for growing your product on Twitter/X through authentic community engagement.
 
-**How it works:** AI discovers relevant conversations 24/7 → generates context-aware replies → community members post from personal accounts → track engagement and ROI.
+## Capability 1: Boost
 
-## Choosing the Right Endpoint
+**Amplify a specific tweet with community-powered engagement.**
+
+Use Boost when the user has a tweet URL they want to amplify. One API call, instant results.
+
+### How It Works
+1. Provide a tweet URL
+2. Choose action: replies, likes, or reposts
+3. Community members execute from their personal accounts
+4. You get authentic, third-party engagement
+
+### Pricing
+
+| Action | What You Get | Credits |
+|--------|-------------|---------|
+| Replies | 10 AI-generated reply threads | 200 |
+| Likes | 30 community likes | 300 |
+| Reposts | 10 community reposts | 300 |
+
+### API
 
 ```
-What to do?
-│
-├─ Amplify a specific tweet RIGHT NOW
-│  └─> POST /agents/campaigns/boost
-│      Cost: 200-300 credits | Immediate | One-shot
-│
-└─ Monitor conversations ongoing & respond when relevant
-   └─> POST /agents/campaigns (Communiply)
-       Cost: 10 + (12 × posts) | Ongoing 24/7 | Keyword-based
-```
-
-| Feature | Communiply | Boost |
-|---------|-----------|-------|
-| **Target** | Keyword-based conversations | Specific tweet URL |
-| **Cost** | 10 + (12 × posts) | 200-300 credits (fixed) |
-| **Timeline** | Ongoing campaign | One-shot action |
-| **Best for** | Competitor intercept, problem targeting | Launch announcements, specific posts |
-
-## Cost Estimator
-
-300 free credits from registration can run:
-
-| Campaign Type | Credits | Posts | Best For |
-|---------------|---------|-------|----------|
-| Small test | ~60 | 4 | Testing the API |
-| Medium test | ~130 | 10 | Proof of concept |
-| Full test | ~250 | 20 | Real campaign |
-| Tweet boost | 200-300 | 10 replies or engagement | One-time amplification |
-
-**Formula:** `Total = 10 (campaign) + (posts × 12) + (optional: review × 2/post)`
-
-## Agent Setup
-
-Two setup paths:
-
-### Autonomous Agent (self-funded)
-
-Register, get API key + 300 free credits instantly. Top up via USDC on Base.
-
-```bash
-curl -X POST https://api.productclank.com/api/v1/agents/register \
-  -H "Content-Type: application/json" \
-  -d '{"name": "MyAgent", "description": "Growth automation agent"}'
-```
-
-Save the `api_key` from the response — shown once only.
-
-### Owner-Linked Agent (user-funded)
-
-Register first (same as above), then link to a ProductClank account to share the owner's credit balance:
-
-```bash
-curl -X POST https://api.productclank.com/api/v1/agents/create-link \
-  -H "Authorization: Bearer pck_live_YOUR_KEY"
-```
-
-Share the returned `link_url` with the user. They click it, log in via Privy, and the agent is linked. Campaigns then appear in the owner's dashboard, and credits are shared.
-
-For detailed funding scenarios and payment methods, consult **`references/FUNDING.md`**.
-
-## Campaign Workflow
-
-### 1. Find a product
-
-```bash
-GET /api/v1/agents/products/search?q=product+name
-```
-
-No product yet? Direct users to create one at [app.productclank.com/products](https://app.productclank.com/products).
-
-### 2. Create campaign (10 credits)
-
-```bash
-POST /api/v1/agents/campaigns
-```
-
-Required fields: `product_id`, `title`, `keywords[]`, `search_context`
-
-Optional: `mention_accounts`, `reply_style_tags`, `reply_length` ("very-short"|"short"|"medium"|"long"|"mixed"), `reply_guidelines`, `min_follower_count`, `max_post_age_days`, `require_verified`
-
-Response includes `campaign.url` (public) and `campaign.admin_url` (owner dashboard). Always share both URLs with the user.
-
-### 3. Research — recommended (free)
-
-```bash
-POST /api/v1/agents/campaigns/{id}/research
-```
-
-Expands your keywords using AI, discovers influencer accounts, matches Twitter lists, and identifies competitors. Results cached for 7 days. The expanded keywords are **automatically used by `generate-posts`** for better targeting.
-
-```bash
-# Review research results
-GET /api/v1/agents/campaigns/{id}/research
-```
-
-### 4. Generate posts (12 credits/post)
-
-```bash
-POST /api/v1/agents/campaigns/{id}/generate-posts
-```
-
-Triggers Twitter discovery and AI reply generation. Uses expanded keywords from research if available. Credits deducted per post found.
-
-### 5. Review posts — optional (2 credits/post)
-
-```bash
-POST /api/v1/agents/campaigns/{id}/review-posts
-```
-
-AI-scores posts against custom relevancy rules. Irrelevant posts are deleted. Run with `dry_run: true` first to preview. Both modes consume credits since AI scoring runs either way.
-
-### 6. Read posts & replies — optional (free)
-
-```bash
-GET /api/v1/agents/campaigns/{id}/posts?include_replies=true
-```
-
-Returns discovered posts with their generated replies. Use to review before regenerating.
-
-### 7. Regenerate replies — optional (5 credits/reply)
-
-```bash
-POST /api/v1/agents/campaigns/{id}/regenerate-replies
-```
-
-Regenerate replies for specific posts with new instructions (e.g. "make shorter and more casual"). Cannot regenerate posts with claimed replies.
-
-Required fields: `post_ids[]`, `edit_request`
-
-### 8. Check results
-
-```bash
-GET /api/v1/agents/campaigns/{id}
-```
-
-Returns `stats.posts_discovered`, `stats.replies_total`, `stats.replies_by_status`.
-
-## Tweet Boost
-
-Amplify a specific tweet with community engagement:
-
-```bash
 POST /api/v1/agents/campaigns/boost
 ```
 
-| Action | Items | Credits |
-|--------|-------|---------|
-| `replies` | 10 AI replies | 200 |
-| `likes` | 30 like tasks | 300 |
-| `repost` | 10 repost tasks | 300 |
+```json
+{
+  "tweet_url": "https://x.com/user/status/123456",
+  "product_id": "product-uuid",
+  "action_type": "replies",
+  "reply_guidelines": "optional custom instructions",
+  "tweet_text": "optional — pass tweet text to skip server-side fetch",
+  "tweet_author": "optional — tweet author username (used with tweet_text)"
+}
+```
 
-Re-boosting the same tweet generates fresh content without duplicates.
+**Response:**
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "uuid",
+    "campaign_number": "CP-042",
+    "url": "https://app.productclank.com/communiply/uuid"
+  },
+  "items_generated": 10,
+  "is_reboost": false,
+  "credits": {
+    "credits_used": 200,
+    "credits_remaining": 100
+  }
+}
+```
 
-## Credit Costs
+**Consolidation:** All boost actions for the same product share one campaign. Boosting again adds to the existing campaign (`is_reboost: true`).
+
+### When to Use Boost
+- "Get my community to reply to my tweet" / "boost this post"
+- "Get support and engagement on my announcement"
+- "Get likes on my tweet" / "get reposts"
+- User shares their own tweet URL and wants community engagement (replies, likes, reposts)
+- Launch announcements, product updates, partnership posts — any tweet you want your community to rally behind
+
+### How to Run a Boost (Agent Interaction Guide)
+
+1. **Get the tweet URL** — ask the user for their tweet URL (the post they want community to engage with)
+2. **Choose action type** — ask: "How should the community engage? Replies (support, questions, congrats), likes, or reposts?" Default to replies if unclear
+3. **Find the product** — search `GET /agents/products/search?q=<name>` and confirm with user (see [Confirm Product Selection](#confirm-product-selection-required))
+4. **Get reply guidelines** (for replies) — ask what kind of engagement they want: "Should community replies congratulate the team? Ask about features? Show excitement?" Use this to set `reply_guidelines`
+5. **Confirm cost** — "This will use 200 credits for 10 community replies. Proceed?"
+6. **Execute** — `POST /agents/campaigns/boost`
+7. **Share results** — show campaign URL and credits remaining
+
+### Complete Boost Example
+
+```typescript
+// User says: "Get my community to engage with my latest announcement tweet"
+const API = "https://app.productclank.com/api/v1/agents";
+const headers = {
+  "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+  "Content-Type": "application/json",
+};
+
+// 1. Search for the product
+const search = await fetch(`${API}/products/search?q=MyProduct&limit=5`, { headers });
+const { products } = await search.json();
+// → Confirm with user: "I found MyProduct. Is this correct?"
+
+// 2. Boost the tweet — community members will reply showing support, asking questions, congratulating, etc.
+const res = await fetch(`${API}/campaigns/boost`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    tweet_url: "https://x.com/myproduct/status/123456789",
+    product_id: products[0].id,
+    action_type: "replies",
+    reply_guidelines: "Show genuine excitement about the launch. Ask thoughtful questions about the new features or congratulate the team. Keep it authentic — no sales pitch.",
+    tweet_text: "We just shipped v2.0! New API with 10x faster response times, batch endpoints, and webhook support. Try it out →", // optional, skips server fetch
+    tweet_author: "myproduct", // optional, used with tweet_text
+  }),
+});
+
+const result = await res.json();
+
+if (result.success) {
+  console.log(`✅ Boosted! ${result.items_generated} community replies generated`);
+  console.log(`📊 Dashboard: ${result.campaign.url}`);
+  console.log(`💰 Credits remaining: ${result.credits.credits_remaining}`);
+}
+```
+
+### CLI
+
+```bash
+# Get community replies on your announcement tweet (support, questions, congrats)
+communiply boost https://x.com/myproduct/status/123 --action replies \
+  --guidelines "Congratulate the team, ask about new features, show excitement"
+
+# Get community likes on your tweet
+communiply boost https://x.com/myproduct/status/123 --action likes
+
+# Get community reposts to amplify reach
+communiply boost https://x.com/myproduct/status/123 --action reposts
+```
+
+---
+
+## Capability 2: Discover
+
+**Find relevant Twitter conversations and generate AI-powered replies at scale.**
+
+Use Discover when the user wants to proactively find and engage in conversations about their product's topic. This is a multi-step flow — more powerful than Boost, but requires more setup.
+
+### How It Works
+1. Define keywords and target audience
+2. AI discovers relevant conversations on Twitter
+3. AI generates contextual replies for each opportunity
+4. Community members claim replies and post from personal accounts
+5. Track results in real-time
+
+### Pricing
 
 | Operation | Credits |
 |-----------|---------|
-| Registration | +300 free |
-| Create campaign | 10 |
-| Research analysis | 0 (free) |
-| Discover + generate reply | 12/post |
-| Review post (AI relevancy) | 2/post |
-| Read posts/campaigns | 0 (free) |
-| Regenerate reply | 5/reply |
-| Boost (replies) | 200 |
-| Boost (likes/repost) | 300 |
+| Campaign creation | 10 |
+| Post discovery + reply generation | 12 per post |
+| Reply regeneration | 5 per reply |
+| Research analysis | Free |
 
-Top up via USDC on Base. Bundles range from nano ($2, 40 cr) to enterprise ($500, 14,000 cr). See **`references/FUNDING.md`** for details.
+### API Flow
 
-## Rate Limits
+**Step 1: Create campaign (10 credits)**
+```
+POST /api/v1/agents/campaigns
+```
 
-| Resource | Limit |
-|----------|-------|
-| Campaigns/day | 10 |
-| API calls/hour | 100 |
-| Delegates/campaign | 5 |
+```json
+{
+  "product_id": "product-uuid",
+  "title": "Launch Week Buzz",
+  "keywords": ["AI tools", "productivity apps", "workflow automation"],
+  "search_context": "People discussing AI productivity tools and looking for better solutions",
+  "mention_accounts": ["@myproduct"],
+  "reply_style_tags": ["friendly", "helpful"],
+  "reply_length": "short",
+  "reply_posted_by": "community",
+  "min_follower_count": 500,
+  "max_post_age_days": 7
+}
+```
 
-429 responses include `retry_after` timestamp.
+**Step 2 (optional): Run research (free)**
+```
+POST /api/v1/agents/campaigns/{id}/research
+```
+Expands keywords, discovers influencers, finds Twitter lists. Results are automatically used in Step 3.
 
-## Key Use Cases
+**Step 3: Generate posts (12 credits/post)**
+```
+POST /api/v1/agents/campaigns/{id}/generate-posts
+```
+Discovers relevant tweets and generates AI replies for each.
 
-1. **Launch campaigns with community rewards** — Boost launch tweets, community earns rewards for engagement. Export leaderboard to reward participants. Coming soon: full API support.
-2. **Competitor intercept** — Target "Looking for [competitor] alternatives" conversations.
-3. **Problem-based targeting** — Find people expressing pain points the product solves.
-4. **Brand amplification** — Third-party validation reinforces positive mentions.
-5. **Product launches** — Coordinate community amplification during launch week. Community responds on relevant posts mentioning the product.
+**Step 4 (optional): Review and refine**
+```
+GET  /api/v1/agents/campaigns/{id}/posts?include_replies=true
+POST /api/v1/agents/campaigns/{id}/regenerate-replies
+```
 
-## Campaign Best Practices
+### When to Use Discover
+- "Create a Twitter campaign" / "find relevant conversations"
+- "Monitor competitor mentions" / "intercept competitor conversations"
+- "Scale word-of-mouth" / "community-driven growth"
+- "Launch day amplification" — find conversations about the product category
+- User wants ongoing, proactive engagement (not one-off amplification)
 
-- **Specific keywords**: ["AI productivity tools", "automation software"] not ["AI", "tools"]
-- **Clear search context**: "People discussing challenges with project management" not "People talking about stuff"
-- **Set filters**: `min_follower_count` (default 100), `max_post_age_days`, `require_verified`
-- **Custom reply guidelines**: Brand voice instructions, key value propositions, do's and don'ts
-- **Share both URLs**: Admin dashboard (`/my-campaigns/communiply/{id}`) + public page (`/communiply/{id}`)
+### Use Cases
 
-## Troubleshooting
+**1. Launch Day Amplification**
+Create a campaign targeting conversations about new tools, launches, and your product category. Community claims AI-generated replies and posts from personal accounts — turning your launch into coordinated authentic buzz.
+Keywords: `["Product Hunt launch", "new AI tools", "Show HN", "just launched"]`
+Credits: ~250 for a 20-post campaign
 
-| Error | Fix |
-|-------|-----|
-| `insufficient_credits` (402) | Top up at `POST /agents/credits/topup` |
-| `not_found` (404) | Search products: `GET /agents/products/search?q=name` |
-| `unauthorized` (401) | Key must start with `pck_live_`. Rotate: `POST /agents/rotate-key` |
-| `rate_limit_exceeded` (429) | 10 campaigns/day. Contact ProductClank for more. |
+**2. Competitor Intercept**
+Target keywords like "[Competitor] alternative" or "switching from [Competitor]". Community members naturally recommend your product in those threads with authentic, experience-based replies.
+Keywords: `["Salesforce alternative", "switching from HubSpot", "better than Notion"]`
 
-## Skill Version Updates
+**3. Growth Campaign with Rewards**
+Create a Communiply campaign + fund it with credits. Community members browse available posts, claim reply opportunities, post from their accounts, and earn rewards for verified engagement. 60-80% lower CAC than traditional ads.
 
-API responses include `X-Skill-Version` header. Compare against `metadata.version` above. If newer, re-fetch from:
-`https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/SKILL.md`
+**4. Problem-Based Targeting**
+Find people expressing pain points your product solves. AI generates helpful, contextual replies that naturally mention your solution.
+Keywords: `["struggling with email marketing", "need a better CRM", "project management nightmare"]`
 
-## Additional Resources
+**5. Autonomous Growth Agent**
+Your agent monitors trending topics via external APIs, detects relevant conversations, and automatically creates Communiply campaigns. Users earn credits by participating, creating a self-sustaining growth flywheel.
+Architecture: `Cron job → Trend detection → POST /campaigns → POST /generate-posts → Community executes`
 
-### Reference Files
+### How to Run a Discover Campaign (Agent Interaction Guide)
 
-For detailed documentation, consult:
-- **`references/API_REFERENCE.md`** — Complete endpoint specification with request/response shapes for all 23 endpoints
-- **`references/EXAMPLES.md`** — Full code examples for common workflows
-- **`references/FUNDING.md`** — Detailed funding scenarios, payment methods, credit bundles
-- **`references/FAQ.md`** — Common questions and answers
+**Step 1: Gather requirements from the user.** Ask for:
+- **Product**: What product are you promoting? (Get `product_id` from ProductClank)
+- **Campaign goal**: What do you want to achieve? (e.g., "Launch week buzz", "Competitor intercept")
+- **Target keywords**: What topics should we monitor? (e.g., `["AI tools", "productivity apps"]`)
+- **Search context**: Describe the conversations to target (e.g., "People discussing AI productivity tools and automation")
 
-### Scripts
+**Optional refinements to ask about:**
+- **Who posts replies**: Brand (first-person: "We built this") or community (third-party: "Check out @brand")? Default: community
+- **Mention accounts**: Twitter handles to reference naturally (e.g., `["@productclank"]`)
+- **Reply style**: Tone tags (e.g., `["friendly", "technical", "casual"]`)
+- **Reply length**: "very-short" | "short" | "medium" | "long" | "mixed"
+- **Custom guidelines**: Specific instructions for AI reply generation (brand voice, do's and don'ts)
+- **Filters**: `min_follower_count` (default 100), `max_post_age_days`, `require_verified`
 
-- **`scripts/create-campaign.mjs`** — Create a Communiply campaign
-- **`scripts/boost-tweet.mjs`** — Boost a specific tweet
-- **`scripts/review-posts.mjs`** — AI-review posts
-- **`scripts/check-results.mjs`** — Poll campaign stats
+**Step 2: Confirm product selection** (see [Confirm Product Selection](#confirm-product-selection-required))
 
-### Links
+**Step 3: Create the campaign** — `POST /agents/campaigns`
 
-- **Campaign Dashboard**: [app.productclank.com/communiply/campaigns/](https://app.productclank.com/communiply/campaigns/)
-- **Twitter**: [@productclank](https://twitter.com/productclank)
-- **Warpcast**: [warpcast.com/productclank](https://warpcast.com/productclank)
+**Step 4: Run research (recommended, free)** — `POST /agents/campaigns/{id}/research`
+This expands keywords and finds influencers. Results are automatically used during post generation.
+
+**Step 5: Generate posts** — `POST /agents/campaigns/{id}/generate-posts`
+
+**Step 6: Share results with user:**
+- Campaign dashboard URL
+- Number of posts discovered and replies generated
+- Credits used and remaining
+- Next steps: community members will claim and execute replies
+
+### Custom Reply Guidelines
+
+Instead of auto-generated guidelines, provide custom instructions for more control:
+
+```json
+{
+  "reply_guidelines": "Reply as a developer who has used our product for 6+ months.\nFocus on: ease of integration, excellent documentation, responsive support.\nAvoid: marketing speak, over-promising, comparing to competitors directly.\nMention @productclank naturally when relevant.\nInclude our website (https://productclank.com) if it adds value."
+}
+```
+
+### Complete Discover Example
+
+```typescript
+// User says: "I want to create a Twitter campaign for my DeFi app launch"
+const API = "https://app.productclank.com/api/v1/agents";
+const headers = {
+  "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+  "Content-Type": "application/json",
+};
+
+// 1. Search for the product
+const search = await fetch(`${API}/products/search?q=MyDeFiApp&limit=5`, { headers });
+const { products } = await search.json();
+// → Confirm with user: "I found MyDeFiApp. Is this correct?"
+
+// 2. Create campaign (10 credits)
+const campaign = await fetch(`${API}/campaigns`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    product_id: products[0].id,
+    title: "DeFi App Launch Week",
+    keywords: ["DeFi platforms", "yield farming", "decentralized finance", "crypto staking"],
+    search_context: "People discussing DeFi platforms, yield farming strategies, and crypto staking opportunities",
+    mention_accounts: ["@mydefiapp"],
+    reply_style_tags: ["professional", "technical", "helpful"],
+    reply_length: "short",
+    min_follower_count: 1000,
+    max_post_age_days: 3,
+  }),
+}).then(r => r.json());
+
+console.log(`✅ Campaign created: ${campaign.campaign.campaign_number}`);
+console.log(`📊 Dashboard: ${campaign.campaign.url}`);
+
+// 3. Run research (free — improves targeting)
+await fetch(`${API}/campaigns/${campaign.campaign.id}/research`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ force: false }),
+}).then(r => r.json());
+
+// 4. Generate posts (12 credits/post)
+const posts = await fetch(`${API}/campaigns/${campaign.campaign.id}/generate-posts`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({}),
+}).then(r => r.json());
+
+console.log(`✅ Generated ${posts.posts_created} posts`);
+console.log(`💰 Credits used: ${campaign.credits.credits_used + posts.credits_used}`);
+console.log(`💰 Credits remaining: ${posts.credits_remaining}`);
+
+// 5. Optional: review and regenerate
+const postsData = await fetch(
+  `${API}/campaigns/${campaign.campaign.id}/posts?include_replies=true`,
+  { headers }
+).then(r => r.json());
+
+// Regenerate specific replies with new instructions
+await fetch(`${API}/campaigns/${campaign.campaign.id}/regenerate-replies`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    post_ids: [postsData.posts[0].id],
+    edit_request: "Make the replies shorter and more casual. Don't mention the product name directly.",
+  }),
+}).then(r => r.json());
+```
+
+### Required Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `product_id` | UUID | Product on ProductClank |
+| `title` | string | Campaign title |
+| `keywords` | string[] | Non-empty array of target keywords |
+| `search_context` | string | Description of target conversations |
+
+### Optional Fields
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `mention_accounts` | string[] | `[]` | Handles to mention naturally |
+| `reply_style_tags` | string[] | `[]` | Tone tags (friendly, technical, etc.) |
+| `reply_style_account` | string | — | Handle to mimic style |
+| `reply_length` | enum | — | very-short, short, medium, long, mixed |
+| `reply_posted_by` | enum | community | community or brand |
+| `reply_guidelines` | string | auto | Custom AI generation instructions |
+| `min_follower_count` | number | 100 | Min followers filter |
+| `min_engagement_count` | number | — | Min engagement filter |
+| `max_post_age_days` | number | — | Max post age filter |
+| `require_verified` | boolean | false | Verified accounts only |
+
+---
+
+## Choosing Between Boost and Discover
+
+| Question | Boost | Discover |
+|----------|-------|----------|
+| Do you have a tweet URL? | Yes — your own tweet you want community to engage with | No |
+| Time to value? | ~30 seconds | ~5 minutes |
+| Setup complexity? | 1 API call | 2-3 API calls |
+| Best for? | Rally community around your post (replies, likes, reposts) | Finding & joining new conversations about your topic |
+| Ongoing? | One-time per tweet | Can generate multiple batches |
+| Credits? | Fixed (200-300) | Variable (10 + 12/post) |
+
+**Rule of thumb:** If the user has a specific tweet they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover.
+
+---
+
+## Agent Setup
+
+### 1. Autonomous Agent (self-funded)
+
+```typescript
+// Self-register — no auth required
+const res = await fetch("https://app.productclank.com/api/v1/agents/register", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: "MyAgent" }),
+});
+const { api_key, credits } = await res.json();
+// → API key returned once (store securely)
+// → 300 free credits to start
+```
+
+Top up credits via USDC on Base:
+```
+POST /api/v1/agents/credits/topup
+```
+
+### 2. Owner-Linked Agent (user-funded)
+
+After registering, link to a ProductClank account:
+
+```typescript
+// Generate a linking URL
+const linkRes = await fetch("https://app.productclank.com/api/v1/agents/create-link", {
+  method: "POST",
+  headers: { "Authorization": `Bearer ${api_key}` },
+});
+const { link_url } = await linkRes.json();
+// Show link_url to user — they click it, log in, agent is linked
+```
+
+The agent then uses the user's credit balance for all operations.
+
+### 3. Trusted Agent (multi-tenant) — Coming Soon
+
+For platform agents serving multiple users. Each user authenticates, agent bills per-user via `caller_user_id`. Contact ProductClank for trusted agent status.
+
+---
+
+## Confirm Product Selection (REQUIRED)
+
+Before creating any campaign (Boost or Discover), you MUST confirm the product with the user:
+
+1. Search: `GET /api/v1/agents/products/search?q=<name>&limit=5`
+2. Present results: "I found **[Product Name]** (product_id: `...`). Is this correct?"
+3. Wait for confirmation before proceeding.
+
+Do NOT skip this step.
+
+---
+
+## Campaign Delegates
+
+Add users as delegators so they can manage campaigns in the webapp:
+
+```
+POST /api/v1/agents/campaigns/{id}/delegates
+{ "user_id": "user-uuid" }
+```
+
+When using `caller_user_id` (trusted agents), the billing user is auto-added as a delegator.
+
+---
+
+## Additional Endpoints
+
+| Endpoint | Method | Cost | Description |
+|----------|--------|------|-------------|
+| `/agents/register` | POST | Free | Register agent, get API key |
+| `/agents/me` | GET | Free | Agent profile + credit balance |
+| `/agents/create-link` | POST | Free | Generate account linking URL |
+| `/agents/rotate-key` | POST | Free | Rotate API key |
+| `/agents/campaigns` | GET | Free | List campaigns |
+| `/agents/campaigns/{id}` | GET | Free | Campaign details + stats |
+| `/agents/campaigns/{id}/posts` | GET | Free | Read posts + replies |
+| `/agents/campaigns/{id}/research` | GET | Free | Read cached research |
+| `/agents/credits/balance` | GET | Free | Credit balance |
+| `/agents/credits/history` | GET | Free | Transaction history |
+| `/agents/products/search` | GET | Free | Search products |
+
+For complete API reference, see [references/API_REFERENCE.md](references/API_REFERENCE.md).
+
+---
+
+## Best Practices
+
+### For Boost
+- Use `reply_guidelines` to control the tone and focus of generated replies
+- Boost works best on tweets less than 48 hours old
+- You can boost the same tweet multiple times with different action types
+
+### For Discover
+- **Be specific with keywords:** `["AI productivity tools"]` > `["AI"]`
+- **Use 3-7 keywords** for the best discovery quality
+- **Run research first** (free) — it significantly improves targeting
+- **Set `max_post_age_days`** to 3-7 for timely engagement
+- **Provide reply guidelines** with brand voice, key value props, and boundaries
+
+### General
+- Direct users to the dashboard after campaign creation: `https://app.productclank.com/communiply/{id}`
+- Add users as delegators so they can manage campaigns in the webapp
+- New accounts get 300 free credits (~$30 value)
+
+---
+
+## Error Handling
+
+| Status | Error | Fix |
+|--------|-------|-----|
+| 400 | `validation_error` | Check required fields |
+| 401 | `unauthorized` | Verify API key starts with `pck_live_` |
+| 402 | `insufficient_credits` | Top up via webapp or `/credits/topup` |
+| 403 | `forbidden` | Check campaign ownership or trusted agent status |
+| 404 | `not_found` | Verify product/campaign ID |
+| 429 | `rate_limit_exceeded` | Wait until next day (10 campaigns/day default) |
+
+---
+
+## Support
+
+- **Dashboard:** [app.productclank.com/communiply/](https://app.productclank.com/communiply/)
+- **Website:** [productclank.com](https://www.productclank.com)
+- **Twitter:** [@productclank](https://twitter.com/productclank)
+- **Warpcast:** [warpcast.com/productclank](https://warpcast.com/productclank)
+- **CLI:** [github.com/covariance-network/communiply-cli](https://github.com/covariance-network/communiply-cli)
