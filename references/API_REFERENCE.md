@@ -552,19 +552,32 @@ AI-powered review of discovered posts against custom relevancy rules. Scores eac
 
 ## POST /api/v1/agents/campaigns/boost
 
-Rally your community to engage with a specific tweet — replies (support, questions, congrats), likes, or reposts. **Cost: 200-300 credits.**
+Rally your community to engage with a specific social post — replies, likes, or reposts. Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, and Farcaster. **Cost: 200-300 credits.**
 
 ### Request Body
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `tweet_url` | string | Yes | Full tweet URL (x.com or twitter.com) |
+| `post_url` | string | Yes | Post URL from any supported platform. Platform is auto-detected. |
 | `product_id` | string (UUID) | Yes | Product to associate |
-| `action_type` | string | No | "replies" (default) \| "likes" \| "repost" |
-| `reply_guidelines` | string | No | Custom AI instructions for community replies (e.g., "Congratulate the team, ask about new features") |
-| `tweet_text` | string | No | Tweet text — skips server-side fetch (useful when Twitter API is unavailable) |
-| `tweet_author` | string | No | Tweet author username (used with `tweet_text` for fallback) |
+| `action_type` | string | No | "replies" (default) \| "likes" \| "repost" — availability varies by platform |
+| `reply_guidelines` | string | No | Custom AI instructions for community replies |
+| `post_text` | string | No | Post text — skips server-side fetch (recommended for non-Twitter platforms) |
+| `post_author` | string | No | Post author username (used with `post_text`) |
 | `caller_user_id` | string | No | Trusted agents only |
+
+> **Backward compatibility:** `tweet_url`, `tweet_text`, and `tweet_author` are still accepted as aliases.
+
+### Supported Platforms & Actions
+
+| Platform | URL Pattern | Replies | Likes | Reposts |
+|----------|-------------|---------|-------|---------|
+| Twitter/X | `x.com/*/status/*` or `twitter.com/*/status/*` | Yes | Yes | Yes |
+| Instagram | `instagram.com/p/*` or `instagram.com/reel/*` | Yes | Yes | — |
+| TikTok | `tiktok.com/@*/video/*` | Yes | Yes | — |
+| LinkedIn | `linkedin.com/posts/*` | Yes | Yes | — |
+| Reddit | `reddit.com/r/*/comments/*` | Yes | Yes | — |
+| Farcaster | `warpcast.com/*/0x*` | Yes | Yes | Yes |
 
 ### Credit Costs
 
@@ -582,17 +595,20 @@ Rally your community to engage with a specific tweet — replies (support, quest
   "campaign": {
     "id": "uuid",
     "campaign_number": "CP-043",
+    "platform": "twitter",
     "action_type": "replies",
     "is_reboost": false,
     "url": "https://app.productclank.com/communiply/uuid",
     "admin_url": "https://app.productclank.com/my-campaigns/communiply/uuid"
   },
-  "tweet": {
+  "post": {
     "id": "123456789",
     "url": "https://x.com/user/status/123456789",
-    "text": "Tweet content...",
-    "author": "username"
+    "text": "Post content...",
+    "author": "username",
+    "platform": "twitter"
   },
+  "tweet": { ... },
   "items_generated": 10,
   "credits": {
     "credits_used": 200,
@@ -601,27 +617,23 @@ Rally your community to engage with a specific tweet — replies (support, quest
 }
 ```
 
-Re-boosting the same tweet regenerates fresh content without duplicating existing replies.
+> The `tweet` field is kept for backward compatibility. New integrations should use `post`.
 
-**Tweet text resolution order:**
-1. Client-provided `tweet_text` (skips fetch entirely)
-2. Server-side fetch via Twitter oEmbed/API
-3. URL-derived fallback (empty text — only works for likes/reposts)
+Re-boosting the same post regenerates fresh content without duplicating existing replies.
 
-For replies, tweet text is required for AI generation. If the server can't fetch the tweet and no `tweet_text` was provided, returns `503`.
+**Post text resolution order:**
+1. Client-provided `post_text` (skips fetch — recommended for non-Twitter platforms)
+2. Server-side fetch via platform API (Twitter oEmbed, TikTok oEmbed, Reddit JSON, Neynar, etc.)
+3. Fallback (empty text — only works for likes/reposts)
 
-**Also available via CLI:**
-```bash
-communiply boost https://x.com/myproduct/status/123 --action replies \
-  --guidelines "Congratulate the team, ask about new features"
-```
+For replies, post text is required for AI generation. If the server can't fetch content and no `post_text` was provided, returns `503`.
 
 ### Error Codes
-- `400` — Missing tweet_url or product_id
+- `400` — Missing post_url/product_id, or unsupported platform URL
 - `402` — Insufficient credits
 - `404` — Product not found
 - `429` — Rate limit exceeded
-- `503` — Tweet text unavailable (replies only) — pass `tweet_text` or retry
+- `503` — Post text unavailable (replies only) — pass `post_text` or retry
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: productclank-campaigns
-description: Two capabilities for Twitter/X growth — Boost (amplify a specific tweet with community engagement) and Discover (find relevant conversations and generate AI-powered replies at scale). Use Boost when the user has a tweet URL. Use Discover when the user wants to find and engage in conversations about their product.
+description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product.
 license: Proprietary
 metadata:
   author: ProductClank
@@ -12,21 +12,35 @@ metadata:
 compatibility: Requires ProductClank credits. Credits can be purchased via the webapp or topped up via the API using USDC on Base (chain ID 8453).
 ---
 
-# ProductClank — Twitter/X Growth for Builders
+# ProductClank — Community-Powered Growth for Builders
 
-Two capabilities for growing your product on Twitter/X through authentic community engagement.
+Turn your community into a growth engine. Launch campaigns where real people amplify your product across social platforms — authentic engagement, not bots.
+
+Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, and Farcaster.
 
 ## Capability 1: Boost
 
-**Amplify a specific tweet with community-powered engagement.**
+**Amplify a specific social post with community-powered engagement.**
 
-Use Boost when the user has a tweet URL they want to amplify. One API call, instant results.
+Use Boost when the user has a post URL they want to amplify. One API call, instant results. Works across platforms — just pass the URL.
+
+### Supported Platforms
+
+| Platform | Replies | Likes | Reposts |
+|----------|---------|-------|---------|
+| Twitter/X | Yes | Yes | Yes |
+| Instagram | Yes | Yes | — |
+| TikTok | Yes | Yes | — |
+| LinkedIn | Yes | Yes | — |
+| Reddit | Yes | Yes | — |
+| Farcaster | Yes | Yes | Yes |
 
 ### How It Works
-1. Provide a tweet URL
-2. Choose action: replies, likes, or reposts
-3. Community members execute from their personal accounts
-4. You get authentic, third-party engagement
+1. Provide a post URL from any supported platform
+2. Platform is auto-detected from the URL
+3. Choose action: replies, likes, or reposts (availability varies by platform)
+4. Community members execute from their personal accounts
+5. You get authentic, third-party engagement
 
 ### Pricing
 
@@ -44,14 +58,16 @@ POST /api/v1/agents/campaigns/boost
 
 ```json
 {
-  "tweet_url": "https://x.com/user/status/123456",
+  "post_url": "https://x.com/user/status/123456",
   "product_id": "product-uuid",
   "action_type": "replies",
   "reply_guidelines": "optional custom instructions",
-  "tweet_text": "optional — pass tweet text to skip server-side fetch",
-  "tweet_author": "optional — tweet author username (used with tweet_text)"
+  "post_text": "optional — pass post text to skip server-side fetch",
+  "post_author": "optional — post author username (used with post_text)"
 }
 ```
+
+> `tweet_url`, `tweet_text`, and `tweet_author` are still accepted for backward compatibility.
 
 **Response:**
 ```json
@@ -60,10 +76,17 @@ POST /api/v1/agents/campaigns/boost
   "campaign": {
     "id": "uuid",
     "campaign_number": "CP-042",
+    "platform": "twitter",
     "url": "https://app.productclank.com/communiply/uuid"
   },
+  "post": {
+    "id": "123456789",
+    "url": "https://x.com/user/status/123456789",
+    "text": "Post content...",
+    "author": "username",
+    "platform": "twitter"
+  },
   "items_generated": 10,
-  "is_reboost": false,
   "credits": {
     "credits_used": 200,
     "credits_remaining": 100
@@ -74,16 +97,16 @@ POST /api/v1/agents/campaigns/boost
 **Consolidation:** All boost actions for the same product share one campaign. Boosting again adds to the existing campaign (`is_reboost: true`).
 
 ### When to Use Boost
-- "Get my community to reply to my tweet" / "boost this post"
-- "Get support and engagement on my announcement"
-- "Get likes on my tweet" / "get reposts"
-- User shares their own tweet URL and wants community engagement (replies, likes, reposts)
-- Launch announcements, product updates, partnership posts — any tweet you want your community to rally behind
+- "Boost this post" / "get engagement on my announcement"
+- "Get community replies on my LinkedIn post"
+- "Get likes on my tweet" / "get reposts on my cast"
+- User shares a post URL from any platform and wants community engagement
+- Launch announcements, product updates, partnership posts — any post you want your community to rally behind
 
 ### How to Run a Boost (Agent Interaction Guide)
 
-1. **Get the tweet URL** — ask the user for their tweet URL (the post they want community to engage with)
-2. **Choose action type** — ask: "How should the community engage? Replies (support, questions, congrats), likes, or reposts?" Default to replies if unclear
+1. **Get the post URL** — ask the user for their post URL (the post they want community to engage with). Any supported platform works.
+2. **Choose action type** — ask: "How should the community engage? Replies (support, questions, congrats), likes, or reposts?" Default to replies if unclear. Note: reposts only available on Twitter and Farcaster.
 3. **Find the product** — search `GET /agents/products/search?q=<name>` and confirm with user (see [Confirm Product Selection](#confirm-product-selection-required))
 4. **Get reply guidelines** (for replies) — ask what kind of engagement they want: "Should community replies congratulate the team? Ask about features? Show excitement?" Use this to set `reply_guidelines`
 5. **Confirm cost** — "This will use 200 credits for 10 community replies. Proceed?"
@@ -93,7 +116,7 @@ POST /api/v1/agents/campaigns/boost
 ### Complete Boost Example
 
 ```typescript
-// User says: "Get my community to engage with my latest announcement tweet"
+// User says: "Get my community to engage with my latest announcement"
 const API = "https://app.productclank.com/api/v1/agents";
 const headers = {
   "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
@@ -105,42 +128,63 @@ const search = await fetch(`${API}/products/search?q=MyProduct&limit=5`, { heade
 const { products } = await search.json();
 // → Confirm with user: "I found MyProduct. Is this correct?"
 
-// 2. Boost the tweet — community members will reply showing support, asking questions, congratulating, etc.
+// 2. Boost a Twitter post
 const res = await fetch(`${API}/campaigns/boost`, {
   method: "POST",
   headers,
   body: JSON.stringify({
-    tweet_url: "https://x.com/myproduct/status/123456789",
+    post_url: "https://x.com/myproduct/status/123456789",
     product_id: products[0].id,
     action_type: "replies",
     reply_guidelines: "Show genuine excitement about the launch. Ask thoughtful questions about the new features or congratulate the team. Keep it authentic — no sales pitch.",
-    tweet_text: "We just shipped v2.0! New API with 10x faster response times, batch endpoints, and webhook support. Try it out →", // optional, skips server fetch
-    tweet_author: "myproduct", // optional, used with tweet_text
+    post_text: "We just shipped v2.0! New API with 10x faster response times, batch endpoints, and webhook support. Try it out →", // optional, skips server fetch
+    post_author: "myproduct", // optional, used with post_text
   }),
 });
 
 const result = await res.json();
 
 if (result.success) {
-  console.log(`✅ Boosted! ${result.items_generated} community replies generated`);
+  console.log(`✅ Boosted on ${result.campaign.platform}! ${result.items_generated} community replies generated`);
   console.log(`📊 Dashboard: ${result.campaign.url}`);
   console.log(`💰 Credits remaining: ${result.credits.credits_remaining}`);
 }
+
+// 3. Works with any platform — just change the URL
+await fetch(`${API}/campaigns/boost`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    post_url: "https://www.linkedin.com/posts/myproduct-launch-update-123",
+    product_id: products[0].id,
+    action_type: "replies",
+    post_text: "Excited to announce our Series A! ...", // recommended for non-Twitter platforms
+  }),
+});
 ```
 
 ### CLI
 
 ```bash
-# Get community replies on your announcement tweet (support, questions, congrats)
+# Boost a Twitter post
 communiply boost https://x.com/myproduct/status/123 --action replies \
   --guidelines "Congratulate the team, ask about new features, show excitement"
 
-# Get community likes on your tweet
-communiply boost https://x.com/myproduct/status/123 --action likes
+# Boost a LinkedIn post
+communiply boost https://linkedin.com/posts/myproduct-update-123 --action likes
 
-# Get community reposts to amplify reach
-communiply boost https://x.com/myproduct/status/123 --action reposts
+# Boost a TikTok video
+communiply boost https://tiktok.com/@myproduct/video/123 --action replies
+
+# Boost a Farcaster cast
+communiply boost https://warpcast.com/myproduct/0xabc123 --action reposts
 ```
+
+### Post Text Resolution
+For **replies**, post text is required for AI generation. Resolution order:
+1. Client-provided `post_text` (skips fetch — recommended for non-Twitter platforms)
+2. Server-side fetch via platform API (Twitter oEmbed, TikTok oEmbed, Reddit JSON, etc.)
+3. If text unavailable, returns `503` for replies. Likes/reposts work without text.
 
 ---
 
@@ -374,14 +418,15 @@ await fetch(`${API}/campaigns/${campaign.campaign.id}/regenerate-replies`, {
 
 | Question | Boost | Discover |
 |----------|-------|----------|
-| Do you have a tweet URL? | Yes — your own tweet you want community to engage with | No |
+| Do you have a post URL? | Yes — your own post you want community to engage with | No |
+| Platforms? | Twitter, Instagram, TikTok, LinkedIn, Reddit, Farcaster | Twitter only |
 | Time to value? | ~30 seconds | ~5 minutes |
 | Setup complexity? | 1 API call | 2-3 API calls |
 | Best for? | Rally community around your post (replies, likes, reposts) | Finding & joining new conversations about your topic |
-| Ongoing? | One-time per tweet | Can generate multiple batches |
+| Ongoing? | One-time per post | Can generate multiple batches |
 | Credits? | Fixed (200-300) | Variable (10 + 12/post) |
 
-**Rule of thumb:** If the user has a specific tweet they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover.
+**Rule of thumb:** If the user has a specific post they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover.
 
 ---
 
@@ -477,8 +522,10 @@ For complete API reference, see [references/API_REFERENCE.md](references/API_REF
 
 ### For Boost
 - Use `reply_guidelines` to control the tone and focus of generated replies
-- Boost works best on tweets less than 48 hours old
-- You can boost the same tweet multiple times with different action types
+- Boost works best on posts less than 48 hours old
+- You can boost the same post multiple times with different action types
+- For non-Twitter platforms, pass `post_text` to ensure reliable reply generation
+- AI replies are automatically tuned to each platform's character limits and tone conventions
 
 ### For Discover
 - **Be specific with keywords:** `["AI productivity tools"]` > `["AI"]`
@@ -504,6 +551,12 @@ For complete API reference, see [references/API_REFERENCE.md](references/API_REF
 | 403 | `forbidden` | Check campaign ownership or trusted agent status |
 | 404 | `not_found` | Verify product/campaign ID |
 | 429 | `rate_limit_exceeded` | Wait until next day (10 campaigns/day default) |
+
+---
+
+## Coming Soon
+
+**Growth Boost** — Community members create original content based on your campaign brief. Define your goals, target audience, and messaging — your community produces authentic posts, threads, and videos across any platform. API coming soon.
 
 ---
 
