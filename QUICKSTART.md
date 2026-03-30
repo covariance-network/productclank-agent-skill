@@ -20,30 +20,28 @@ This guide covers **Tier 1** (Quick Launch). See [SKILL.md](./SKILL.md) for Tier
 
 ### 1. ProductClank Account (Free)
 - Register via API (Step 1 below) or at [app.productclank.com](https://app.productclank.com)
-- **Get 300 free credits instantly** (enough for ~24 posts)
-- No payment needed to start
+- Top up credits via the [webapp](https://app.productclank.com/credits/purchase) (credit card or crypto) or x402
 
 ### 2. Product to Promote
 - Create at: [app.productclank.com/products](https://app.productclank.com/products)
 - Or search existing: `GET /api/v1/agents/products/search?q=name`
 
-### 3. Payment Method (Only When Free Credits Run Out)
+### 3. Payment Method (Required for campaigns)
 
-**Option A: Crypto Wallet (Easiest for Agents)**
+**Option A: Credit Card (Easiest)**
+- Top up via [webapp](https://app.productclank.com/credits/purchase) — no crypto needed
+
+**Option B: Crypto Wallet with x402 (Best for Agents)**
 - Need: Wallet with USDC on Base blockchain
 - Why: Automated x402 protocol payments
 - Network: Base (Coinbase's Layer 2, chain ID 8453)
 - Token: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
 
-**Option B: Any Crypto Wallet**
+**Option C: Direct USDC Transfer**
 - Send USDC manually → submit tx hash
 - No special wallet required
 
-**Option C: Credit Card** *(coming soon)*
-- Top up via webapp dashboard
-- No crypto needed
-
-**Don't have crypto?** Use your 300 free credits to test everything first. By the time you need more, you'll know if this is worth investing in.
+**Starting small?** The nano bundle ($2, 40 credits) is enough to test the API with a few posts.
 
 ---
 
@@ -53,14 +51,14 @@ Before running your first campaign, verify:
 
 **Test your setup:**
 ```bash
-# This should return your 300 free credits
+# Check your credit balance
 curl https://api.productclank.com/api/v1/agents/credits/balance \
   -H "Authorization: Bearer pck_live_YOUR_API_KEY"
 ```
 
 **Expected:**
 ```json
-{"success": true, "balance": 300, ...}
+{"success": true, "balance": 0, ...}
 ```
 
 **If this works, you're ready!**
@@ -71,7 +69,8 @@ curl https://api.productclank.com/api/v1/agents/credits/balance \
 - Other error → See [Common Mistakes](#-common-mistakes) below
 
 **Checkpoint questions:**
-- [ ] API Key works? (balance check returned 300)
+- [ ] API Key works? (balance check returned successfully)
+- [ ] Credits topped up? (see [Credit Bundles](README.md#credit-bundles-usdc-on-base))
 - [ ] Product exists? (search returned your product UUID)
 - [ ] Know your budget? (see [Cost Calculator](README.md#-campaign-cost-estimator))
 
@@ -113,7 +112,7 @@ For the full **Discover** flow (find conversations, generate replies at scale), 
 
 ## Step 1: Register Your Agent (30 seconds)
 
-Self-register to get an API key and **300 free credits** (enough for ~24 posts or 1 boost):
+Self-register to get an API key:
 
 ```bash
 curl -X POST https://api.productclank.com/api/v1/agents/register \
@@ -137,7 +136,7 @@ curl -X POST https://api.productclank.com/api/v1/agents/register \
   },
   "api_key": "pck_live_abc123...",
   "credits": {
-    "balance": 300,
+    "balance": 0,
     "plan": "free"
   },
   "_warning": "Store this API key securely. It will not be shown again."
@@ -187,7 +186,7 @@ Copy the `id` — you'll need it for campaign creation.
 
 ## Step 3: Check Your Credit Balance (15 seconds)
 
-Verify your API key works and see your free credits:
+Verify your API key works and check your balance:
 
 ```bash
 curl https://api.productclank.com/api/v1/agents/credits/balance \
@@ -198,18 +197,18 @@ curl https://api.productclank.com/api/v1/agents/credits/balance \
 ```json
 {
   "success": true,
-  "balance": 300,
+  "balance": 0,
   "plan": "free",
   "lifetime_purchased": 0,
   "lifetime_used": 0,
-  "lifetime_bonus": 300
+  "lifetime_bonus": 0
 }
 ```
 
-✅ **Success:** You see `balance: 300` from your free signup credits  
+✅ **Success:** Balance check returned — your API key works.
 ❌ **Error:** Check your API key is correct (starts with `pck_live_`)
 
-> **300 free credits** = ~24 posts (10 credits for campaign creation + 12 credits per post). Enough to run a real test campaign.
+> **Next step:** Top up credits before creating a campaign. The nano bundle ($2, 40 credits) covers ~3 posts — enough for a quick test.
 
 ---
 
@@ -402,9 +401,9 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 **Problem:** Key is shown once and cannot be retrieved  
 **Fix:** Save the `api_key` from the registration response immediately. If lost, use `POST /api/v1/agents/rotate-key` to get a new one.
 
-### ❌ Trying to boost before free credits run out
-**Problem:** 402 error even with credits  
-**Fix:** Tweet boost costs 200-300 credits. Check balance first (`GET /credits/balance`). Free 300 credits cover only ONE boost OR multiple Communiply posts.
+### ❌ Trying to boost without enough credits
+**Problem:** 402 error
+**Fix:** Tweet boost costs 200-300 credits. Check balance first (`GET /credits/balance`). Top up via the [webapp](https://app.productclank.com/credits/purchase) or x402 if needed.
 
 ### ❌ Passing product name instead of product UUID
 **Error:** "Product not found"  
@@ -424,7 +423,7 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 
 | Operation | Credits | Notes |
 |-----------|---------|-------|
-| **Registration** | +300 free | One-time signup bonus |
+| **Registration** | Free | Creates account (no credits included) |
 | **Create campaign** | 10 | Deducted at campaign creation |
 | **Discover post + generate reply** | 12 | Deducted at generate-posts |
 | **Generate reply only** | 8 | For pre-supplied posts |
@@ -436,7 +435,7 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 
 | Bundle | Price | Credits | Rate | Posts (~12 cr/post) | Best For |
 |--------|-------|---------|------|---------------------|----------|
-| **nano** | $2 | 40 | 20 cr/$ | ~3 posts | **Extending free credits** |
+| **nano** | $2 | 40 | 20 cr/$ | ~3 posts | **Quick test** |
 | micro | $10 | 200 | 20 cr/$ | ~16 posts | Small test campaign |
 | small | $25 | 550 | 22 cr/$ | ~45 posts | Product launch |
 | medium | $50 | 1,200 | 24 cr/$ | ~100 posts | Medium campaign |
@@ -445,7 +444,7 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=5" \
 
 ---
 
-## Buy More Credits (When Free Credits Run Out)
+## Buy Credits
 
 **Two scenarios for funding:**
 

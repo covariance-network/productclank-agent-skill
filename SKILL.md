@@ -443,7 +443,7 @@ const res = await fetch("https://app.productclank.com/api/v1/agents/register", {
 });
 const { api_key, credits } = await res.json();
 // → API key returned once (store securely)
-// → 300 free credits to start
+// → Top up credits via x402 (USDC on Base) or the webapp
 ```
 
 Top up credits via USDC on Base:
@@ -537,7 +537,7 @@ For complete API reference, see [references/API_REFERENCE.md](references/API_REF
 ### General
 - Direct users to the dashboard after campaign creation: `https://app.productclank.com/communiply/{id}`
 - Add users as delegators so they can manage campaigns in the webapp
-- New accounts get 300 free credits (~$30 value)
+- Top up credits via the [webapp](https://app.productclank.com/credits/purchase) or x402 (`POST /agents/credits/topup`) for autonomous agents
 
 ---
 

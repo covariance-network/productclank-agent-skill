@@ -38,7 +38,7 @@ What do you want to do?
 
 ## 💰 Campaign Cost Estimator
 
-**Your 300 free credits can run:**
+**Example credit costs:**
 
 | Campaign Type | Credits Needed | Posts Generated | Best For |
 |---------------|----------------|----------------|----------|
@@ -53,9 +53,9 @@ What do you want to do?
 - Campaign creation: 10 credits
 - Discover + generate 20 posts: 20 × 12 = 240 credits
 - Review 20 posts (optional): 20 × 2 = 40 credits
-- **Total: 290 credits** ← Fits in free tier!
+- **Total: 290 credits**
 
-**Need more?** See [Credit Bundles](#credit-bundles-usdc-on-base) below.
+Top up credits via the [webapp](https://app.productclank.com/credits/purchase) or x402 (USDC on Base). See [Credit Bundles](#credit-bundles-usdc-on-base) below.
 
 ---
 
@@ -161,7 +161,7 @@ curl -X POST https://api.productclank.com/api/v1/agents/register \
   -d '{"name": "MyAgent"}'
 ```
 
-Returns your API key instantly (shown once — store securely) + **300 free credits**.
+Returns your API key instantly (shown once — store securely). Top up credits via the [webapp](https://app.productclank.com/credits/purchase) or x402.
 
 All agents start as **autonomous** (self-funded). To use your existing ProductClank credits instead, link the agent to your account:
 
@@ -204,7 +204,7 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns/CAMPAIGN_ID/ge
   -H "Authorization: Bearer pck_live_YOUR_KEY"
 ```
 
-### 5. Buy More Credits (When Free Credits Run Out)
+### 5. Buy Credits
 
 **Two funding scenarios:**
 
@@ -296,7 +296,7 @@ communiply-cli/                    # CLI Tool (for developers)
 ### Registration, Identity & Linking
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/agents/register` | Self-register, get API key + 300 free credits |
+| POST | `/agents/register` | Self-register, get API key |
 | POST | `/agents/create-link` | Generate a linking URL for owner-linking |
 | GET | `/agents/me` | View agent profile & rate limits |
 | POST | `/agents/rotate-key` | Rotate API key |
@@ -327,8 +327,8 @@ communiply-cli/                    # CLI Tool (for developers)
 
 ## Credit System
 
-### Free Credits
-Every new agent gets **300 free credits** on registration — no payment needed to start.
+### Getting Credits
+Top up credits via the [webapp](https://app.productclank.com/credits/purchase) (credit card or crypto) or USDC on Base via x402 (`POST /agents/credits/topup`).
 
 ### Credit Costs
 
@@ -344,7 +344,7 @@ Every new agent gets **300 free credits** on registration — no payment needed 
 
 | Bundle | Price | Credits | Rate | ~Posts | Best For |
 |--------|-------|---------|------|--------|----------|
-| **nano** | $2 | 40 | 20 cr/$ | ~3 | Extending free tier |
+| **nano** | $2 | 40 | 20 cr/$ | ~3 | Quick test |
 | micro | $10 | 200 | 20 cr/$ | ~16 | Small test campaign |
 | small | $25 | 550 | 22 cr/$ | ~45 | Product launch |
 | medium | $50 | 1,200 | 24 cr/$ | ~100 | Medium campaign |
@@ -482,10 +482,10 @@ if (skillMeta !== cachedVersion) {
 ## FAQ
 
 **Q: Do I need to contact anyone to get an API key?**
-A: No! Self-register via `POST /api/v1/agents/register`. API key + 300 free credits are provided instantly.
+A: No! Self-register via `POST /api/v1/agents/register`. API key is provided instantly. Then top up credits via the [webapp](https://app.productclank.com/credits/purchase) or x402.
 
 **Q: Do I need USDC to start?**
-A: No. Registration includes 300 free credits — enough for ~24 posts. Buy more when you run out.
+A: You need credits to run campaigns. Top up via the [webapp](https://app.productclank.com/credits/purchase) (credit card — no crypto needed) or USDC on Base. The nano bundle ($2, 40 credits) is enough for a quick test.
 
 **Q: What happens after a campaign is created?**
 A: Share the admin dashboard URL (`/my-campaigns/communiply/{id}`) with the campaign owner and the public URL (`/communiply/{id}`) with community participants. Then call `POST /api/v1/agents/campaigns/{id}/generate-posts` to trigger Twitter discovery and reply generation (12 credits/post). Optionally use `review-posts` to AI-filter irrelevant results (2 credits/post).
@@ -503,7 +503,7 @@ A: Use `POST /api/v1/agents/rotate-key` with your current key to generate a new 
 A: Yes, via the admin dashboard at `https://app.productclank.com/my-campaigns/communiply/{campaign_id}`
 
 **Q: Is there a test environment?**
-A: No separate test API — use the 300 free credits from registration to test on production.
+A: No separate test API — use the production API with a small credit top-up (nano bundle: $2 for 40 credits).
 
 **Q: What's the difference between autonomous and owner-linked agents?**
 A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI.
