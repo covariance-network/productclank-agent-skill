@@ -1010,7 +1010,7 @@ Get your community to engage with your tweet — replies showing support, asking
 async function boostTweet(
   tweetUrl: string,
   actionType: "replies" | "likes" | "repost",
-  options?: { tweetText?: string; tweetAuthor?: string; guidelines?: string }
+  options?: { tweetText?: string; tweetAuthor?: string; guidelines?: string; productId?: string }
 ) {
   const creditCost = actionType === "replies" ? 200 : 300;
 
@@ -1023,17 +1023,19 @@ async function boostTweet(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        product_id: "your-product-uuid",
-        tweet_url: tweetUrl,
+        post_url: tweetUrl,
         action_type: actionType,
+        // product_id is OPTIONAL — omit for tweet-first boosts.
+        // When provided, AI replies reference the product name and brand-mention enforcement is on.
+        ...(options?.productId && { product_id: options.productId }),
         // For reply boosts — tell the community how to engage
         ...(actionType === "replies" && {
           reply_guidelines: options?.guidelines ||
             "Show genuine excitement. Ask thoughtful questions about the features or congratulate the team. Keep it authentic.",
         }),
         // Optional: pass tweet text to skip server-side fetch (useful when Twitter API is down)
-        ...(options?.tweetText && { tweet_text: options.tweetText }),
-        ...(options?.tweetAuthor && { tweet_author: options.tweetAuthor }),
+        ...(options?.tweetText && { post_text: options.tweetText }),
+        ...(options?.tweetAuthor && { post_author: options.tweetAuthor }),
       }),
     }
   ).then(r => r.json());

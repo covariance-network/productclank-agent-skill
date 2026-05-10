@@ -559,7 +559,7 @@ Rally your community to engage with a specific social post — replies, likes, o
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `post_url` | string | Yes | Post URL from any supported platform. Platform is auto-detected. |
-| `product_id` | string (UUID) | Yes | Product to associate |
+| `product_id` | string (UUID) | No | Optional product to associate. If omitted, AI replies use generic amplification language ("this post") and brand-mention enforcement is skipped. |
 | `action_type` | string | No | "replies" (default) \| "likes" \| "repost" — availability varies by platform |
 | `reply_guidelines` | string | No | Custom AI instructions for community replies |
 | `post_text` | string | No | Post text — skips server-side fetch (recommended for non-Twitter platforms) |
@@ -629,9 +629,9 @@ Re-boosting the same post regenerates fresh content without duplicating existing
 For replies, post text is required for AI generation. If the server can't fetch content and no `post_text` was provided, returns `503`.
 
 ### Error Codes
-- `400` — Missing post_url/product_id, or unsupported platform URL
+- `400` — Missing `post_url`, or unsupported platform URL
 - `402` — Insufficient credits
-- `404` — Product not found
+- `404` — Product not found (only when `product_id` is provided and doesn't match an existing product)
 - `429` — Rate limit exceeded
 - `503` — Post text unavailable (replies only) — pass `post_text` or retry
 

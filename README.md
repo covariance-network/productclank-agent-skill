@@ -113,6 +113,7 @@ See [SKILL.md](SKILL.md) for complete documentation.
 | **Community action** | Reply to others' conversations | Reply/like/repost your post |
 | **Timeline** | Ongoing campaign | One-shot action |
 | **Best for** | Competitor intercept, problem targeting | Launch announcements, product updates |
+| **`product_id`** | Required | Optional (tweet-first; link a product to enable brand-mention enforcement) |
 | **CLI** | Coming soon | `communiply boost <url>` |
 
 **When to use Discover:**

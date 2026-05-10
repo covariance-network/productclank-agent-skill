@@ -5,6 +5,18 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-05-10
+
+### Changed - Boost `product_id` is now optional
+- **`product_id` is no longer required for `POST /agents/campaigns/boost`** — matches the webapp behavior, which already supports tweet-first boosts without a linked product. When omitted, AI reply generation falls back to generic amplification language (`"this post"` instead of the product name) and brand-mention enforcement is skipped.
+- Updated SKILL.md Boost section, interaction guide step 3, request-body schema, and the second code example to demonstrate the no-product flow.
+- Renamed the "Confirm Product Selection (REQUIRED)" section to "Confirm Product Selection" and clarified: required for Discover, optional for Boost.
+- Updated `references/API_REFERENCE.md` boost request-body table (`product_id` → `Required: No`) and error codes (`400` no longer fires when `product_id` is missing; `404 Product not found` only applies when `product_id` is provided).
+- Updated `QUICKSTART.md` Boost-via-API curl example to omit `product_id` and clarified that the prerequisite product is only required for Discover.
+- Updated `README.md` campaign-types comparison table with a `product_id` row.
+- Added FAQ entry: "Do I need a product on ProductClank to launch a Boost?"
+- Discover/Communiply standard campaigns (`POST /agents/campaigns`) continue to require `product_id` — unchanged.
+
 ## [3.1.0] - 2026-03-16
 
 ### Added - CLI Tool & Community Framing
