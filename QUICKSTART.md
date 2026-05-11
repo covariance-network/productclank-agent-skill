@@ -23,8 +23,8 @@ This guide covers **Tier 1** (Quick Launch). See [SKILL.md](./SKILL.md) for Tier
 - Top up credits via the [webapp](https://app.productclank.com/credits/purchase) (credit card or crypto) or x402
 
 ### 2. Product to Promote
-- Create at: [app.productclank.com/products](https://app.productclank.com/products)
-- Or search existing: `GET /api/v1/agents/products/search?q=name`
+- **Required for Discover campaigns** — create at [app.productclank.com/products](https://app.productclank.com/products) or search existing via `GET /api/v1/agents/products/search?q=name`
+- **Optional for Boost campaigns** — boosts run fine without a `product_id` (tweet-first amplification). Link a product if you want AI replies to reference the product name and enforce brand mentions.
 
 ### 3. Payment Method (Required for campaigns)
 
@@ -93,17 +93,19 @@ communiply boost https://x.com/myproduct/status/123 --action replies \
 
 **Fastest path — Boost via API:**
 ```bash
-# After registration (Steps 1-3), skip to:
+# After registration (Step 1 alone is enough — product_id is optional for Boost):
 curl -X POST https://api.productclank.com/api/v1/agents/campaigns/boost \
   -H "Authorization: Bearer pck_live_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "tweet_url": "https://x.com/myproduct/status/123",
-    "product_id": "YOUR_PRODUCT_UUID",
+    "post_url": "https://x.com/myproduct/status/123",
     "action_type": "replies",
     "reply_guidelines": "Show excitement, ask about the new features",
-    "tweet_text": "We just shipped v2.0! 10x faster response times."
+    "post_text": "We just shipped v2.0! 10x faster response times."
   }'
+
+# Optional: link the boost to a ProductClank product by adding "product_id": "YOUR_PRODUCT_UUID"
+# (then AI replies will reference the product name and enforce brand mentions).
 ```
 
 For the full **Discover** flow (find conversations, generate replies at scale), continue with Steps 1-7 below.

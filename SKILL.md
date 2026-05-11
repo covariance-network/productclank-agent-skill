@@ -4,7 +4,7 @@ description: Community-powered growth for builders. Boost amplifies your social 
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.0.0"
+  version: "3.2.0"
   api_endpoint: https://app.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -23,6 +23,8 @@ Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, and Farcaster.
 **Amplify a specific social post with community-powered engagement.**
 
 Use Boost when the user has a post URL they want to amplify. One API call, instant results. Works across platforms — just pass the URL.
+
+> **Tweet-first, product-optional.** Boost campaigns can run with or without a `product_id`. If the user wants to associate a product on ProductClank, link it; otherwise omit `product_id` and AI replies will use generic amplification language ("this post" instead of the product name) with brand-mention enforcement skipped.
 
 ### Supported Platforms
 
@@ -59,15 +61,15 @@ POST /api/v1/agents/campaigns/boost
 ```json
 {
   "post_url": "https://x.com/user/status/123456",
-  "product_id": "product-uuid",
   "action_type": "replies",
+  "product_id": "optional — product UUID to link this boost to a ProductClank product",
   "reply_guidelines": "optional custom instructions",
   "post_text": "optional — pass post text to skip server-side fetch",
   "post_author": "optional — post author username (used with post_text)"
 }
 ```
 
-> `tweet_url`, `tweet_text`, and `tweet_author` are still accepted for backward compatibility.
+> Only `post_url` is required. `tweet_url`, `tweet_text`, and `tweet_author` are still accepted for backward compatibility.
 
 **Response:**
 ```json
@@ -107,7 +109,7 @@ POST /api/v1/agents/campaigns/boost
 
 1. **Get the post URL** — ask the user for their post URL (the post they want community to engage with). Any supported platform works.
 2. **Choose action type** — ask: "How should the community engage? Replies (support, questions, congrats), likes, or reposts?" Default to replies if unclear. Note: reposts only available on Twitter and Farcaster.
-3. **Find the product** — search `GET /agents/products/search?q=<name>` and confirm with user (see [Confirm Product Selection](#confirm-product-selection-required))
+3. **(Optional) Link a product** — if the user wants the boost associated with a product on ProductClank, search `GET /agents/products/search?q=<name>` and confirm with user (see [Confirm Product Selection](#confirm-product-selection)). Skip this step if the user has no product on ProductClank or doesn't want to link one — boosts run fine without `product_id`.
 4. **Get reply guidelines** (for replies) — ask what kind of engagement they want: "Should community replies congratulate the team? Ask about features? Show excitement?" Use this to set `reply_guidelines`
 5. **Confirm cost** — "This will use 200 credits for 10 community replies. Proceed?"
 6. **Execute** — `POST /agents/campaigns/boost`
@@ -150,15 +152,16 @@ if (result.success) {
   console.log(`💰 Credits remaining: ${result.credits.credits_remaining}`);
 }
 
-// 3. Works with any platform — just change the URL
+// 3. Works with any platform — just change the URL.
+//    product_id is optional: omit it for tweet-first boosts (no ProductClank product needed).
 await fetch(`${API}/campaigns/boost`, {
   method: "POST",
   headers,
   body: JSON.stringify({
     post_url: "https://www.linkedin.com/posts/myproduct-launch-update-123",
-    product_id: products[0].id,
     action_type: "replies",
     post_text: "Excited to announce our Series A! ...", // recommended for non-Twitter platforms
+    // product_id omitted — AI replies use generic amplification language
   }),
 });
 ```
@@ -473,15 +476,19 @@ For platform agents serving multiple users. Each user authenticates, agent bills
 
 ---
 
-## Confirm Product Selection (REQUIRED)
+## Confirm Product Selection
 
-Before creating any campaign (Boost or Discover), you MUST confirm the product with the user:
+**Required for Discover campaigns. Optional for Boost campaigns.**
+
+When the user wants to associate a product with the campaign (always for Discover, when requested for Boost):
 
 1. Search: `GET /api/v1/agents/products/search?q=<name>&limit=5`
 2. Present results: "I found **[Product Name]** (product_id: `...`). Is this correct?"
 3. Wait for confirmation before proceeding.
 
-Do NOT skip this step.
+**Boost without a product:** if the user has no product on ProductClank or doesn't want to link one, omit `product_id`. The boost will still run — AI replies use generic amplification language ("this post" instead of the product name) and brand-mention enforcement is skipped. Do not block the user on creating a product first.
+
+**Discover without a product:** not supported. The Communiply campaign endpoint requires `product_id`. If the user has no product, direct them to create one at [app.productclank.com/products](https://app.productclank.com/products) before proceeding.
 
 ---
 
