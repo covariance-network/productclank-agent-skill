@@ -1,12 +1,18 @@
 name: Sync skill to BankrBot/skills
 
+# Mirrors the published skills into the Bankr fork (covariance-network/skills)
+# on a branch based on UPSTREAM BankrBot/skills main, then prints a PR link.
+# It updates SKILL.md + references/ + scripts/ for each skill and PRESERVES the
+# Bankr-only catalog.json. A skill folder with no catalog.json upstream is
+# skipped (it isn't published yet — first publish is a manual onboarding PR).
+
 on:
   push:
     branches: [main]
     paths:
-      - "SKILL.md"
-      - "references/**"
-      - "scripts/**"
+      - "productclank-campaigns/**"
+      - "productclank-agent-participation/**"
+  workflow_dispatch: {}
 
 jobs:
   sync:
@@ -24,36 +30,61 @@ jobs:
           token: ${{ secrets.BANKR_SYNC_TOKEN }}
           path: bankr-fork
 
-      - name: Copy skill files
-        run: |
-          rm -rf bankr-fork/productclank
-          mkdir -p bankr-fork/productclank/references bankr-fork/productclank/scripts
-          cp skill-source/SKILL.md bankr-fork/productclank/
-          cp skill-source/references/*.md bankr-fork/productclank/references/ 2>/dev/null || true
-          cp skill-source/scripts/* bankr-fork/productclank/scripts/ 2>/dev/null || true
-
-      - name: Check for changes
-        id: diff
+      - name: Base sync branch on upstream BankrBot/skills main
         working-directory: bankr-fork
         run: |
-          git add productclank/
-          git diff --cached --quiet && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+          # The fork's own main lags upstream by hundreds of commits, so basing
+          # the branch on it would produce a PR diff that reverts everyone else.
+          git remote add upstream https://github.com/BankrBot/skills.git
+          git fetch --depth=1 upstream main
+          VERSION=$(grep -oP 'version:\s*"?\K[0-9][^"[:space:]]*' ../skill-source/productclank-campaigns/SKILL.md | head -1 || echo "unknown")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BRANCH=sync-productclank-v${VERSION}" >> "$GITHUB_ENV"
+          git checkout -B "sync-productclank-v${VERSION}" upstream/main
 
-      - name: Create PR
-        if: steps.diff.outputs.changed == 'true'
+      - name: Sync skill content (preserve catalog.json)
+        run: |
+          sync_skill() {
+            local src="$1" dest="$2"
+            if [ ! -f "bankr-fork/$dest/catalog.json" ]; then
+              echo "::warning::bankr-fork/$dest has no catalog.json upstream — not yet published on Bankr, skipping (needs a manual onboarding PR with a hand-authored catalog.json + README entry)."
+              return
+            fi
+            cp "skill-source/$src/SKILL.md" "bankr-fork/$dest/SKILL.md"
+            # Mirror references/ and scripts/ exactly (handles added & removed files).
+            rm -rf "bankr-fork/$dest/references" "bankr-fork/$dest/scripts"
+            if [ -d "skill-source/$src/references" ]; then
+              mkdir -p "bankr-fork/$dest/references"
+              cp -R "skill-source/$src/references/." "bankr-fork/$dest/references/"
+            fi
+            if [ -d "skill-source/$src/scripts" ]; then
+              mkdir -p "bankr-fork/$dest/scripts"
+              cp -R "skill-source/$src/scripts/." "bankr-fork/$dest/scripts/"
+            fi
+            echo "synced $src -> $dest"
+          }
+          sync_skill productclank-campaigns productclank
+          sync_skill productclank-agent-participation productclank-agent-participation
+
+      - name: Commit & push sync branch if changed
         working-directory: bankr-fork
         env:
           GH_TOKEN: ${{ secrets.BANKR_SYNC_TOKEN }}
         run: |
-          VERSION=$(grep -oP 'version: "\K[^"]+' ../skill-source/SKILL.md || echo "unknown")
-          BRANCH="sync-productclank-v${VERSION}"
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git checkout -b "$BRANCH"
-          git commit -m "Update ProductClank skill to v${VERSION}"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to sync — Bankr is already up to date." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "Sync ProductClank skills to Bankr (campaigns v${VERSION})"
           git push origin "$BRANCH" --force
-
-          echo "Branch pushed. Open a PR at:"
-          echo "https://github.com/covariance-network/skills/compare/main...${BRANCH}?expand=1"
+          {
+            echo "### ProductClank skill sync pushed :rocket:"
+            echo ""
+            echo "Branch \`$BRANCH\` pushed to \`covariance-network/skills\`."
+            echo ""
+            echo "**Open the PR into BankrBot/skills:**"
+            echo "https://github.com/BankrBot/skills/compare/main...covariance-network:${BRANCH}?expand=1"
+          } >> "$GITHUB_STEP_SUMMARY"
