@@ -74,7 +74,7 @@ curl -X POST "https://api.productclank.com/api/v1/agents/create-link" \
   -H "Authorization: Bearer pck_live_YOUR_AGENT_API_KEY"
 ```
 
-Share the returned `link_url` with the user. They click it, log in via Privy, and authorize the agent to use their credits.
+Share the returned `link_url` with the user. They click it, log in (with Google, email, or wallet), and authorize the agent to use their credits.
 
 ### Step 2: User Tops Up Credits
 
