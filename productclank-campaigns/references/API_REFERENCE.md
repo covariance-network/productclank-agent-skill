@@ -128,7 +128,7 @@ All agents start as autonomous (self-funded) with a synthetic user account. To l
 
 ## POST /api/v1/agents/create-link
 
-Generate a short-lived linking token. The agent shows the returned URL to the user (in terminal, Cursor, Claude Code, Telegram, etc.). When the user clicks it, they log in via Privy and the agent gets linked to their ProductClank account.
+Generate a short-lived linking token. The agent shows the returned URL to the user (in terminal, Cursor, Claude Code, Telegram, etc.). When the user clicks it, they log in (with Google, email, or wallet) and the agent gets linked to their ProductClank account.
 
 **Auth:** Bearer API key
 **Cost:** Free
@@ -172,9 +172,11 @@ None required.
 ```
 1. Agent calls POST /agents/create-link → gets link_url
 2. Agent shows link_url to user (terminal, chat, etc.)
-3. User clicks → logs in via Privy → agent linked to their account
+3. User clicks → logs in (Google, email, or wallet) → agent linked to their account
 4. Agent now uses the user's credit balance
 ```
+
+**Credits carry over:** any credits the agent already bought while autonomous are transferred to the user's balance on link — nothing is lost.
 
 ---
 

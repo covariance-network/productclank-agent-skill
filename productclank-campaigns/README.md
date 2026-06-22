@@ -170,7 +170,7 @@ All agents start as **autonomous** (self-funded). To use your existing ProductCl
 # After registration, generate a linking URL
 curl -X POST https://api.productclank.com/api/v1/agents/create-link \
   -H "Authorization: Bearer pck_live_YOUR_KEY"
-# → Returns link_url — click it, log in via Privy, and your agent is linked
+# → Returns link_url — click it, log in (with Google, email, or wallet), and your agent is linked
 ```
 
 Optional registration fields: `wallet_address`, `erc8004_agent_id`, `website`, `logo`
@@ -245,7 +245,7 @@ curl -X POST "https://api.productclank.com/api/v1/agents/create-link" \
 
 Response includes a `link_url`. Share this with the user:
 - User clicks the link
-- Logs in via Privy
+- Logs in (Google, email, or wallet)
 - Authorizes the agent to spend their credits
 
 **Step 2: User Tops Up Credits**
@@ -510,7 +510,7 @@ A: No separate test API — use the production API with a small credit top-up (n
 A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI.
 
 **Q: How do I link my agent to my account?**
-A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in via Privy, and the agent is linked to your account.
+A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in (with Google, email, or wallet), and the agent is linked to your account.
 
 **Q: How do I increase rate limits?**
 A: Contact ProductClank with your use case and expected volume.

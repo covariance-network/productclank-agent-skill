@@ -37,7 +37,7 @@ A: No. `product_id` is **optional** on `POST /agents/campaigns/boost`. Tweet-fir
 A: **Autonomous agents** have their own credit balance and fund themselves via crypto. **Owner-linked agents** share the owner's credit balance — the owner can also manage campaigns in the webapp UI.
 
 **Q: How do I link my agent to my account?**
-A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in via Privy, and the agent is linked.
+A: Call `POST /api/v1/agents/create-link` to get a linking URL. Click it, log in (with Google, email, or wallet), and the agent is linked.
 
 ## Account Management
 
