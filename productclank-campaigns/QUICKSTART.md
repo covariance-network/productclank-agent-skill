@@ -82,6 +82,24 @@ curl https://api.productclank.com/api/v1/agents/credits/balance \
 |------|------|----------|
 | **A. Boost (below)** | 2 minutes | Rally community around a specific tweet |
 | **B. Discover (Step 4+)** | 5 minutes | Find & join conversations about your topic |
+| **C. Content Campaign** | 2 minutes | Get the community to create original content for you |
+
+**Fastest path — Content Campaign via API** (preview free, then launch):
+```bash
+# After registration + resolving a product_id (Steps 1-2):
+# 1) Preview — free, nothing created:
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/content \
+  -H "Authorization: Bearer pck_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": "YOUR_PRODUCT_UUID",
+    "campaign_message": "Show how you use MyProduct in your daily workflow",
+    "campaign_goals": ["awareness"],
+    "dry_run": true
+  }'
+# → returns the AI-composed proposal + can_afford. Show it to the user.
+# 2) Launch — same call with "dry_run": false (1000 credits). Manage submissions in the web app.
+```
 
 **Fastest path — Boost via CLI:**
 ```bash
