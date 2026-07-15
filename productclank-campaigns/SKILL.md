@@ -1,10 +1,10 @@
 ---
 name: productclank-campaigns
-description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product.
+description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them.
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.2.0"
+  version: "3.3.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -417,19 +417,92 @@ await fetch(`${API}/campaigns/${campaign.campaign.id}/regenerate-replies`, {
 
 ---
 
-## Choosing Between Boost and Discover
+## Capability 3: Content Campaign
 
-| Question | Boost | Discover |
-|----------|-------|----------|
-| Do you have a post URL? | Yes — your own post you want community to engage with | No |
-| Platforms? | Twitter, Instagram, TikTok, LinkedIn, Reddit, Farcaster | Twitter only |
-| Time to value? | ~30 seconds | ~5 minutes |
-| Setup complexity? | 1 API call | 2-3 API calls |
-| Best for? | Rally community around your post (replies, likes, reposts) | Finding & joining new conversations about your topic |
-| Ongoing? | One-time per post | Can generate multiple batches |
-| Credits? | Fixed (200-300) | Variable (10 + 12/post) |
+**Rally the community to create original content for your product — posts, threads, videos.**
 
-**Rule of thumb:** If the user has a specific post they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover.
+Use Content Campaign when the user doesn't have a post to amplify (Boost) or conversations to join (Discover), but wants the community to *make* content about their product. You write the brief from what you know about the product; ProductClank's AI expands it into a full campaign and auto-activates it. Community members submit their content, and the user reviews submissions and picks winners **in the ProductClank web app**.
+
+### How It Works
+1. You write a short brief (what the community should create) from your knowledge of the product
+2. **Preview it for free** — the platform's AI drafts the full campaign (title, description, call-to-action) so the user can review before paying
+3. On approval, launch — the campaign is created and auto-activates (1000 credits)
+4. Community members submit content through ProductClank
+5. The user reviews submissions and selects winners in the web app
+
+> **Two-step, preview-first.** Always call the preview (`dry_run: true`) first — it's free and returns the exact campaign that would be created, plus whether the user can afford to launch it. Show it to the user, refine the brief if needed, then launch (`dry_run: false`). Submissions and judging are **web-app only** in this version.
+
+### Pricing
+
+| Operation | Credits |
+|-----------|---------|
+| Preview (`dry_run: true`) | Free |
+| Launch (`dry_run: false`) | 1000 |
+
+### API Flow
+
+**Step 1: Preview (free)**
+```
+POST /api/v1/agents/campaigns/content
+```
+
+```json
+{
+  "product_id": "product-uuid",
+  "campaign_message": "Show how you use <product> in your daily workflow",
+  "campaign_goals": ["awareness"],
+  "preferred_platform": "x",
+  "dry_run": true
+}
+```
+
+Returns the AI-composed `proposal` (title, description, call-to-action), `credits_required: 1000`, and `can_afford`. Nothing is created and no credits are charged.
+
+**Step 2: Launch (1000 credits)**
+
+Repeat the same call with `"dry_run": false` (omitting it also launches). Creates the campaign, generates the final brief, and auto-activates it. The response includes the campaign id and an `admin_url` where the user manages submissions.
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `product_id` | string (UUID) | Product to run the campaign for (from `products/search`) |
+| `campaign_message` | string | The core brief — what the community should create |
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `campaign_goals` | string[] | e.g. `["awareness", "signups"]` |
+| `target_audience` | string | Who the campaign should reach |
+| `preferred_platform` | string | e.g. `"x"`, `"farcaster"` |
+| `additional_guidelines` | string | Extra do's/don'ts for creators |
+| `references` | string | Links or references to include |
+| `dry_run` | boolean | `true` = free preview; `false`/omitted = launch |
+| `caller_user_id` | string (UUID) | Trusted agents only |
+
+### When to Use Content Campaign
+- The user wants user-generated content about their product, not amplification of an existing post
+- There's no specific conversation to join — the goal is fresh community-created material
+- The user is comfortable reviewing and rewarding submissions in the ProductClank web app
+
+---
+
+## Choosing Between Boost, Discover, and Content Campaign
+
+| Question | Boost | Discover | Content Campaign |
+|----------|-------|----------|------------------|
+| Do you have a post URL? | Yes — your own post you want community to engage with | No | No |
+| What does the community do? | Engages an existing post (replies/likes/reposts) | Replies to conversations it finds | Creates original content for you |
+| Platforms? | Twitter, Instagram, TikTok, LinkedIn, Reddit, Farcaster | Twitter only | Any (creators choose) |
+| Time to value? | ~30 seconds | ~5 minutes | ~1 minute (preview + launch) |
+| Setup complexity? | 1 API call | 2-3 API calls | 2 calls (preview, then launch) |
+| Best for? | Rally community around your post (replies, likes, reposts) | Finding & joining new conversations about your topic | Getting fresh user-generated content about your product |
+| Ongoing? | One-time per post | Can generate multiple batches | One-time per campaign |
+| Credits? | Fixed (200-300) | Variable (10 + 12/post) | Fixed (1000) |
+| Results reviewed where? | In-app / via API | In-app / via API | Web app only (submissions + winners) |
+
+**Rule of thumb:** If the user has a specific post they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover. If the user wants the community to create original content for them → Content Campaign.
 
 ---
 

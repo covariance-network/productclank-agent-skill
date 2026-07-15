@@ -57,6 +57,7 @@ Authorization: Bearer pck_live_<your_api_key>
 | GET | `/agents/campaigns/{id}/posts` | Bearer | Free | Read discovered posts + replies |
 | POST | `/agents/campaigns/{id}/regenerate-replies` | Bearer | 5 credits/reply | Regenerate replies with new instructions |
 | POST | `/agents/campaigns/boost` | Bearer | 200-300 credits | Boost a specific tweet |
+| POST | `/agents/campaigns/content` | Bearer | Free (`dry_run`) / 1000 credits | Preview or launch a content campaign |
 
 ### Credits
 | Method | Endpoint | Auth | Cost | Description |
@@ -636,6 +637,87 @@ For replies, post text is required for AI generation. If the server can't fetch 
 - `404` — Product not found (only when `product_id` is provided and doesn't match an existing product)
 - `429` — Rate limit exceeded
 - `503` — Post text unavailable (replies only) — pass `post_text` or retry
+
+---
+
+## POST /api/v1/agents/campaigns/content
+
+Preview or launch a **content campaign** — rally the community to create original content (posts, threads, videos) for a product. One endpoint, two modes via `dry_run`. **Cost: free to preview, 1000 credits to launch.**
+
+Submissions and winner selection happen in the ProductClank web app (this version); the response returns an `admin_url` for the user to manage them.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `product_id` | string (UUID) | Yes | Product to run the campaign for (from `products/search`) |
+| `campaign_message` | string | Yes | The core brief — what the community should create |
+| `campaign_goals` | string[] | No | e.g. `["awareness", "signups"]` |
+| `target_audience` | string | No | Who the campaign should reach |
+| `preferred_platform` | string | No | e.g. `"x"`, `"farcaster"` |
+| `additional_guidelines` | string | No | Extra do's/don'ts for creators |
+| `references` | string | No | Links or references to include |
+| `dry_run` | boolean | No | `true` = free preview (no campaign, no charge); `false`/omitted = launch |
+| `caller_user_id` | string (UUID) | No | Trusted agents only |
+
+### Response (200) — preview (`dry_run: true`)
+
+Free. Nothing is created and no credits are charged.
+
+```json
+{
+  "success": true,
+  "dry_run": true,
+  "proposal": {
+    "title": "…",
+    "description": "…",
+    "action_type": "custom_action",
+    "action_url": "…",
+    "action_cta": "…",
+    "action_message": "…"
+  },
+  "product": { "id": "product-uuid", "name": "…" },
+  "credits_required": 1000,
+  "credits_available": 5000,
+  "can_afford": true
+}
+```
+
+### Response (200) — launch (`dry_run: false`)
+
+Creates the campaign, generates its final brief, and auto-activates it (`processing` → `active`).
+
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "campaign-uuid",
+    "campaign_number": 512,
+    "title": "Growth Boost: …",
+    "product_id": "product-uuid",
+    "campaign_type": "take_action",
+    "status": "processing",
+    "admin_url": "https://app.productclank.com/my-campaigns"
+  },
+  "credits": {
+    "credits_used": 1000,
+    "credits_remaining": 4000,
+    "billing_user_id": "user-uuid"
+  },
+  "next_step": {
+    "action": "review_submissions",
+    "admin_url": "https://app.productclank.com/my-campaigns"
+  }
+}
+```
+
+### Error Codes
+- `400` — Missing `product_id` or `campaign_message`
+- `402` — Insufficient credits (launch only; preview is never credit-gated)
+- `404` — Product not found
+- `429` — Rate limit exceeded
+
+> **Preview first.** Call with `dry_run: true`, show the `proposal` to the user, refine the brief if needed, then call again with `dry_run: false` to launch.
 
 ---
 

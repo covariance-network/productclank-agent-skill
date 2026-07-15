@@ -5,6 +5,16 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-07-15
+
+### Added - Content Campaigns (Capability 3)
+- **New capability: Content Campaign** — rally the community to create original content (posts, threads, videos) for a product, via `POST /agents/campaigns/content` (Growth Boost / `take_action`). Distinct from Boost (amplify an existing post) and Discover (join conversations).
+- **Preview-first, two-step flow:** call with `dry_run: true` for a **free** AI-composed proposal (title/description/CTA + `can_afford`), then `dry_run: false` to launch (**1000 credits**). The campaign auto-activates after launch.
+- **Submissions + winner selection are web-app only** in this version (the response returns an `admin_url`); judging via API is a later tier.
+- Added the "Capability 3: Content Campaign" section to `SKILL.md`, expanded the "Choosing Between…" table to three capabilities, and updated the skill `description`.
+- Added the `POST /api/v1/agents/campaigns/content` endpoint to `references/API_REFERENCE.md` (request body, preview + launch responses, error codes) and the Campaigns overview table.
+- Updated `README.md` (capability router + comparison table) and `QUICKSTART.md` (campaign tiers).
+
 ## [3.2.0] - 2026-05-10
 
 ### Changed - Boost `product_id` is now optional

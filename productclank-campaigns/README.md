@@ -24,12 +24,19 @@ What do you want to do?
 │      • Time: Immediate (single API call)
 │      • Best for: Launch announcements, product updates, partnership posts
 │
-└─ Find & join conversations about your product's topic
-   └─> POST /agents/campaigns (Communiply Discover)
-       • Cost: 10 + (12 credits × posts discovered)
-       • Result: AI discovers conversations, generates contextual replies
-       • Time: Ongoing automated campaign
-       • Best for: Competitor intercept, problem targeting, brand monitoring
+├─ Find & join conversations about your product's topic
+│  └─> POST /agents/campaigns (Communiply Discover)
+│      • Cost: 10 + (12 credits × posts discovered)
+│      • Result: AI discovers conversations, generates contextual replies
+│      • Time: Ongoing automated campaign
+│      • Best for: Competitor intercept, problem targeting, brand monitoring
+│
+└─ Get the community to CREATE original content for your product
+   └─> POST /agents/campaigns/content  (dry_run:true to preview free, then launch)
+       • Cost: Free to preview, 1000 credits to launch
+       • Result: AI drafts the campaign; community submits content; you pick winners in the web app
+       • Time: ~1 minute (preview + launch)
+       • Best for: User-generated content drives, creator campaigns
 ```
 
 **Still not sure?** See the [Comparison Table](#campaign-types-comparison) below.
@@ -104,17 +111,18 @@ See [SKILL.md](SKILL.md) for complete documentation.
 
 ## Campaign Types Comparison
 
-| Feature | Discover | Boost |
-|---------|----------|-------|
-| **Use case** | Find & join relevant conversations | Rally community around your tweet |
-| **Target** | Keyword-based conversations | Specific tweet URL you want engagement on |
-| **Cost** | 10 + (12 × posts) | 200-300 credits (fixed) |
-| **Discovery** | Continuous 24/7 scanning | Immediate burst |
-| **Community action** | Reply to others' conversations | Reply/like/repost your post |
-| **Timeline** | Ongoing campaign | One-shot action |
-| **Best for** | Competitor intercept, problem targeting | Launch announcements, product updates |
-| **`product_id`** | Required | Optional (tweet-first; link a product to enable brand-mention enforcement) |
-| **CLI** | Coming soon | `communiply boost <url>` |
+| Feature | Discover | Boost | Content Campaign |
+|---------|----------|-------|------------------|
+| **Use case** | Find & join relevant conversations | Rally community around your tweet | Get the community to create content for you |
+| **Target** | Keyword-based conversations | Specific tweet URL you want engagement on | A product you want content about |
+| **Cost** | 10 + (12 × posts) | 200-300 credits (fixed) | Free to preview, 1000 to launch |
+| **Discovery** | Continuous 24/7 scanning | Immediate burst | N/A — creators submit |
+| **Community action** | Reply to others' conversations | Reply/like/repost your post | Create & submit original content |
+| **Timeline** | Ongoing campaign | One-shot action | One-shot per campaign |
+| **Best for** | Competitor intercept, problem targeting | Launch announcements, product updates | UGC drives, creator campaigns |
+| **`product_id`** | Required | Optional (tweet-first; link a product to enable brand-mention enforcement) | Required |
+| **Results reviewed** | In-app / API | In-app / API | Web app only (submissions + winners) |
+| **CLI** | Coming soon | `communiply boost <url>` | — |
 
 **When to use Discover:**
 - "Monitor whenever someone mentions [competitor]"
@@ -125,6 +133,11 @@ See [SKILL.md](SKILL.md) for complete documentation.
 - "Get my community to reply to my launch tweet"
 - "Get support and congratulations on this announcement"
 - "Get likes and reposts on my product update"
+
+**When to use Content Campaign:**
+- "Get the community to make posts/videos about my product"
+- "Run a user-generated content drive"
+- "I want creators to produce original content, and I'll pick winners"
 
 ## CLI (Communiply CLI)
 
