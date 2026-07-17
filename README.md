@@ -14,6 +14,15 @@ An agent registers **once** and can do all three — they share registration, AP
 
 > **Two "content" capabilities, opposite directions.** *Content Campaign* (in `productclank-campaigns`) rallies the **community** to make content **for** a product. *Content Studio* (this repo's third skill) drafts content **you** produce **into** your own pipeline. Pick by who's creating.
 
+## Acting on behalf of a user (read this if a call returns empty or "needs authorization")
+
+All three skills run every call as a **ProductClank user**, and you only see **that user's** data. Empty results or an authorization error is almost always an **identity** mismatch — *not* a missing approval:
+
+- **Non-trusted agent** (the default when you self-register) → acts as its **own** linked user. To act for a human, **link** it to their account: `POST /api/v1/agents/create-link` → they approve at the returned URL. Then **no `caller_user_id`** is needed.
+- **Trusted agent** (granted by ProductClank) → must pass **`caller_user_id`** (the user's id) on **every** call, and the user must have authorized it.
+- **Empty results / `unauthorized_delegation`?** You're either seeing your agent's own empty account, or passing the wrong user id (e.g. a duplicate account). **Link**, or fix `caller_user_id`. **Don't** call `POST /agents/authorize` to fix it — that's a trusted-agent self-grant (takes `user_id`, not `agent_id`), not the fix.
+- **Simplest path for most integrations:** use the ProductClank **OAuth connector**, which resolves the user automatically so you never handle `caller_user_id`.
+
 ## Quick start
 
 ```bash
