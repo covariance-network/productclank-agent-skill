@@ -35,6 +35,15 @@ Let your agent **draft content straight into your ProductClank content pipeline*
 
 Every endpoint requires `Authorization: Bearer <api_key>`. Trusted agents acting on behalf of a user pass `caller_user_id` (the Claude connector sets this automatically from the OAuth session).
 
+## Identity — which account are you acting as?
+
+**This is the #1 thing to get right** (and the most common source of "it returns nothing"). Every call runs as a *ProductClank user*, and you only ever see **that user's** spaces. There are two ways your agent maps to a user:
+
+- **Non-trusted agent** (the default when you self-register). You act as your **own linked user** — so you only see spaces *your agent's own account* owns/manages, which for a fresh agent is **none**. To act for a human, **link your agent to their account**: `POST /api/v1/agents/create-link` → they open the returned URL and approve. After linking, every call acts as that user with **no `caller_user_id` needed**.
+- **Trusted agent** (granted by ProductClank; e.g. a multi-user connector). You **must** pass `caller_user_id` — the ProductClank user id of the person you're acting for — on **every** call, and that user must have authorized your agent.
+
+> Building a connector for many users? Prefer the **OAuth connector**, which resolves the user automatically so you never handle `caller_user_id` at all.
+
 ## The flow
 
 1. **Find your space** — `GET /api/v1/agents/content/spaces` returns the content-enabled spaces you can draft into (`{ space_id, name }`). Confirm the target space with the user.
@@ -123,6 +132,20 @@ Share `review_url` with the user so they can review, edit, and schedule the draf
 | 401 | `unauthorized` | Missing/invalid API key. |
 | 403 | `forbidden` | You don't control that space, or the user revoked your app. |
 | 404 | `not_found` | The content engine isn't enabled on that space. |
+
+## Troubleshooting
+
+Most "it returns nothing / it says I need access" problems are an **identity** mismatch (see [Identity](#identity--which-account-are-you-acting-as)), **not** a missing approval.
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `list_content_spaces` returns `[]` (success, no error) | You're a **non-trusted** agent seeing your *own* empty account | **Link** to the user's account (`POST /api/v1/agents/create-link`); or if **trusted**, pass `caller_user_id`. |
+| `400 caller_user_id is required for trusted agents` | You're **trusted** but didn't say who you act for | Add `caller_user_id` = the user's ProductClank id. |
+| `403 unauthorized_delegation` | The user hasn't authorized your agent, **or** you passed the wrong user id (e.g. a duplicate account) | Have the user authorize your app, or correct `caller_user_id`. |
+| `403 forbidden` (write) | That user doesn't own/manage the space, or revoked your app | Use a `space_id` from `list_content_spaces`; re-check authorization. |
+| `404 not_found` (write) | The content engine isn't enabled on that space | The user enables it once at <https://app.productclank.com/content>. |
+
+> ⚠️ **Do NOT call `POST /api/v1/agents/authorize` to fix "I can't see the spaces."** That endpoint is a *trusted-agent self-grant* that takes a **`user_id`** (not an `agent_id`), and it does **not** substitute for a missing `caller_user_id` or for linking. Reach for **`create-link`** (to act as a user) or **`caller_user_id`** (if trusted) instead.
 
 ## Safety
 
