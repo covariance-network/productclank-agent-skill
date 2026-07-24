@@ -4,7 +4,7 @@ description: Community-powered growth for builders. Boost amplifies your social 
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.3.0"
+  version: "3.4.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -561,7 +561,32 @@ When the user wants to associate a product with the campaign (always for Discove
 
 **Boost without a product:** if the user has no product on ProductClank or doesn't want to link one, omit `product_id`. The boost will still run — AI replies use generic amplification language ("this post" instead of the product name) and brand-mention enforcement is skipped. Do not block the user on creating a product first.
 
-**Discover without a product:** not supported. The Communiply campaign endpoint requires `product_id`. If the user has no product, direct them to create one at [app.productclank.com/products](https://app.productclank.com/products) before proceeding.
+**Discover without a product:** Discover (and Content) campaigns require a `product_id`. If the user has no product on ProductClank, **list one first via the API** — see [List a Product](#list-a-product) below. You no longer need to send them to the web app.
+
+---
+
+## List a Product
+
+If `products/search` returns no match and you need a `product_id`, create a **token-free listing** with `POST /api/v1/agents/products` (`LIST_WITHOUT_TOKEN` — no token, no wallet, no payment; free).
+
+**URL-first:** the minimum input is the product's `url`. The server fetches the page and auto-fills the name, tagline, description, logo, and X handle. Any field you pass explicitly overrides the extracted value; **socials are optional**.
+
+1. Confirm with the user: "Want me to list **<url>** on ProductClank so we can run the campaign?"
+2. Call `POST /agents/products` with `{ "url": "<product url>" }` (add `name`/`tagline`/… only to override).
+3. Use the returned `product.id` for the boost/campaign.
+
+Re-listing the same URL is safe — an existing match is returned (`already_listed: true`) instead of a duplicate. If the site is unreadable, pass a `name` (and optional `tagline`/`description`) to list manually.
+
+```typescript
+// User has no product listed yet — list it from the URL, then run the campaign
+const listed = await fetch(`${API}/products`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ url: "https://p1x3lz.com" }),
+}).then(r => r.json());
+
+const productId = listed.product.id; // → use for boost / campaign
+```
 
 ---
 
@@ -593,6 +618,7 @@ When using `caller_user_id` (trusted agents), the billing user is auto-added as 
 | `/agents/credits/balance` | GET | Free | Credit balance |
 | `/agents/credits/history` | GET | Free | Transaction history |
 | `/agents/products/search` | GET | Free | Search products |
+| `/agents/products` | POST | Free | List a new product (token-free, URL-autofilled) |
 
 For complete API reference, see [references/API_REFERENCE.md](references/API_REFERENCE.md).
 

@@ -5,6 +5,15 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-07-24
+
+### Added - List a Product from the API (URL-first, token-free)
+- **New endpoint: `POST /api/v1/agents/products`** — agents can now create a **token-free** product listing (`LIST_WITHOUT_TOKEN`; no token, no wallet, no payment) directly from the API. Previously the only product endpoint was `products/search`, so an unlisted product forced the user into the web app.
+- **URL-first autofill:** the minimum input is a product `url` — the server fetches the site and auto-fills name, tagline, description, logo, and X handle (the same extraction the webapp's "paste your URL" listing flow uses). Explicit fields override; **socials are optional**. Free (no credits).
+- **Idempotent per owner:** re-listing the same website/name returns the existing product (`already_listed: true`) instead of duplicating.
+- Added the endpoint to `references/API_REFERENCE.md` (request body, response, error codes) and the Products overview table.
+- Added a "List a Product" section to `SKILL.md`, updated "Confirm Product Selection" so the no-product path lists via the API instead of directing users to the web app, and added the endpoint to the Additional Endpoints table.
+
 ## [3.3.0] - 2026-07-15
 
 ### Added - Content Campaigns (Capability 3)

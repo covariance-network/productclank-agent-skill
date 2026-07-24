@@ -42,6 +42,7 @@ Authorization: Bearer pck_live_<your_api_key>
 | Method | Endpoint | Auth | Cost | Description |
 |--------|----------|------|------|-------------|
 | GET | `/agents/products/search?q=` | Bearer | Free | Search products by name/UUID |
+| POST | `/agents/products` | Bearer | Free | List a new product (token-free; URL-autofilled) |
 
 ### Campaigns
 | Method | Endpoint | Auth | Cost | Description |
@@ -289,6 +290,64 @@ Search for products by name, tagline, or UUID.
 ```
 
 If the query is a UUID, returns exact match by product ID.
+
+---
+
+## POST /api/v1/agents/products
+
+List a **new** product on ProductClank as a **token-free listing** (`LIST_WITHOUT_TOKEN` — no on-chain token, no wallet, no payment). Use this when `products/search` returns no match and you need a `product_id` to run a Discover or Content campaign (or to link a Boost).
+
+**Auth:** Bearer API key
+**Cost:** Free
+
+**URL-first:** the minimum input is a product `url`. The server fetches the page and auto-fills `name`, `tagline`, `description`, `logo`, and the X handle (same autofill the webapp "paste your URL" listing flow uses). Any field you pass explicitly overrides the extracted value. **Socials are optional.**
+
+**Idempotent per owner:** if the caller already listed a product with the same website (or name), the existing one is returned with `already_listed: true` instead of creating a duplicate.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes* | Product website URL — auto-fills the listing. *Provide `url` **or** `name`. |
+| `name` | string | Yes* | Product name. Optional when `url` is given (extracted from the site); required otherwise. |
+| `tagline` | string | No | One-line value proposition (overrides extracted). |
+| `description` | string | No | Short description (overrides extracted). |
+| `website` | string | No | Canonical website, if different from `url`. |
+| `twitter` | string | No | X/Twitter handle or profile URL. |
+| `logo` | string | No | Logo image URL (otherwise auto-resolved from the site). |
+| `category` | string[] | No | Category tags. |
+| `caller_user_id` | string (UUID) | No | Trusted agents only — list on behalf of this user. |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "already_listed": false,
+  "product": {
+    "id": "product-uuid",
+    "name": "P1x3lz",
+    "tagline": "Pixel-art everything",
+    "website": "https://p1x3lz.com",
+    "logo": "https://…/autofill-….png",
+    "category": [],
+    "twitter": "https://x.com/p1x3lz",
+    "listing_type": "LIST_WITHOUT_TOKEN"
+  },
+  "next_step": {
+    "action": "boost_or_campaign",
+    "description": "Use this product_id with POST /agents/campaigns/boost or /agents/campaigns to run a campaign."
+  }
+}
+```
+
+When an existing match is found, the response is the same shape with `already_listed: true` and the existing product.
+
+### Error Codes
+- `400` — Neither `url` nor `name` provided, or a name couldn't be resolved.
+- `422` — `url` given but the site was unreadable and no `name` was provided (pass `name` to list manually).
+- `429` — Daily product-listing limit reached (20/day per owner).
+- `500` — Listing failed.
 
 ---
 
