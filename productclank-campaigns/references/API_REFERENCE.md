@@ -16,6 +16,21 @@ Authorization: Bearer pck_live_<your_api_key>
 
 **Obtaining an API Key:** Self-register via `POST /api/v1/agents/register` — no manual approval needed. Returns API key instantly. Top up credits via [webapp](https://app.productclank.com/credits/purchase) or x402 (USDC on Base).
 
+### Trusted agents & per-user scoping
+
+Normal (non-trusted) agents can ignore `caller_user_id` entirely — every request
+acts on the agent's own linked user, and passing `caller_user_id` returns `403`.
+
+**Trusted agents** (platform-operated keys acting for many users, e.g. the MCP
+connector) must pass `caller_user_id` on **every campaign endpoint — reads
+included — plus `GET /credits/history`** (query param on GETs, body field on
+POSTs); omitting it returns `400 validation_error`. Campaign access is scoped to
+the user the campaign was created for (`creator_id`): a campaign belonging to a
+different user returns `404`, and list results only include the caller's own
+campaigns. Billable calls are also blocked with `429 daily_spend_cap_exceeded`
+when they would exceed the per-user daily cap the user set under Profile →
+Connected Apps.
+
 ---
 
 ## Endpoints Overview
@@ -431,6 +446,7 @@ List campaigns created by the authenticated agent.
 | `limit` | number | 20 | Max results (max 100) |
 | `offset` | number | 0 | Pagination offset |
 | `status` | string | all | Filter: "active", "paused", "completed" |
+| `caller_user_id` | string (UUID) | — | Trusted agents REQUIRED — list only this user's campaigns |
 
 ### Response (200)
 
@@ -462,7 +478,8 @@ List campaigns created by the authenticated agent.
 
 ## GET /api/v1/agents/campaigns/{campaignId}
 
-Get campaign details and stats for an agent-owned campaign.
+Get campaign details and stats for an agent-owned campaign. Trusted agents must
+pass `?caller_user_id=` (a campaign owned by a different user returns `404`).
 
 ### Path Parameters
 
@@ -789,6 +806,7 @@ Add a ProductClank user as a campaign delegator (gives web dashboard access).
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `user_id` | string (UUID) | Yes | Existing ProductClank user ID |
+| `caller_user_id` | string (UUID) | Trusted only | Trusted agents REQUIRED — the campaign must belong to this user |
 
 ### Response (200)
 
@@ -817,6 +835,8 @@ Returns `already_delegator: true` if user was already added (still 200 OK).
 Run AI-powered research analysis to discover expanded keywords, high-intent phrases, key influencer accounts, relevant Twitter lists, and competitors. Results are cached for 7 days. **Free — no credits charged.**
 
 Run this after creating a campaign but before `generate-posts`. The expanded keywords are **automatically used during post discovery**, resulting in better targeting.
+
+Trusted agents must include `caller_user_id` in the body (and `?caller_user_id=` on the GET below).
 
 ### Path Parameters
 
@@ -903,6 +923,7 @@ Read discovered posts with their replies. **Free.** Use this to review results b
 | `limit` | number | 50 | Max posts (max 200) |
 | `offset` | number | 0 | Pagination offset |
 | `status` | string | all | Filter: "filtered", "discovered", "rejected" |
+| `caller_user_id` | string (UUID) | — | Trusted agents REQUIRED — campaign must belong to this user |
 | `include_replies` | boolean | true | Include reply data |
 
 ### Response (200)
@@ -1001,7 +1022,7 @@ Regenerate AI replies for selected posts with new instructions. Old unclaimed re
 **Who pays?**
 - **Autonomous agents** — credits are deducted from the agent's own balance (auto-created at registration)
 - **Owner-linked agents** — credits are deducted from the linked owner's balance
-- **Trusted agents (coming soon)** — can pass `caller_user_id` to bill a specific user's credits per request (multi-tenant)
+- **Trusted agents** — MUST pass `caller_user_id` to bill (and act as) a specific authorized user per request; per-user daily spend caps apply (see *Trusted agents & per-user scoping* above)
 
 ## GET /api/v1/agents/credits/balance
 
@@ -1085,6 +1106,7 @@ View credit transaction history with pagination.
 |-------|------|---------|-----|-------------|
 | `limit` | number | 20 | 100 | Transactions per page |
 | `offset` | number | 0 | - | Pagination offset |
+| `caller_user_id` | string (UUID) | - | - | Trusted agents REQUIRED — return this user's transactions |
 
 ### Response (200)
 
