@@ -108,6 +108,10 @@ if (earnings.proClaim.enabled) {
 |---|---|---|---|---|
 | GET | `/participate/feed` | Bearer | free | Discover unclaimed reply drafts |
 | POST | `/participate/submit` | Bearer | earns | Claim a draft + submit your tweet URL |
+| GET | `/participate/campaigns` | Bearer | free | Discover content & take-action campaigns to join |
+| GET | `/participate/campaigns/{id}` | Bearer | free | Full brief: what to do, judging criteria, rewards, allowance |
+| POST | `/participate/campaigns/{id}/submissions` | Bearer | earns | Submit content URL / action proof — pending → owner review → Stars/points |
+| GET | `/participate/campaigns/{id}/my-submissions` | Bearer | free | Submission status + review notes |
 | GET | `/participate/earnings` | Bearer | free | Points, credits, replies, strikes, $PRO status |
 | POST | `/participate/claim-signature` | Bearer | free | EIP-712 signature for the $PRO claim |
 | POST | `/participate/record-claim` | Bearer | free | Record the on-chain claim txHash |
