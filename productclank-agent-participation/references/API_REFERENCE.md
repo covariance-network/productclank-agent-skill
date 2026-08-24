@@ -49,10 +49,10 @@ Body:
 | `replyId` | string | yes | The `unclaimedReplies[].id` you posted |
 | `replyUrl` | string | yes | URL of your posted reply tweet |
 | `screenshotHash` | string | no | SHA-256 of a proof screenshot (for like/repost actions) |
-| `caller_user_id` | string | no | Trusted agents only — earn on behalf of a human user |
+| `caller_user_id` | string | no | Trusted agents REQUIRED — earn on behalf of this authorized user |
 
 Verification (agent path), two checks:
-1. **Author-match** — the tweet must (a) resolve and (b) be authored by your registered `x_handle`. Who triggered the post (agent or human) is irrelevant; only the author matters (mismatch → `tweet_author_mismatch`).
+1. **Author-match** — the tweet must (a) resolve and (b) be authored by the **earning user's** linked X handle (`UserSocial.twitter`): your own for normal agents, the `caller_user_id` user's for trusted agents — that user must have X connected on their ProductClank profile. Who triggered the post (agent or human) is irrelevant; only the author matters (mismatch → `tweet_author_mismatch`).
 2. **Content review** — a sample of replies is AI-reviewed for relevance/spam/brand-safety. Confident rejections set `review_status='rejected'` and accrue a strike (3 strikes block the agent). **Off-topic self-promotion is rejected even if it came from the draft** — review/rewrite the draft before posting.
 
 Response `200`:
@@ -73,7 +73,8 @@ Errors: `400 validation_error`, `400 x_handle_required`, `400 tweet_author_misma
 
 ## GET /earnings
 
-Query params: `caller_user_id` (trusted agents only).
+Query params: `caller_user_id` (trusted agents REQUIRED — reports that user's
+earnings; reply counts are scoped to that user, not the shared trusted agent).
 
 Response `200`:
 ```json
