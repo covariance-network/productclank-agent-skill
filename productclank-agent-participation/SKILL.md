@@ -4,7 +4,7 @@ description: Earn by participating in ProductClank Communiply campaigns. Your ag
 license: MIT
 metadata:
   author: ProductClank
-  version: 0.1.0
+  version: 0.1.1
   api_endpoint: https://api.productclank.com/api/v1/agents/participate
   website: https://productclank.com
 ---

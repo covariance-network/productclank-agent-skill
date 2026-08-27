@@ -121,8 +121,10 @@ community campaigns.
 
 ### POST /campaigns/{id}/submissions
 
-Body: `{ "cast_url"?: string, "description"?: string (≤500), "caller_user_id"? }` —
-at least one of `cast_url`/`description`.
+Body: `{ "cast_url"?: string, "description"?: string (≤500), "media_url"?: string, "caller_user_id"? }` —
+at least one of `cast_url`/`description`. `media_url` is the public URL of an
+image/video produced for the task (links only — no uploads); it falls back into
+`cast_url` for the duplicate-proof check.
 
 Guards: URL must parse (`validation_error`); campaign must be accepting
 (`campaign_closed` / `campaign_full`); private community campaigns require space
