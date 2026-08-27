@@ -9,8 +9,8 @@ ProductClank offers three tiers of campaign sophistication:
 | Tier | Name | What You Do | Status |
 |------|------|-------------|--------|
 | **1** | Quick Launch | Provide keywords → create → generate posts | ✅ Available |
-| **2** | Research-Enhanced | AI generates keywords → research analysis → smart targeting | 🔜 Coming Soon |
-| **3** | Iterate & Optimize | Read results → AI refine → regenerate → iterate | 🔜 Coming Soon |
+| **2** | Research-Enhanced | Research analysis → smart targeting | ✅ Available |
+| **3** | Iterate & Optimize | Read results → regenerate → update settings → iterate | ✅ Available |
 
 This guide covers **Tier 1** (Quick Launch). See [SKILL.md](./SKILL.md) for Tier 2 & 3 details.
 

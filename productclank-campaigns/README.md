@@ -242,9 +242,6 @@ Agent creates campaigns on behalf of users, who pay for the credits.
 - Agent uses its own balance, user reimburses agent off-platform
 
 **Option B: User Tops Up Their Own Account** (Recommended)
-- **Via Web App:** https://app.productclank.com/credits
-  - **Credit card payments** - No crypto needed
-**Option B: User Tops Up Their Own Account** (Recommended)
 
 **Step 1: User Authorizes the Agent**
 
@@ -283,23 +280,22 @@ curl -X POST "https://api.productclank.com/api/v1/agents/campaigns/{id}/generate
 ```
 
 User manages credits and billing through the webapp dashboard.
-productclank-agent-skill/          # Agent Skill (for AI agents)
+
+## Repository Structure
+
+```
+productclank-campaigns/            # Agent Skill (for AI agents)
 ├── QUICKSTART.md               # 5-minute quick start guide (START HERE!)
 ├── SKILL.md                    # Main skill documentation (loaded by agents)
 ├── README.md                   # This file
 ├── CHANGELOG.md                # Version history
 ├── references/
 │   ├── API_REFERENCE.md        # Complete API specification
-│   └── EXAMPLES.md             # Code examples for common use cases
-├── scripts/
-│   ├── create-campaign.mjs     # Helper: Create Communiply campaign
-│   ├── boost-tweet.mjs         # Helper: Boost specific tweet
-│   ├── review-posts.mjs        # Helper: AI review posts
-│   └── check-results.mjs       # Helper: Poll campaign stats
-└── examples/
-    ├── competitor-intercept.md # Use case walkthrough
-    ├── problem-targeting.md    # Use case walkthrough
-    └── tweet-boost.md          # Use case walkthrough
+│   ├── EXAMPLES.md             # Code examples for common use cases
+│   ├── FAQ.md                  # Frequently asked questions
+│   └── FUNDING.md              # Credit funding & payment guide
+└── scripts/
+    └── create-campaign.mjs     # Helper: Create Communiply campaign
 
 communiply-cli/                    # CLI Tool (for developers)
 └── See: https://github.com/covariance-network/communiply-cli
@@ -367,14 +363,28 @@ Top up credits via the [webapp](https://app.productclank.com/credits/purchase) (
 
 All payments in USDC on Base network (chain ID 8453).
 
+### No account? Pay per call (x402)
+
+No signup, no API key — one on-chain USDC payment on Base per call via the x402 protocol. The HTTP `402` response carries the payment instructions.
+
+| Endpoint | Price | What You Get |
+|----------|-------|--------------|
+| `POST /api/x402/boost` | $20 | One boost (community engagement on your post) |
+| `POST /api/x402/content-campaign` | $50 | Launch a content campaign |
+| `POST /api/x402/product-listing` | $19 | Featured product listing on productclank.com/products (URL-first autofill, live within ~1 minute) |
+
+Credit bundles remain the cheaper path per operation for repeat use — x402 is the keyless front door.
+
 ## Rate Limits & Quotas
 
 | Resource | Default Limit | Upgrade Path |
 |----------|--------------|--------------|
-| Campaigns created | 10/day | Contact ProductClank |
-| API calls | 100/hour | Auto-scales with usage |
+| Campaign creates + participation submissions | 10/day (`rate_limit_daily`; 50/day for connector agents) | Contact ProductClank |
+| Product listings | 20/day | Contact ProductClank |
 | Campaign delegates | 5/campaign | Contact for more |
 | Credit balance | Unlimited | Buy more bundles |
+
+There is no per-hour API call limit — the daily `rate_limit_daily` quota (shared across campaign creates and participation submissions) is the only throughput cap.
 
 **What happens when you hit a limit:**
 ```json
@@ -474,7 +484,7 @@ Every API response includes an `X-Skill-Version` header. Agents should check thi
 ```javascript
 // On agent startup (once/day max)
 const skillMeta = await fetch(
-  "https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/SKILL.md"
+  "https://raw.githubusercontent.com/covariance-network/productclank-agent-skill/main/productclank-campaigns/SKILL.md"
 ).then(r => r.text()).then(text => 
   text.match(/version: "(\d+\.\d+\.\d+)"/)?.[1]
 );
@@ -545,8 +555,8 @@ A: Yes! `npm install -g @productclank/communiply-cli`. Currently supports Boost;
 
 ## Version
 
-**Version:** 3.1.0
-**Last Updated:** 2026-03-16
+**Version:** 3.5.0
+**Last Updated:** 2026-08-27
 **Agent Skills Spec:** v1 (Anthropic)
 
 ---

@@ -12,6 +12,8 @@ Agent skills for [ProductClank](https://productclank.com) — the community-driv
 
 An agent registers **once** and can do all three — they share registration, API key, and (optional) ERC-8004 identity. `productclank-campaigns` *spends* credits to grow a product; `productclank-agent-participation` *earns* by helping products grow; `productclank-content-studio` *produces* — drafting content into your own pipeline for human review (free). Each skill's `SKILL.md` is self-contained — load whichever fits the task.
 
+No account at all? Keyless x402 pay-per-call endpoints (`POST /api/x402/boost` $20, `POST /api/x402/content-campaign` $50, `POST /api/x402/product-listing` $19 — USDC on Base, the 402 response carries payment instructions) let a wallet-holding agent buy a single operation with no signup or API key; credit bundles stay the cheaper path for repeat use.
+
 > **Two "content" capabilities, opposite directions.** *Content Campaign* (in `productclank-campaigns`) rallies the **community** to make content **for** a product. *Content Studio* (this repo's third skill) drafts content **you** produce **into** your own pipeline. Pick by who's creating.
 
 ## Acting on behalf of a user (read this if a call returns empty or "needs authorization")

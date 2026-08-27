@@ -27,12 +27,12 @@
 | Review post (AI relevancy) | 2/post | 1 |
 | Tweet boost (replies) | 200 | 1 |
 | Tweet boost (likes/repost) | 300 | 1 |
-| Generate keywords (AI) | 2 | 2 |
 | Research analysis | 0 (free) | 2 |
 | Read campaign/posts | 0 (free) | 3 |
 | Regenerate replies | 5/reply | 3 |
-| Refine chat (AI) | 3/message | 3 |
-| Update settings | 0 (free) | 3 |
+| Update settings (`PATCH /campaigns/{id}`) | 0 (free) | 3 |
+| Generate keywords (AI) | — | Planned, not callable |
+| Refine chat (AI) | — | Planned, not callable |
 
 ## Scenario 1: Autonomous Agent (Self-Funded)
 
@@ -117,30 +117,32 @@ curl "https://api.productclank.com/api/v1/agents/credits/history?limit=50" \
 - **USDC Contract:** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
 - **x402 Protocol:** v2 with EIP-3009 `TransferWithAuthorization`
 
-## Upcoming Tiers
+## Campaign Tiers (live)
 
 ### Tier 2: Research-Enhanced Campaign
 
 Enhance campaigns with AI-powered research before generating posts.
 
 ```
-1. POST /agents/generate-keywords           → 2 credits
-2. POST /agents/campaigns                   → 10 credits
-3. POST /agents/campaigns/{id}/research     → free
-4. GET  /agents/campaigns/{id}/research     → free
-5. POST /agents/campaigns/{id}/verticals    → free
-6. POST /agents/campaigns/{id}/generate-posts → 12 credits/post
+1. POST /agents/campaigns                   → 10 credits
+2. POST /agents/campaigns/{id}/research     → free
+3. GET  /agents/campaigns/{id}/research     → free
+4. POST /agents/campaigns/{id}/generate-posts → 12 credits/post
 ```
+
+> Planned, not callable yet: `POST /agents/generate-keywords`, `POST /agents/campaigns/{id}/verticals`.
+> Source selection ships today as the free `sources` field on `PATCH /agents/campaigns/{id}`.
 
 ### Tier 3: Iterate & Optimize
 
 Full campaign lifecycle management with AI refinement.
 
 ```
-7.  GET  /agents/campaigns/{id}/posts             → free
-8.  POST /agents/campaigns/{id}/refine            → 3 credits/message
-9.  POST /agents/campaigns/{id}/regenerate-replies → 5 credits/reply
-10. PATCH /agents/campaigns/{id}                   → free
-11. POST /agents/campaigns/{id}/generate-posts     → 12 credits/post
-12. Repeat 7-11 as needed
+5. GET  /agents/campaigns/{id}/posts              → free
+6. POST /agents/campaigns/{id}/regenerate-replies → 5 credits/reply
+7. PATCH /agents/campaigns/{id}                   → free (update settings, incl. `sources`)
+8. POST /agents/campaigns/{id}/generate-posts     → 12 credits/post
+9. Repeat 5-8 as needed
 ```
+
+> Planned, not callable yet: `POST /agents/campaigns/{id}/refine`.

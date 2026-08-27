@@ -43,7 +43,7 @@ Connected Apps.
 | GET | `/agents/me` | Bearer | Free | View agent profile & rate limits |
 | POST | `/agents/rotate-key` | Bearer | Free | Rotate API key |
 | POST | `/agents/import` | None | Free | Import ERC-8004 agent metadata |
-| GET | `/agents/by-user` | None | Free | List agents linked to a user |
+| GET | `/agents/by-user` | Webapp session | Free | List the caller's own linked agents |
 | POST | `/agents/authorize` | Bearer (trusted) | Free | Grant agent authorization to bill user |
 | DELETE | `/agents/authorize` | Bearer (trusted) | Free | Revoke agent authorization |
 
@@ -631,7 +631,7 @@ AI-powered review of discovered posts against custom relevancy rules. Scores eac
 
 ## POST /api/v1/agents/campaigns/boost
 
-Rally your community to engage with a specific social post — replies, likes, or reposts. Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, and Farcaster. **Cost: 200-300 credits.**
+Rally your community to engage with a specific social post — replies, likes, or reposts. Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, Farcaster, and YouTube. **Cost: 200-300 credits.**
 
 ### Request Body
 
@@ -657,6 +657,7 @@ Rally your community to engage with a specific social post — replies, likes, o
 | LinkedIn | `linkedin.com/posts/*` | Yes | Yes | — |
 | Reddit | `reddit.com/r/*/comments/*` | Yes | Yes | — |
 | Farcaster | `warpcast.com/*/0x*` | Yes | Yes | Yes |
+| YouTube | `youtube.com/watch?v=*` or `youtu.be/*` | Yes | Yes | — |
 
 ### Credit Costs
 
@@ -1210,13 +1211,7 @@ const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
 
 ## GET /api/v1/agents/by-user
 
-List all agents linked to a specific user. No authentication required.
-
-### Query Parameters
-
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `userId` | string | Yes | ProductClank user ID |
+List the agents linked to the calling user. **Requires a verified webapp session** (the caller's identity is derived server-side from the session) and returns only the caller's own agents — it is not a public lookup of other users' agents.
 
 ### Response (200)
 
@@ -1240,7 +1235,7 @@ List all agents linked to a specific user. No authentication required.
 ```
 
 ### Error Codes
-- `400` — Missing `userId` query parameter
+- `401` — No verified webapp session
 
 ---
 
