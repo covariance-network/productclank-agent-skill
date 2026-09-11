@@ -74,6 +74,7 @@ Connected Apps.
 | POST | `/agents/campaigns/{id}/regenerate-replies` | Bearer | 5 credits/reply | Regenerate replies with new instructions |
 | POST | `/agents/campaigns/boost` | Bearer | 200-300 credits | Boost a specific tweet |
 | POST | `/agents/campaigns/content` | Bearer | Free (`dry_run`) / 1000 credits | Preview or launch a content campaign |
+| GET | `/agents/campaigns/content/{campaignId}` | Bearer | Free | Read a content campaign's submissions, state and winners |
 
 ### Credits
 | Method | Endpoint | Auth | Cost | Description |
@@ -721,7 +722,7 @@ For replies, post text is required for AI generation. If the server can't fetch 
 
 Preview or launch a **content campaign** — rally the community to create original content (posts, threads, videos) for a product. One endpoint, two modes via `dry_run`. **Cost: free to preview, 1000 credits to launch.**
 
-Submissions and winner selection happen in the ProductClank web app (this version); the response returns an `admin_url` for the user to manage them.
+Read back what the campaign produced with `GET /agents/campaigns/content/{campaignId}` (below). Winner selection happens in the ProductClank web app; the response returns an `admin_url` for the user to manage it.
 
 ### Request Body
 
@@ -795,6 +796,81 @@ Creates the campaign, generates its final brief, and auto-activates it (`process
 - `429` — Rate limit exceeded
 
 > **Preview first.** Call with `dry_run: true`, show the `proposal` to the user, refine the brief if needed, then call again with `dry_run: false` to launch.
+
+---
+
+## GET /api/v1/agents/campaigns/content/{campaignId}
+
+Read the **results** of a content campaign you created: lifecycle state, submission counts, every submission (the live post URL, author, review state, points) and any winners. **Free**, read-only. Accepts the campaign UUID or its public campaign number.
+
+This is how you close the loop after launching. Without it you only know a campaign was paid for, not whether it produced anything.
+
+### Query Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `status` | string | Filter submissions: `pending` / `approved` / `rejected` |
+| `limit` | number | Submissions per page (default 50, max 100) |
+| `offset` | number | Pagination offset |
+| `caller_user_id` | string (UUID) | Trusted agents only — the campaign must belong to this user |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "campaign-uuid",
+    "campaign_number": 512,
+    "title": "Growth Boost: Acme",
+    "state": "active",
+    "state_label": "Active",
+    "is_accepting_submissions": true,
+    "raw_status": "active",
+    "start_date": "2026-09-11T00:00:00Z",
+    "end_date": "2026-09-14T23:59:59Z",
+    "reward_type": "leaderboard_points",
+    "participants_count": 38,
+    "public_url": "https://www.productclank.com/take-action/512"
+  },
+  "counts": { "total": 38, "pending": 22, "approved": 6, "rejected": 10 },
+  "submissions": [
+    {
+      "id": "submission-uuid",
+      "post_url": "https://x.com/someone/status/123",
+      "status": "approved",
+      "review_notes": "On-brief, disclosed.",
+      "reviewed_at": "2026-09-12T10:00:00Z",
+      "points_allocated": 50,
+      "created_at": "2026-09-12T09:00:00Z",
+      "creator": {
+        "user_id": "user-uuid",
+        "name": "Someone",
+        "avatar": "https://…",
+        "fid": 1234,
+        "x_username": "someone"
+      }
+    }
+  ],
+  "winners": [
+    { "id": "…", "user_id": "…", "submission_id": "…", "winner_type": "raffle", "reward_amount": 99 }
+  ],
+  "pagination": { "limit": 50, "offset": 0, "returned": 38, "total_matching": 38, "has_more": false }
+}
+```
+
+### Reading the response
+
+- **Use `state`, never `raw_status`.** A campaign past its end date reads `ended` while `raw_status` still says `active`.
+- `state` values: `processing` (the AI brief is still generating — the campaign is not live yet), `active`, `paused`, `ended`, `cancelled`.
+- **Right after launch, expect `processing` and zero submissions.** That is normal, not a failure.
+- Only `approved` submissions are delivered content. Report `pending` as unreviewed — never as results.
+- `post_url` is the live content the participant published; open it to judge quality.
+
+### Error Codes
+- `400` — `campaignId` is not a UUID or campaign number
+- `403` — The campaign belongs to another agent/user
+- `404` — Campaign not found
 
 ---
 

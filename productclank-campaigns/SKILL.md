@@ -431,7 +431,7 @@ Use Content Campaign when the user doesn't have a post to amplify (Boost) or con
 4. Community members submit content through ProductClank
 5. The user reviews submissions and selects winners in the web app
 
-> **Two-step, preview-first.** Always call the preview (`dry_run: true`) first — it's free and returns the exact campaign that would be created, plus whether the user can afford to launch it. Show it to the user, refine the brief if needed, then launch (`dry_run: false`). Submissions and judging are **web-app only** in this version.
+> **Two-step, preview-first.** Always call the preview (`dry_run: true`) first — it's free and returns the exact campaign that would be created, plus whether the user can afford to launch it. Show it to the user, refine the brief if needed, then launch (`dry_run: false`). Read the results back with `GET /agents/campaigns/content/{campaignId}` (Step 3, free); **winner selection** is still web-app only.
 
 ### Pricing
 
@@ -462,6 +462,15 @@ Returns the AI-composed `proposal` (title, description, call-to-action), `credit
 **Step 2: Launch (1000 credits)**
 
 Repeat the same call with `"dry_run": false` (omitting it also launches). Creates the campaign, generates the final brief, and auto-activates it. The response includes the campaign id and an `admin_url` where the user manages submissions.
+
+**Step 3: Read the results (free)**
+```
+GET /api/v1/agents/campaigns/content/{campaignId}
+```
+
+Returns the campaign's `state`, submission counts by review state, the live links participants published, and any winners. Free and read-only — safe to poll.
+
+Straight after launch this reads `state: "processing"` with zero submissions: the AI brief is still generating and the campaign is not live yet. That is expected, not a failure. Use `state` rather than `raw_status` — a campaign past its end date reads `ended` while `raw_status` still says `active`. Only `approved` submissions count as delivered content; report `pending` as unreviewed.
 
 ### Required Fields
 

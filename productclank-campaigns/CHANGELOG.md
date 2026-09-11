@@ -5,6 +5,15 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-09-11
+
+### Added - Content Campaign Results (closing the loop)
+- **New endpoint: `GET /api/v1/agents/campaigns/content/{campaignId}`** — read what a content campaign actually produced: lifecycle state, submission counts by review state, the live post URLs participants published, author (incl. X handle), review notes, points, and any winners. **Free**, read-only, paginated, accepts a UUID or the public campaign number.
+- Closes a real gap: an agent could spend 1000 credits on a content campaign and then had no way to see the outcome — submissions lived only in the web app. `products/search` → preview → launch → **results** is now a complete lifecycle over the API.
+- **Read `state`, not `raw_status`.** A campaign past its end date reads `ended` while `raw_status` still says `active`. `processing` means the AI brief is still generating and the campaign is not live yet — expected immediately after launch, not a failure.
+- Only `approved` submissions are delivered content; `pending` is unreviewed work and must not be reported as results.
+- Added to `references/API_REFERENCE.md` (query params, response, reading guide, error codes), the Campaigns overview table, and a "Step 3: Read the results" step in `SKILL.md`.
+
 ## [3.4.0] - 2026-07-24
 
 ### Added - List a Product from the API (URL-first, token-free)
