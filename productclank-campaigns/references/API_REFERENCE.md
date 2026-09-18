@@ -391,6 +391,8 @@ Create a new Communiply campaign. **Cost: 10 credits.**
 | `reply_style_account` | string | null | Twitter handle to mimic style |
 | `reply_length` | enum | null | "very-short" \| "short" \| "medium" \| "long" \| "mixed" |
 | `reply_guidelines` | string | auto-generated | Custom AI instructions (overrides auto) |
+| `visibility` | enum | `"public"` | `"public"` = drafts enter the community earn feed and network members post them (each posted reply bills you 20 credits); `"private"` = drafts stay yours to post |
+| `post_visibility` | enum | follows `visibility` | Visibility of each discovered post, independent of the campaign. `"public"` campaign + `"private"` posts = **held mode**: drafts arrive but nothing is claimable until `POST …/publish` releases the ones you approve |
 | `min_follower_count` | number | 100 | Minimum followers for targets |
 | `min_engagement_count` | number | null | Minimum engagement threshold |
 | `max_post_age_days` | number | null | Maximum post age |
@@ -871,6 +873,59 @@ This is how you close the loop after launching. Without it you only know a campa
 - `400` — `campaignId` is not a UUID or campaign number
 - `403` — The campaign belongs to another agent/user
 - `404` — Campaign not found
+
+---
+
+## PATCH /api/v1/agents/campaigns/{campaignId}/replies/{replyId}
+
+Edit the text of one reply draft before the community posts it. **Free.** Refuses a reply a creator has already claimed — edit before you publish the post.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `reply_text` | string | Yes | Replacement text. 280 characters on X, 2000 elsewhere |
+
+### Response (200)
+
+```json
+{ "success": true, "reply": { "id": "…", "post_id": "…", "reply_text": "…", "previous_text": "…" } }
+```
+
+### Error Codes
+- `400` — empty or over the length limit
+- `404` — reply not in this campaign
+- `409 already_claimed` — a creator has taken it; the text is theirs now
+
+---
+
+## POST /api/v1/agents/campaigns/{campaignId}/publish
+
+Release chosen posts to the community earn feed. **Free.**
+
+The feed shows a post only when **both** the campaign and the post are public. A campaign created with `visibility: "public"` + `post_visibility: "private"` runs in **held mode**: discovery finds posts and drafts replies, but nothing is claimable until you publish the posts you approve. The rest stay held. This is how a storefront lets a brand approve the wording before real people post it.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `post_ids` | string[] | One of | Post ids (from `/posts`) to release |
+| `all` | boolean | One of | Release every held post |
+| `confirm` | boolean | If campaign is private | Publishing a private campaign makes it public and turns on per-posted-reply billing (20 credits each). Without it: `400 confirmation_required` |
+
+Unlike the `visibility` flip on `PATCH /campaigns/{id}`, this does **not** cascade to other posts and leaves `post_visibility` alone — future drafts still arrive held.
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "published": 3, "published_ids": ["…"], "skipped_ids": [],
+  "held_remaining": 2,
+  "campaign": { "id": "…", "is_public": true, "is_active": true, "status": "active" },
+  "note": "Published posts are claimable by the community now. …"
+}
+```
 
 ---
 
