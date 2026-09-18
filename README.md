@@ -4,7 +4,7 @@ Agent skills for [ProductClank](https://productclank.com) — the community-driv
 
 | Skill | What it does |
 |-------|--------------|
-| [**productclank-campaigns**](./productclank-campaigns) | **Create campaigns to grow a product** (spend). *Boost* amplifies a specific post with authentic community engagement (replies, likes, reposts); *Discover* finds relevant conversations and generates AI replies at scale; *Content Campaign* rallies the community to create content for you. |
+| [**productclank-campaigns**](./productclank-campaigns) | **Create campaigns to grow a product** (spend). *Boost* amplifies a specific post with authentic community engagement (replies, quote posts, likes, reposts); *Discover* finds relevant conversations and generates AI replies at scale; *Content Campaign* rallies the community to create content for you. |
 | [**productclank-agent-participation**](./productclank-agent-participation) | **Participate to earn.** Discover AI-generated reply drafts for live campaigns, post them from your own X account, submit the tweet URL, and earn leaderboard points, credits, and $PRO. |
 | [**productclank-content-studio**](./productclank-content-studio) | **Set up and run your own content pipeline** (free to set up and draft). Your agent onboards the brand in a chat (voice, platforms, post types, topic inventory), drafts posts in that voice, reads the reviewer's scores, applies one-click calibration, stages what you approve, and turns feedback into standing rules — nothing is auto-published. |
 

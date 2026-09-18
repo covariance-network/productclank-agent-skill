@@ -634,7 +634,7 @@ AI-powered review of discovered posts against custom relevancy rules. Scores eac
 
 ## POST /api/v1/agents/campaigns/boost
 
-Rally your community to engage with a specific social post — replies, likes, or reposts. Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, Farcaster, and YouTube. **Cost: 200-300 credits.**
+Rally your community to engage with a specific social post — replies, quote posts, likes, or reposts. Supports Twitter/X, Instagram, TikTok, LinkedIn, Reddit, Farcaster, and YouTube. **Cost: 200-300 credits.**
 
 ### Request Body
 
@@ -642,8 +642,8 @@ Rally your community to engage with a specific social post — replies, likes, o
 |-------|------|----------|-------------|
 | `post_url` | string | Yes | Post URL from any supported platform. Platform is auto-detected. |
 | `product_id` | string (UUID) | No | Optional product to associate. If omitted, AI replies use generic amplification language ("this post") and brand-mention enforcement is skipped. |
-| `action_type` | string | No | "replies" (default) \| "likes" \| "repost" — availability varies by platform |
-| `reply_guidelines` | string | No | Custom AI instructions for community replies |
+| `action_type` | string | No | "replies" (default) \| "quote" \| "likes" \| "repost" — availability varies by platform. `"quote"` = a repost WITH the member's own AI-drafted text (**X only**, needs post text like replies) |
+| `reply_guidelines` | string | No | Custom AI instructions for community replies (and for quote-post text) |
 | `post_text` | string | No | Post text — skips server-side fetch (recommended for non-Twitter platforms) |
 | `post_author` | string | No | Post author username (used with `post_text`) |
 | `caller_user_id` | string | No | Trusted agents only |
@@ -652,23 +652,28 @@ Rally your community to engage with a specific social post — replies, likes, o
 
 ### Supported Platforms & Actions
 
-| Platform | URL Pattern | Replies | Likes | Reposts |
-|----------|-------------|---------|-------|---------|
-| Twitter/X | `x.com/*/status/*` or `twitter.com/*/status/*` | Yes | Yes | Yes |
-| Instagram | `instagram.com/p/*` or `instagram.com/reel/*` | Yes | Yes | — |
-| TikTok | `tiktok.com/@*/video/*` | Yes | Yes | — |
-| LinkedIn | `linkedin.com/posts/*` | Yes | Yes | — |
-| Reddit | `reddit.com/r/*/comments/*` | Yes | Yes | — |
-| Farcaster | `warpcast.com/*/0x*` | Yes | Yes | Yes |
-| YouTube | `youtube.com/watch?v=*` or `youtu.be/*` | Yes | Yes | — |
+| Platform | URL Pattern | Replies | Quote posts | Likes | Reposts |
+|----------|-------------|---------|-------------|-------|---------|
+| Twitter/X | `x.com/*/status/*` or `twitter.com/*/status/*` | Yes | Yes | Yes | Yes |
+| Instagram | `instagram.com/p/*` or `instagram.com/reel/*` | Yes | — | Yes | — |
+| TikTok | `tiktok.com/@*/video/*` | Yes | — | Yes | — |
+| LinkedIn | `linkedin.com/posts/*` | Yes | — | Yes | — |
+| Reddit | `reddit.com/r/*/comments/*` | Yes | — | Yes | — |
+| Farcaster | `warpcast.com/*/0x*` | Yes | — | Yes | Yes |
+| YouTube | `youtube.com/watch?v=*` or `youtu.be/*` | Yes | — | Yes | — |
+
+> ⚠️ **Unsupported action types fall back silently, at the price of what you actually got.** `action_type` is validated against the platform's supported actions and anything unsupported becomes `replies` — `"quote"` on a LinkedIn URL charges 200 credits for replies, with no error. Check this table before calling, and read `campaign.action_type` back off the response.
 
 ### Credit Costs
 
 | Action | Items Generated | Credits |
 |--------|----------------|---------|
 | `replies` | 10 AI replies | 200 |
+| `quote` | 10 AI-drafted quote posts (X only) | 200 |
 | `likes` | 30 like tasks | 300 |
 | `repost` | 10 repost tasks | 300 |
+
+**Quote posts** are the highest-reach action: a quote is a repost carrying the member's own drafted text, so it publishes to **their** followers' feeds instead of sitting under your post. Proof is the member's own quote-post URL — the platform author-matches it against their linked X handle and verifies it actually quotes the boosted post, so a plain tweet or a quote of something else is rejected and earns nothing.
 
 ### Response (200)
 
@@ -709,14 +714,14 @@ Re-boosting the same post regenerates fresh content without duplicating existing
 2. Server-side fetch via platform API (Twitter oEmbed, TikTok oEmbed, Reddit JSON, Neynar, etc.)
 3. Fallback (empty text — only works for likes/reposts)
 
-For replies, post text is required for AI generation. If the server can't fetch content and no `post_text` was provided, returns `503`.
+For replies **and quote posts**, post text is required for AI generation. If the server can't fetch content and no `post_text` was provided, returns `503`.
 
 ### Error Codes
 - `400` — Missing `post_url`, or unsupported platform URL
 - `402` — Insufficient credits
 - `404` — Product not found (only when `product_id` is provided and doesn't match an existing product)
 - `429` — Rate limit exceeded
-- `503` — Post text unavailable (replies only) — pass `post_text` or retry
+- `503` — Post text unavailable (replies and quote posts) — pass `post_text` or retry
 
 ---
 

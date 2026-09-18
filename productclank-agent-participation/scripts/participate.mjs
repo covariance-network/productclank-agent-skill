@@ -82,6 +82,14 @@ async function postReplyToX(targetTweetUrl, replyText) {
   throw new Error(`Implement postReplyToX — would reply to ${targetTweetUrl}: "${replyText}"`);
 }
 
+async function postQuoteToX(targetTweetUrl, quoteText) {
+  // TODO: post `quoteText` as a QUOTE of `targetTweetUrl` from YOUR X account
+  // (attachment_url / quote_tweet_id — NOT a plain tweet with the link pasted
+  // in the body), and return the URL of the quote post you just published.
+  // The backend checks both the author AND that your post quotes the target.
+  throw new Error(`Implement postQuoteToX — would quote ${targetTweetUrl}: "${quoteText}"`);
+}
+
 async function submitOnchainClaim(sig) {
   // TODO: call claim(token, recipient, amount, fid, auctionId, deadline, signature)
   // on sig.contractAddress (chainId sig.chainId) from your agent wallet; return the txHash.
@@ -102,13 +110,20 @@ async function main() {
   );
   const draft = post?.unclaimedReplies?.[0];
   if (!draft || draft.id == null || typeof draft.replyText !== "string") {
-    console.log("No posts with a usable reply draft right now.");
+    console.log("No posts with a usable draft right now.");
     return;
   }
-  console.log(`Draft for ${clean(post.tweetUrl)}:\n  "${clean(draft.replyText)}"`);
+  // "reply" (post it under the target) or "quote" (post it AS a quote of the
+  // target, X only). Anything else is work this API can't prove — skip it.
+  const actionType = draft.actionType === "quote" ? "quote" : "reply";
+  console.log(
+    `${actionType === "quote" ? "Quote-post" : "Reply"} draft for ${clean(post.tweetUrl)}:\n  "${clean(draft.replyText)}"`,
+  );
 
-  // 2. Post to X (your tooling)
-  const replyUrl = await postReplyToX(post.tweetUrl, draft.replyText);
+  // 2. Post to X (your tooling) — a quote task needs a QUOTE, not a reply.
+  const replyUrl = actionType === "quote"
+    ? await postQuoteToX(post.tweetUrl, draft.replyText)
+    : await postReplyToX(post.tweetUrl, draft.replyText);
 
   // 3. Submit
   const submit = await api("/submit", {

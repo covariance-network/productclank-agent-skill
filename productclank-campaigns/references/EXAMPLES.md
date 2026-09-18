@@ -1004,15 +1004,17 @@ async function weeklyGrowthCampaign() {
 
 ## Tweet Boost — Rally Community Around Your Post
 
-Get your community to engage with your tweet — replies showing support, asking questions, congratulating, plus likes and reposts.
+Get your community to engage with your tweet — replies showing support, asking questions, congratulating, quote posts carrying their own take to their own followers, plus likes and reposts.
 
 ```typescript
 async function boostTweet(
   tweetUrl: string,
-  actionType: "replies" | "likes" | "repost",
+  actionType: "replies" | "quote" | "likes" | "repost",
   options?: { tweetText?: string; tweetAuthor?: string; guidelines?: string; productId?: string }
 ) {
-  const creditCost = actionType === "replies" ? 200 : 300;
+  // Replies and quote posts are both 200; likes and reposts are 300.
+  const isTextAction = actionType === "replies" || actionType === "quote";
+  const creditCost = isTextAction ? 200 : 300;
 
   const result = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns/boost",
@@ -1028,8 +1030,8 @@ async function boostTweet(
         // product_id is OPTIONAL — omit for tweet-first boosts.
         // When provided, AI replies reference the product name and brand-mention enforcement is on.
         ...(options?.productId && { product_id: options.productId }),
-        // For reply boosts — tell the community how to engage
-        ...(actionType === "replies" && {
+        // For reply and quote boosts — tell the community how to engage
+        ...(isTextAction && {
           reply_guidelines: options?.guidelines ||
             "Show genuine excitement. Ask thoughtful questions about the features or congratulate the team. Keep it authentic.",
         }),
@@ -1041,7 +1043,9 @@ async function boostTweet(
   ).then(r => r.json());
 
   if (result.success) {
-    const actions = actionType === "replies" ? "10 community replies" : actionType === "likes" ? "30 likes" : "10 reposts";
+    const actions = actionType === "replies" ? "10 community replies"
+      : actionType === "quote" ? "10 community quote posts"
+      : actionType === "likes" ? "30 likes" : "10 reposts";
     console.log(`
 Boost created!
 
@@ -1066,6 +1070,18 @@ await boostTweet(
   }
 );
 
+// Community quote posts — X only. Each member reposts WITH their own text, so
+// it lands in their followers' feed instead of under your post.
+await boostTweet(
+  "https://x.com/myproduct/status/123456789",
+  "quote",
+  {
+    tweetText: "We just shipped v2.0! New API with 10x faster response times.",
+    tweetAuthor: "myproduct",
+    guidelines: "Give your own take on why this matters — what it changes for you. No hype, no sales pitch.",
+  }
+);
+
 // Community likes
 await boostTweet("https://x.com/myproduct/status/123456789", "likes");
 
@@ -1087,6 +1103,8 @@ communiply boost https://x.com/myproduct/status/123 --action likes
 
 # Reposts
 communiply boost https://x.com/myproduct/status/123 --action reposts
+
+# Quote posts are not exposed by the CLI — use the API with action_type: "quote"
 ```
 
 ---
