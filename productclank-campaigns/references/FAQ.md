@@ -31,6 +31,9 @@ A: Communiply for ongoing keyword-based monitoring. Boost for amplifying a speci
 **Q: Do I need a product on ProductClank to launch a Boost?**
 A: No. `product_id` is **optional** on `POST /agents/campaigns/boost`. Tweet-first boosts work without one — AI replies use generic amplification language ("this post" instead of the product name) and brand-mention enforcement is skipped. Pass `product_id` when you want the boost linked to a product on ProductClank (so AI replies reference the product name and enforce mentions). Discover/Communiply campaigns (`POST /agents/campaigns`) still require `product_id`.
 
+**Q: What's the difference between a repost boost and a quote boost?**
+A: A **repost** is a bare retweet — no words from the member, 300 credits for 10. A **quote post** is a repost **with the member's own AI-drafted text**, 200 credits for 10, and it publishes to that member's own followers as their post, which makes it the highest-reach boost action. Quote posts are **X only** (`action_type: "quote"`); on any other platform the value silently falls back to `replies` at the replies price, so check `campaign.action_type` in the response. Like replies, a quote boost needs the post's text — pass `post_text` or let the server fetch it (`503` if neither works).
+
 ## Agent Setup
 
 **Q: What's the difference between autonomous and owner-linked agents?**

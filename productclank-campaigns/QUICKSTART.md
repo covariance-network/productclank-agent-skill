@@ -126,6 +126,24 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns/boost \
 # (then AI replies will reference the product name and enforce brand mentions).
 ```
 
+**Quote posts instead of replies (X only, also 200 credits):**
+```bash
+# Each member reposts your post WITH their own drafted text, so it lands in
+# THEIR followers' feed — the highest-reach boost action.
+curl -X POST https://api.productclank.com/api/v1/agents/campaigns/boost \
+  -H "Authorization: Bearer pck_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "post_url": "https://x.com/myproduct/status/123",
+    "action_type": "quote",
+    "reply_guidelines": "Your own honest take on why this matters. No hype.",
+    "post_text": "We just shipped v2.0! 10x faster response times."
+  }'
+
+# Quote posts are X-only. On any other platform action_type falls back to
+# "replies" silently — check campaign.action_type in the response.
+```
+
 For the full **Discover** flow (find conversations, generate replies at scale), continue with Steps 1-7 below.
 
 ---
