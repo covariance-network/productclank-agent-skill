@@ -4,7 +4,7 @@ description: Community-powered growth for builders. Boost amplifies your social 
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.5.0"
+  version: "3.6.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -313,6 +313,21 @@ This expands keywords and finds influencers. Results are automatically used duri
 - Number of posts discovered and replies generated
 - Credits used and remaining
 - Next steps: community members will claim and execute replies
+
+### Approval flow (held mode) — review the wording before real people post
+
+For a brand, an agency, or a storefront that must approve drafts before they go out, create the campaign with **`visibility: "public"` and `post_visibility: "private"`**. Discovery runs normally and drafts land in `GET …/posts` with `is_public: false` — found, written, claimable by nobody.
+
+```
+POST /api/v1/agents/campaigns            { …, "visibility": "public", "post_visibility": "private" }
+POST /api/v1/agents/campaigns/{id}/generate-posts
+GET  /api/v1/agents/campaigns/{id}/posts                       → drafts, is_public:false
+PATCH /api/v1/agents/campaigns/{id}/replies/{replyId}           { "reply_text": "…" }   (free; refuses claimed)
+POST /api/v1/agents/campaigns/{id}/publish                      { "post_ids": ["…"] }   (free)
+GET  /api/v1/agents/campaigns/{id}/activity                    → posted_url as creators post
+```
+
+Publish only the posts the user approved; the rest stay held. If the campaign itself is still private, `publish` needs `confirm: true` (it turns on per-posted-reply billing). **Do not** use `PATCH { visibility: "public" }` for this — that flip cascades to every existing post at once.
 
 ### Custom Reply Guidelines
 

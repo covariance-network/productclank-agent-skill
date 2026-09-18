@@ -5,6 +5,15 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-09-18
+
+### Added - Approval flow for discovery campaigns (held mode)
+- **`post_visibility` on `POST /agents/campaigns`** (and `PATCH`): visibility of each discovered post, independent of the campaign. `visibility:"public"` + `post_visibility:"private"` = **held mode** — drafts are found and written but nothing is claimable until released.
+- **New: `PATCH /agents/campaigns/{id}/replies/{replyId}`** — edit one draft's text before the community posts it. Free. Refuses claimed replies (`409 already_claimed`).
+- **New: `POST /agents/campaigns/{id}/publish`** — release chosen posts (`post_ids` or `all`) to the earn feed. Free. Private campaign → `confirm:true` required. Does not cascade like the `visibility` flip.
+- `GET …/posts` now returns `is_public` per post so a UI can show held vs published.
+- New "Approval flow (held mode)" section in `SKILL.md` under Discover, and both endpoints in `references/API_REFERENCE.md`.
+
 ## [3.5.0] - 2026-09-11
 
 ### Added - Content Campaign Results (closing the loop)
