@@ -5,6 +5,15 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2026-09-22
+
+### Added - Derive a campaign brief from a URL
+- **New: `POST /agents/campaigns/analyze-url`** — reads the product's website and proposes the `keywords` and `search_context` that `POST /agents/campaigns` refuses without, plus a `suggested_title`. **3 credits**, charged only when a brief comes back. **Creates nothing** — no campaign, no product, no discovery. Optional `product_id` feeds the listing's name and tagline into the brief; `platform` adapts the vocabulary.
+- **Guidance unchanged where it matters:** if you can fetch and read the page yourself, still do that. It is free, it uses what the user has told you, and you can iterate before a credit is spent. This endpoint is the fallback for a client with no web access, or a storefront form where a human pastes a URL.
+
+### Fixed
+- The endpoint index was missing `PATCH /agents/campaigns/{id}/replies/{replyId}` and `POST /agents/campaigns/{id}/publish`, both shipped in 3.6.0 and documented in full further down the reference.
+
 ## [3.7.0] - 2026-09-18
 
 ### Added - Quote-Post Boosts (the highest-reach action)
