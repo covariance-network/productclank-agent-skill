@@ -4,7 +4,7 @@ description: Community-powered growth for builders. Boost amplifies your social 
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.6.0"
+  version: "3.7.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -209,12 +209,32 @@ Use Discover when the user wants to proactively find and engage in conversations
 
 | Operation | Credits |
 |-----------|---------|
+| URL → keywords + search context (only if you can't read the page yourself) | 3 |
 | Campaign creation | 10 |
 | Post discovery + reply generation | 12 per post |
 | Reply regeneration | 5 per reply |
 | Research analysis | Free |
 
 ### API Flow
+
+**Step 0: the brief is yours to derive (free)**
+
+`keywords` and `search_context` are the campaign's steering wheel and create refuses without
+them. Fetch and read the product's site, work out who the audience is and the phrases they use
+when they have the problem it solves, and build both from that. Do it here, in the
+conversation — it costs nothing and you can iterate with the user before a credit is spent.
+
+If you cannot fetch web pages from this client, say so, and either build the brief from what
+the user tells you or call the endpoint that does the read for you:
+
+```
+POST /api/v1/agents/campaigns/analyze-url    # 3 credits, creates nothing
+{ "url": "https://acme.com", "product_id": "product-uuid", "platform": "twitter" }
+→ { "keywords": [...], "search_context": "…", "suggested_title": "…" }
+```
+
+It returns 8-15 keywords. Show them to the user and cut to the 3-8 that match how their buyers
+actually talk. Never silently guess a brief from the product's name.
 
 **Step 1: Create campaign (10 credits)**
 ```

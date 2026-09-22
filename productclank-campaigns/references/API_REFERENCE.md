@@ -62,6 +62,7 @@ Connected Apps.
 ### Campaigns
 | Method | Endpoint | Auth | Cost | Description |
 |--------|----------|------|------|-------------|
+| POST | `/agents/campaigns/analyze-url` | Bearer | 3 credits | Derive `keywords` + `search_context` from a product URL, before create |
 | POST | `/agents/campaigns` | Bearer | 10 credits | Create campaign |
 | GET | `/agents/campaigns` | Bearer | Free | List agent's campaigns |
 | GET | `/agents/campaigns/{id}` | Bearer | Free | Get campaign details & stats |
@@ -75,6 +76,8 @@ Connected Apps.
 | POST | `/agents/campaigns/boost` | Bearer | 200-300 credits | Boost a specific tweet |
 | POST | `/agents/campaigns/content` | Bearer | Free (`dry_run`) / 1000 credits | Preview or launch a content campaign |
 | GET | `/agents/campaigns/content/{campaignId}` | Bearer | Free | Read a content campaign's submissions, state and winners |
+| PATCH | `/agents/campaigns/{id}/replies/{replyId}` | Bearer | Free | Edit one draft's text before it is published |
+| POST | `/agents/campaigns/{id}/publish` | Bearer | Free | Release chosen held posts to the community |
 
 ### Credits
 | Method | Endpoint | Auth | Cost | Description |
@@ -364,6 +367,50 @@ When an existing match is found, the response is the same shape with `already_li
 - `422` — `url` given but the site was unreadable and no `name` was provided (pass `name` to list manually).
 - `429` — Daily product-listing limit reached (20/day per owner).
 - `500` — Listing failed.
+
+---
+
+## POST /api/v1/agents/campaigns/analyze-url
+
+Derive a campaign's `keywords` and `search_context` from the product's website, **before** creating the campaign. **Cost: 3 credits**, charged only when a brief comes back. **Creates nothing** — no campaign, no product, no discovery.
+
+> **Derive it yourself when you can.** If you can fetch and read the product's site in your own context, do that: it is free, you can iterate with the user before anything is spent, and you know what they have told you about their audience. This endpoint exists for the case that cannot — a client with no web access, or a storefront form where a human pastes a URL and expects the fields to fill themselves.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | The product's website. Fetched server-side (10s timeout, SSRF-guarded). |
+| `platform` | enum | No | `twitter` (default), `linkedin`, `reddit`, `youtube` — the brief adapts its vocabulary. Pass what you will pass to create. |
+| `product_id` | string (UUID) | No | Existing listing whose name and tagline sharpen the brief. |
+| `product_name` | string | No | Overrides the listing's name. |
+| `product_tagline` | string | No | Overrides the listing's tagline. |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "platform": "twitter",
+  "product": { "id": "product-uuid", "name": "Acme", "tagline": "Issue tracking for small teams" },
+  "search_context": "Find posts where founders and small teams are comparing lightweight project tools ...",
+  "keywords": ["issue tracker", "jira alternative", "project management for small teams", "..."],
+  "suggested_title": "Acme — issue-tracker conversations",
+  "credits": { "credits_used": 3, "credits_remaining": 1297 }
+}
+```
+
+`keywords` comes back as 8-15 phrases. Put them in front of the user and cut to the 3-8 that match how their buyers actually talk — that list is what the campaign then runs on. Leave `search_context` broad: it is the relevance gate's criteria, and a narrow one returns an empty first run.
+
+### Error Codes
+
+| Code | Meaning |
+|------|---------|
+| `400 validation_error` | No `url`, or an unknown `platform` |
+| `400 url_fetch_failed` | Page unreachable, blocked, or empty — ask for another link, or write the fields from what the user tells you |
+| `402 insufficient_credits` | Nothing ran |
+| `404 not_found` | Unknown `product_id` |
+| `502 ai_error` | The model failed or returned nothing usable. Nothing was charged; safe to retry. |
 
 ---
 
