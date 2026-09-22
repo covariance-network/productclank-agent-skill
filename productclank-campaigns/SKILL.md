@@ -1,10 +1,10 @@
 ---
 name: productclank-campaigns
-description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them.
+description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, quote posts, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them.
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.7.0"
+  version: "3.8.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -28,20 +28,22 @@ Use Boost when the user has a post URL they want to amplify. One API call, insta
 
 ### Supported Platforms
 
-| Platform | Replies | Likes | Reposts |
-|----------|---------|-------|---------|
-| Twitter/X | Yes | Yes | Yes |
-| Instagram | Yes | Yes | — |
-| TikTok | Yes | Yes | — |
-| LinkedIn | Yes | Yes | — |
-| Reddit | Yes | Yes | — |
-| Farcaster | Yes | Yes | Yes |
-| YouTube | Yes | Yes | — |
+| Platform | Replies | Quote posts | Likes | Reposts |
+|----------|---------|-------------|-------|---------|
+| Twitter/X | Yes | Yes | Yes | Yes |
+| Instagram | Yes | — | Yes | — |
+| TikTok | Yes | — | Yes | — |
+| LinkedIn | Yes | — | Yes | — |
+| Reddit | Yes | — | Yes | — |
+| Farcaster | Yes | — | Yes | Yes |
+| YouTube | Yes | — | Yes | — |
+
+> **Quote posts are X-only.** A quote post is a repost **with the member's own text**, so it lands in that member's followers' feed as their own post — the highest-reach boost action. On any other platform, `action_type: "quote"` falls back to `replies` (see the fallback warning under [API](#api)).
 
 ### How It Works
 1. Provide a post URL from any supported platform
 2. Platform is auto-detected from the URL
-3. Choose action: replies, likes, or reposts (availability varies by platform)
+3. Choose action: replies, quote posts (X only), likes, or reposts (availability varies by platform)
 4. Community members execute from their personal accounts
 5. You get authentic, third-party engagement
 
@@ -50,6 +52,7 @@ Use Boost when the user has a post URL they want to amplify. One API call, insta
 | Action | What You Get | Credits |
 |--------|-------------|---------|
 | Replies | 10 AI-generated reply threads | 200 |
+| Quote posts | 10 AI-drafted quote posts (X only) | 200 |
 | Likes | 30 community likes | 300 |
 | Reposts | 10 community reposts | 300 |
 
@@ -71,6 +74,9 @@ POST /api/v1/agents/campaigns/boost
 ```
 
 > Only `post_url` is required. `tweet_url`, `tweet_text`, and `tweet_author` are still accepted for backward compatibility.
+
+> **`action_type` is `"replies"` (default) | `"quote"` | `"likes"` | `"repost"`.**
+> ⚠️ **Unsupported values fall back silently — at the price of what you actually got.** The server validates `action_type` against the platform's supported actions and turns anything unsupported into `replies`. `"quote"` on a LinkedIn URL charges 200 credits and buys *replies*, with no error. Check the platform table above before calling, and read `campaign.action_type` back off the response to confirm what was created.
 
 **Response:**
 ```json
@@ -99,20 +105,38 @@ POST /api/v1/agents/campaigns/boost
 
 **Consolidation:** All boost actions for the same product share one campaign. Boosting again adds to the existing campaign (`is_reboost: true`).
 
+### Quote Posts (the highest-reach action)
+
+A **quote post** is a repost *with the community member's own text*. Unlike a reply — which sits under someone else's post and is seen mostly by that post's audience — a quote is published on the member's own timeline and pushed to **their** followers, so reach compounds across the community instead of concentrating on one thread.
+
+| | Reply | Quote post | Repost |
+|---|---|---|---|
+| Where it lands | Under the target post | The member's own timeline, quoting the target | The member's timeline, no text |
+| Member's own words | Yes (AI-drafted) | Yes (AI-drafted) | No |
+| Platforms | All 7 | **X only** | X & Farcaster |
+| Credits | 200 / 10 replies | **200 / 10 quote posts** | 300 / 10 reposts |
+
+Practical notes:
+- **Post text is required**, same as replies — pass `post_text` if you already have it, or the server fetches it (`503` if neither works).
+- `reply_guidelines` steers quote-post text too — it is the same drafting knob.
+- **How it is proved:** the member submits the URL of *their own quote post*. The platform checks the author matches their linked X handle **and** that the post actually quotes the boosted post — a plain tweet, or a quote of something else, is rejected and earns nothing.
+- Reach for quote posts on launches and announcements where you want the community's own framing in front of *their* audiences; reach for replies when you want the target thread itself to look alive.
+
 ### When to Use Boost
 - "Boost this post" / "get engagement on my announcement"
 - "Get community replies on my LinkedIn post"
 - "Get likes on my tweet" / "get reposts on my cast"
+- "Get people to quote-tweet my launch with their own take" (X only — the highest-reach option)
 - User shares a post URL from any platform and wants community engagement
 - Launch announcements, product updates, partnership posts — any post you want your community to rally behind
 
 ### How to Run a Boost (Agent Interaction Guide)
 
 1. **Get the post URL** — ask the user for their post URL (the post they want community to engage with). Any supported platform works.
-2. **Choose action type** — ask: "How should the community engage? Replies (support, questions, congrats), likes, or reposts?" Default to replies if unclear. Note: reposts only available on Twitter and Farcaster.
+2. **Choose action type** — ask: "How should the community engage? Replies (support, questions, congrats), quote posts (members repost it with their own take, in front of their own followers), likes, or reposts?" Default to replies if unclear. Note: quote posts are **X only**; reposts are Twitter and Farcaster only. Do not offer an action the user's platform doesn't support — an unsupported `action_type` silently becomes `replies` and still bills.
 3. **(Optional) Link a product** — if the user wants the boost associated with a product on ProductClank, search `GET /agents/products/search?q=<name>` and confirm with user (see [Confirm Product Selection](#confirm-product-selection)). Skip this step if the user has no product on ProductClank or doesn't want to link one — boosts run fine without `product_id`.
-4. **Get reply guidelines** (for replies) — ask what kind of engagement they want: "Should community replies congratulate the team? Ask about features? Show excitement?" Use this to set `reply_guidelines`
-5. **Confirm cost** — "This will use 200 credits for 10 community replies. Proceed?"
+4. **Get reply guidelines** (for replies and quote posts) — ask what kind of engagement they want: "Should community replies congratulate the team? Ask about features? Show excitement?" Use this to set `reply_guidelines` — it drafts quote-post text the same way
+5. **Confirm cost** — "This will use 200 credits for 10 community replies. Proceed?" (or "…for 10 community quote posts")
 6. **Execute** — `POST /agents/campaigns/boost`
 7. **Share results** — show campaign URL and credits remaining
 
@@ -165,6 +189,27 @@ await fetch(`${API}/campaigns/boost`, {
     // product_id omitted — AI replies use generic amplification language
   }),
 });
+
+// 4. Quote posts — X only. Same 200 credits, but each member reposts WITH their
+//    own drafted text, so it lands in THEIR followers' feeds. Post text is
+//    required here exactly as it is for replies.
+const quoteRes = await fetch(`${API}/campaigns/boost`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    post_url: "https://x.com/myproduct/status/123456789",
+    action_type: "quote",
+    reply_guidelines: "Give your own honest take on why this matters — what problem it solves for you. No hype, no sales pitch.",
+    post_text: "We just shipped v2.0! New API with 10x faster response times.",
+  }),
+});
+
+const quote = await quoteRes.json();
+// Always confirm what was actually created — an unsupported action_type
+// silently degrades to "replies" at the same price.
+if (quote.success && quote.campaign.action_type !== "quote") {
+  console.warn(`⚠️ Platform doesn't support quote posts — created ${quote.campaign.action_type} instead.`);
+}
 ```
 
 ### CLI
@@ -184,11 +229,13 @@ communiply boost https://tiktok.com/@myproduct/video/123 --action replies
 communiply boost https://warpcast.com/myproduct/0xabc123 --action reposts
 ```
 
+> The CLI exposes `replies`, `likes` and `reposts` only. **For quote posts, call the API directly** (`action_type: "quote"`).
+
 ### Post Text Resolution
-For **replies**, post text is required for AI generation. Resolution order:
+For **replies and quote posts**, post text is required for AI generation. Resolution order:
 1. Client-provided `post_text` (skips fetch — recommended for non-Twitter platforms)
 2. Server-side fetch via platform API (Twitter oEmbed, TikTok oEmbed, Reddit JSON, etc.)
-3. If text unavailable, returns `503` for replies. Likes/reposts work without text.
+3. If text unavailable, returns `503` for replies and quote posts. Likes/reposts work without text.
 
 ---
 
@@ -538,11 +585,11 @@ Straight after launch this reads `state: "processing"` with zero submissions: th
 | Question | Boost | Discover | Content Campaign |
 |----------|-------|----------|------------------|
 | Do you have a post URL? | Yes — your own post you want community to engage with | No | No |
-| What does the community do? | Engages an existing post (replies/likes/reposts) | Replies to conversations it finds | Creates original content for you |
+| What does the community do? | Engages an existing post (replies/quote posts/likes/reposts) | Replies to conversations it finds | Creates original content for you |
 | Platforms? | Twitter, Instagram, TikTok, LinkedIn, Reddit, Farcaster, YouTube | Twitter only | Any (creators choose) |
 | Time to value? | ~30 seconds | ~5 minutes | ~1 minute (preview + launch) |
 | Setup complexity? | 1 API call | 2-3 API calls | 2 calls (preview, then launch) |
-| Best for? | Rally community around your post (replies, likes, reposts) | Finding & joining new conversations about your topic | Getting fresh user-generated content about your product |
+| Best for? | Rally community around your post (replies, quote posts, likes, reposts) | Finding & joining new conversations about your topic | Getting fresh user-generated content about your product |
 | Ongoing? | One-time per post | Can generate multiple batches | One-time per campaign |
 | Credits? | Fixed (200-300) | Variable (10 + 12/post) | Fixed (1000) |
 | Results reviewed where? | In-app / via API | In-app / via API | Web app only (submissions + winners) |
@@ -674,7 +721,8 @@ For complete API reference, see [references/API_REFERENCE.md](references/API_REF
 ## Best Practices
 
 ### For Boost
-- Use `reply_guidelines` to control the tone and focus of generated replies
+- Use `reply_guidelines` to control the tone and focus of generated replies (and of quote-post text)
+- **Want reach rather than a busy thread? Use `action_type: "quote"`** — quote posts publish to each member's own followers instead of under your post. X only, same 200 credits as replies
 - Boost works best on posts less than 48 hours old
 - You can boost the same post multiple times with different action types
 - For non-Twitter platforms, pass `post_text` to ensure reliable reply generation

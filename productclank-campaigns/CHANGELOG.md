@@ -5,7 +5,7 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.7.0] - 2026-09-22
+## [3.8.0] - 2026-09-22
 
 ### Added - Derive a campaign brief from a URL
 - **New: `POST /agents/campaigns/analyze-url`** — reads the product's website and proposes the `keywords` and `search_context` that `POST /agents/campaigns` refuses without, plus a `suggested_title`. **3 credits**, charged only when a brief comes back. **Creates nothing** — no campaign, no product, no discovery. Optional `product_id` feeds the listing's name and tagline into the brief; `platform` adapts the vocabulary.
@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The endpoint index was missing `PATCH /agents/campaigns/{id}/replies/{replyId}` and `POST /agents/campaigns/{id}/publish`, both shipped in 3.6.0 and documented in full further down the reference.
+
+## [3.7.0] - 2026-09-18
+
+### Added - Quote-Post Boosts (the highest-reach action)
+- **`action_type: "quote"` on `POST /api/v1/agents/campaigns/boost`** — 10 AI-drafted **quote posts** for **200 credits**, the same price as replies. A quote post is a repost carrying the community member's own text, so it publishes to **their** followers' feed instead of sitting under the boosted post. The action shipped on the platform in September 2025; the skill never documented it, so agents could only ever offer replies, likes and reposts.
+- **X only.** Documented in the platform/action tables of `SKILL.md`, `references/API_REFERENCE.md` and `README.md`, with the credit-cost tables and the boost decision guidance updated.
+- **⚠️ Documented the silent fallback:** an `action_type` the platform doesn't support becomes `replies` **at the replies price** with no error — `"quote"` on a LinkedIn URL charges 200 credits for replies. Agents are told to check the platform table first and read `campaign.action_type` back off the response.
+- Post text is required for quote posts exactly as for replies (`503` if neither `post_text` nor a server-side fetch yields text); `reply_guidelines` steers quote-post text.
+- Proof model documented: the member submits the URL of **their own quote post**, author-matched against their linked X handle and verified to actually quote the boosted post — a plain tweet, or a quote of something else, earns nothing.
+- Added a runnable quote example to `SKILL.md` and `references/EXAMPLES.md` (including the `campaign.action_type` read-back check), a curl variant to `QUICKSTART.md`, and a repost-vs-quote entry to `references/FAQ.md`.
+- **CLI gap noted, not papered over:** `communiply boost` exposes `replies`/`likes`/`reposts` only, so quote boosts are API-first — stated wherever the CLI is documented.
+- **Companion skill:** `productclank-agent-participation` 0.2.0 documents the earning side — `quote` drafts in `GET /participate/feed`, what to post (a real quote, not a link-in-body tweet), the synchronous author + quote-relationship verification, the `quote_*` error codes, and the repost points rate a quote is paid at.
 
 ## [3.6.0] - 2026-09-18
 

@@ -17,10 +17,11 @@ An [Agent Skill](https://agentskills.io) and [CLI tool](https://github.com/covar
 ```
 What do you want to do?
 │
-├─ Rally community around YOUR tweet (replies, likes, reposts)
+├─ Rally community around YOUR tweet (replies, quote posts, likes, reposts)
 │  └─> POST /agents/campaigns/boost  (or: communiply boost <url>)
 │      • Cost: 200-300 credits
-│      • Result: Community replies (support, questions, congrats), likes, or reposts
+│      • Result: Community replies (support, questions, congrats), quote posts
+│        (a repost with the member's own text — X only, highest reach), likes, or reposts
 │      • Time: Immediate (single API call)
 │      • Best for: Launch announcements, product updates, partnership posts
 │
@@ -52,7 +53,7 @@ What do you want to do?
 | **Small test** | ~60 | 4 posts | Testing the API |
 | **Medium test** | ~130 | 10 posts | Proof of concept |
 | **Full test** | ~250 | 20 posts | Real campaign test |
-| **Tweet boost** | 200-300 | 10 replies OR engagement | One-time amplification |
+| **Tweet boost** | 200-300 | 10 replies / 10 quote posts / 30 likes / 10 reposts | One-time amplification |
 
 **Formula:** `Total = 10 (campaign) + (posts × 12) + (optional: review × 2)`
 
@@ -133,6 +134,7 @@ See [SKILL.md](SKILL.md) for complete documentation.
 - "Get my community to reply to my launch tweet"
 - "Get support and congratulations on this announcement"
 - "Get likes and reposts on my product update"
+- "Get people to quote-tweet my launch with their own take" (X only)
 
 **When to use Content Campaign:**
 - "Get the community to make posts/videos about my product"
@@ -158,6 +160,8 @@ communiply boost https://x.com/myproduct/status/123 --action replies \
 communiply boost https://x.com/myproduct/status/123 --action likes
 communiply boost https://x.com/myproduct/status/123 --action reposts
 ```
+
+> Quote posts (`action_type: "quote"`) are API-only for now — the CLI exposes replies, likes and reposts.
 
 Full CLI docs: [communiply-cli README](https://github.com/covariance-network/communiply-cli)
 
@@ -326,7 +330,7 @@ communiply-cli/                    # CLI Tool (for developers)
 | POST | `/agents/campaigns/{id}/generate-posts` | 12 cr/post | Trigger discovery & replies |
 | POST | `/agents/campaigns/{id}/review-posts` | 2 cr/post | AI relevancy review & cleanup |
 | POST | `/agents/campaigns/{id}/delegates` | Free | Add campaign delegator |
-| POST | `/agents/campaigns/boost` | 200-300 cr | Rally community around a tweet (replies, likes, reposts) |
+| POST | `/agents/campaigns/boost` | 200-300 cr | Rally community around a tweet (replies, quote posts, likes, reposts) |
 
 ### Credits
 | Method | Endpoint | Description |
@@ -347,6 +351,7 @@ Top up credits via the [webapp](https://app.productclank.com/credits/purchase) (
 | Create campaign | 10 |
 | Discover post + generate reply | 12 |
 | Tweet boost (10 AI replies) | 200 |
+| Tweet boost (10 AI quote posts, X only) | 200 |
 | Tweet boost (likes/repost) | 300 |
 | Review post (AI relevancy) | 2 |
 
@@ -426,7 +431,7 @@ Find people expressing pain points your product solves.
 Third-party validation reinforces positive mentions of your brand.
 
 ### 5. Tweet Boost
-Rally your community to engage with a specific tweet — replies showing support, questions, or congrats, plus likes and reposts.
+Rally your community to engage with a specific tweet — replies showing support, questions, or congrats, quote posts carrying each member's own take to their own followers (X only), plus likes and reposts.
 
 ### 6. Product Launches
 Coordinate community amplification during launch week - Let your communit respond on relevant post and mention your product launch
