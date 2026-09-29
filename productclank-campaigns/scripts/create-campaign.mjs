@@ -91,6 +91,10 @@ const campaignData = {
   mention_accounts: ["@productclank"],
   reply_style_tags: ["friendly", "helpful"],
   reply_length: "short",
+  // X only. "mention" = awareness (product in the thread); "flag" = sales (tag
+  // the brand/founder at the post's author as a lead — set reply_tag_accounts).
+  reply_approach: "mention",
+  // reply_tag_accounts: ["productclank", "yourfounder"], // for "flag": brand, founder, or both
   min_follower_count: 100,
   max_post_age_days: 7,
 };

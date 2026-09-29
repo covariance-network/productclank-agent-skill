@@ -264,27 +264,23 @@ async function createCompetitorInterceptCampaign() {
 
         search_context: "People actively looking for alternatives to our competitors, frustrated with pricing, features, or support",
 
-        mention_accounts: ["@yourproduct"],
+        // Someone shopping for a competitor's replacement is a sales lead, so
+        // flag it to the people who can close it instead of pitching the author.
+        reply_approach: "flag",
+        reply_tag_accounts: ["yourproduct", "your_founder"], // brand, founder, or both
         reply_style_tags: ["helpful", "empathetic", "solution-oriented"],
         reply_length: "short",
 
         reply_guidelines: `
-Reply as a user who recently switched from [competitor] to our product.
+Flag the post to the tagged accounts as a lead: say in a few words what the
+author is unhappy with or looking for, and which part of the product fits.
 
-**Share your experience:**
-- What frustrated you about [competitor]
-- What made you switch to us
-- Specific features/benefits you love now
-
-**Be authentic:**
 - Don't bash competitors
-- Share genuine experience
-- Offer to help if they have questions
+- Never claim to have used either product
+- Keep it short, like passing a friend a lead
 
 **Example tone:**
-"I was in the same boat last month. Switched to @yourproduct and haven't looked back. Their [feature] alone saved me hours/week. Happy to share my migration process if helpful!"
-
-Keep it conversational, not salesy.
+"@yourproduct @your_founder Sam is fed up with [competitor]'s pricing and looking for a switch, your [feature] might be exactly it"
         `.trim(),
 
         min_follower_count: 500,
@@ -333,19 +329,21 @@ async function createLaunchWeekCampaign() {
         reply_style_tags: ["excited", "friendly", "genuine"],
         reply_length: "mixed",
 
+        // Launch week is about being seen: awareness replies (the default).
+        reply_approach: "mention",
+
         reply_guidelines: `
-You're an early beta user who's been using the product for 3 months.
+You're a community member passing on a launch that fits the conversation.
+Never claim to have used the product or gotten results with it.
 
 **Launch week focus:**
-- Share what you've built with it
 - Mention it launched today/this week
+- Say what problem it solves, tied to THIS post
 - Highlight 1-2 unique features
-- Offer to answer questions
 
 **Example angles:**
-- "Just saw @yourproduct launched today! Been using the beta for months..."
-- "This reminds me of @yourproduct which just launched. They solve this exact problem by..."
-- "Perfect timing - @yourproduct literally just released a feature for this yesterday..."
+- "@yourproduct launched today and it's built for exactly this, worth a look"
+- "This is the problem @yourproduct just shipped a fix for: [feature]"
 
 **Include launch link:** https://yourproduct.com/launch
 
@@ -612,6 +610,8 @@ interface CampaignRequest {
   reply_style_account?: string;
   reply_length?: "very-short" | "short" | "medium" | "long" | "mixed";
   reply_guidelines?: string;
+  reply_approach?: "mention" | "flag"; // X only: awareness vs flag leads to the founder
+  reply_tag_accounts?: string[]; // X only, for "flag": ≤2 handles, brand first
   min_follower_count?: number;
   min_engagement_count?: number;
   max_post_age_days?: number;
@@ -885,12 +885,12 @@ async function createGrowthRewardsCampaign() {
         reply_style_tags: ["enthusiastic", "helpful", "genuine"],
         reply_length: "short",
         reply_guidelines: `
-You're a user who's been using the product for a few weeks during beta.
+You're a community member recommending the product where it genuinely fits.
+Never claim to have used it or gotten results with it.
 
-Share what you love:
-- How it saved you time on X
-- A specific feature that surprised you
-- Why you'd recommend it
+- Name the specific problem in the post it solves
+- Point to one concrete feature
+- Say why it's worth a look
 
 Keep it natural — you're helping someone, not selling.
 Include @yourproduct when relevant.
