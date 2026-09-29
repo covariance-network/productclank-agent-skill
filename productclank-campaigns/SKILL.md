@@ -4,7 +4,7 @@ description: Community-powered growth for builders. Boost amplifies your social 
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.9.0"
+  version: "3.10.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -725,6 +725,8 @@ When using `caller_user_id` (trusted agents), the billing user is auto-added as 
 | `/agents/credits/history` | GET | Free | Transaction history |
 | `/agents/products/search` | GET | Free | Search products |
 | `/agents/products` | POST | Free | List a new product (token-free, URL-autofilled) |
+| `/agents/support` | POST | Free | Report a failure or a dead end to the ProductClank team |
+| `/agents/support` | GET | Free | Your support tickets and the team's replies |
 
 For complete API reference, see [references/API_REFERENCE.md](references/API_REFERENCE.md).
 
@@ -751,6 +753,35 @@ For complete API reference, see [references/API_REFERENCE.md](references/API_REF
 - Direct users to the dashboard after campaign creation: `https://app.productclank.com/communiply/{id}`
 - Add users as delegators so they can manage campaigns in the webapp
 - Top up credits via the [webapp](https://app.productclank.com/credits/purchase) or x402 (`POST /agents/credits/topup`) for autonomous agents
+
+---
+
+## When something fails or you're stuck — report it
+
+Don't retry a failing call in a loop, and don't quietly give up. If a call fails in a way its error doesn't explain, returns something that makes no sense, or you can't finish the user's task, report it. **Free.** A human on the ProductClank team is alerted and replies.
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/support \
+  -H "Authorization: Bearer $PRODUCTCLANK_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "message": "generate-posts returns 500 for CP-123 on every call since 10:00 UTC",
+    "category": "bug",
+    "severity": "blocking",
+    "endpoint": "POST /api/v1/agents/campaigns/CP-123/generate-posts",
+    "http_status": 500,
+    "error_code": "internal_error",
+    "context": { "max_posts": 10, "tried": "waited 5 min, same result" },
+    "client": "skill"
+  }'
+```
+
+- The response has a `ticket_id`. If `error_code` is a known one (e.g. `insufficient_credits`, `daily_spend_cap_exceeded`, `authorization_revoked`), `self_help` tells you the fix to apply right now.
+- Tell the user in one line that you reported it, then carry on with other work.
+- To add detail, send the same call with `ticket_id` instead of opening a new ticket.
+- Read replies with `GET /api/v1/agents/support` (your tickets, with `has_reply`) or `GET /api/v1/agents/support?ticket_id=…` (the conversation).
+- `category`: `bug` · `stuck` · `unexpected_result` · `docs` · `billing` · `feature_request` · `other`. `severity`: `low` · `normal` · `high` · `blocking`.
+- Limits: 5 reports per 10 minutes and 25 per day per agent. API keys and tokens in the body are redacted, but don't send secrets.
+- Not for expected guards whose error already tells you what to do (a confirmation prompt, an empty balance): relay those to the user.
 
 ---
 
