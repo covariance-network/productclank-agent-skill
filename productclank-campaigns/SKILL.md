@@ -4,7 +4,7 @@ description: Community-powered growth for builders. Boost amplifies your social 
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.8.0"
+  version: "3.9.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -298,10 +298,20 @@ POST /api/v1/agents/campaigns
   "reply_style_tags": ["friendly", "helpful"],
   "reply_length": "short",
   "reply_posted_by": "community",
+  "reply_approach": "mention",
   "min_follower_count": 500,
   "max_post_age_days": 7
 }
 ```
+
+**Ask what the replies are for (X only).** It changes every reply, so ask the user rather than defaulting silently:
+
+| `reply_approach` | Goal | What a reply does | Example |
+|---|---|---|---|
+| `"mention"` (default) | **Awareness**: visibility, traffic, brand presence | Puts the product and its site in the conversation for thread readers | "distribution is the hard part. @acme is built for exactly this, worth a look: acme.com" |
+| `"flag"` | **Sales**: signups, demos, deals | Tags the brand and/or founder and points them at the post's author as a lead, so the founder can jump in and convert | "@acme @jane_founder Nick shipped 3 weeks ago with zero signups, might be something you can help with" |
+
+With `"flag"`, set `reply_tag_accounts` to who gets tagged: the brand, the founder's personal account, or both (up to 2, brand first), e.g. `"reply_tag_accounts": ["acme", "jane_founder"]`. Neither style has the replier pretend to have used the product. Both fields are rejected (400) on non-X campaigns, and the response's `warnings` flags settings that won't take effect (e.g. `no_tag_account` for flag mode with nobody to tag). Change either later with `PATCH /api/v1/agents/campaigns/{id}` (free).
 
 **Step 2 (optional): Run research (free)**
 ```
@@ -487,12 +497,14 @@ await fetch(`${API}/campaigns/${campaign.campaign.id}/regenerate-replies`, {
 ### Optional Fields
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `mention_accounts` | string[] | `[]` | Handles to mention naturally |
+| `mention_accounts` | string[] | `[]` | Handles to name-drop in `mention` replies. Also a discovery input (posts mentioning them are surfaced), so don't use it to pick who `flag` replies tag |
 | `reply_style_tags` | string[] | `[]` | Tone tags (friendly, technical, etc.) |
 | `reply_style_account` | string | — | Handle to mimic style |
 | `reply_length` | enum | — | very-short, short, medium, long, mixed |
 | `reply_posted_by` | enum | community | community or brand |
 | `reply_guidelines` | string | auto | Custom AI generation instructions |
+| `reply_approach` | enum | mention | **X only.** `mention` = awareness (product in the thread); `flag` = sales (tag the brand/founder at the lead) |
+| `reply_tag_accounts` | string[] | — | **X only, for `flag`.** Up to 2 handles to tag, brand first then founder |
 | `min_follower_count` | number | 100 | Min followers filter |
 | `min_engagement_count` | number | — | Min engagement filter |
 | `max_post_age_days` | number | — | Max post age filter |

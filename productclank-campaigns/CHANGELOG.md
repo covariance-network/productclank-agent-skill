@@ -5,6 +5,19 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.0] - 2026-09-29
+
+### Added - Choose what discovery replies are for (X)
+- **`reply_approach` on `POST /agents/campaigns` and `PATCH /agents/campaigns/{id}`**: `"mention"` (default) = **awareness**, replies put the product and its site in the conversation; `"flag"` = **sales**, replies tag the brand and/or founder and point them at the post's author as a lead ("@acme @jane_founder Nick shipped 3 weeks ago with zero signups, might be something you can help with").
+- **`reply_tag_accounts`**: up to 2 handles for flag replies, brand first then founder, so the user picks brand, personal or both.
+- Both are X only (400 elsewhere). Settings that won't take effect come back as `warnings` (`no_tag_account`, `reply_tag_accounts_inactive`, `reply_approach_inactive`). `GET /agents/campaigns/{id}` returns them.
+- SKILL.md tells agents to **ask the user** which approach they want.
+- `PATCH /agents/campaigns/{id}` is now in the endpoint index, with its reply-approach fields documented.
+
+### Changed
+- **Examples no longer have replies pose as users of the product.** The launch-week, competitor and rewards examples told the replier to be "an early beta user", "a user who recently switched", or "a user for a few weeks". They are now honest recommendations, and the competitor example uses `reply_approach: "flag"` (a frustrated competitor customer is a lead for the founder).
+- `mention_accounts` is documented as a discovery input too, not the way to choose who flag replies tag.
+
 ## [3.8.0] - 2026-09-22
 
 ### Added - Derive a campaign brief from a URL

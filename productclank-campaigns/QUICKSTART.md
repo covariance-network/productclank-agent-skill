@@ -266,10 +266,13 @@ curl -X POST https://api.productclank.com/api/v1/agents/campaigns \
     "mention_accounts": ["@productclank"],
     "reply_style_tags": ["friendly", "helpful"],
     "reply_length": "short",
+    "reply_approach": "mention",
     "min_follower_count": 100,
     "max_post_age_days": 7
   }'
 ```
+
+`reply_approach` (X only) picks what replies are for: `"mention"` (awareness, the default) puts the product in the conversation; `"flag"` (sales) tags the brand and/or founder at each post's author as a lead. For flag, add `"reply_tag_accounts": ["yourbrand", "yourfounder"]`.
 
 **Expected Response (200):**
 ```json

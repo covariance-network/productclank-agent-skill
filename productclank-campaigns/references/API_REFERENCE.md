@@ -66,6 +66,7 @@ Connected Apps.
 | POST | `/agents/campaigns` | Bearer | 10 credits | Create campaign |
 | GET | `/agents/campaigns` | Bearer | Free | List agent's campaigns |
 | GET | `/agents/campaigns/{id}` | Bearer | Free | Get campaign details & stats |
+| PATCH | `/agents/campaigns/{id}` | Bearer | Free | Tune a live campaign (keywords, sources, visibility, reply approach, …) |
 | POST | `/agents/campaigns/{id}/generate-posts` | Bearer | 12 credits/post | Trigger discovery & reply generation |
 | POST | `/agents/campaigns/{id}/review-posts` | Bearer | 2 credits/post | AI relevancy review & cleanup |
 | POST | `/agents/campaigns/{id}/delegates` | Bearer | Free | Add campaign delegator |
@@ -433,11 +434,13 @@ Create a new Communiply campaign. **Cost: 10 credits.**
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `mention_accounts` | string[] | `[]` | Twitter handles to mention |
+| `mention_accounts` | string[] | `[]` | Twitter handles to name-drop in `mention` replies. Also a discovery input: posts that mention these accounts are surfaced too |
 | `reply_style_tags` | string[] | `[]` | Tone tags (e.g., ["friendly", "technical"]) |
 | `reply_style_account` | string | null | Twitter handle to mimic style |
 | `reply_length` | enum | null | "very-short" \| "short" \| "medium" \| "long" \| "mixed" |
 | `reply_guidelines` | string | auto-generated | Custom AI instructions (overrides auto) |
+| `reply_approach` | enum | `"mention"` | **X only** (400 elsewhere). `"mention"` = awareness: replies put the product and its site in the conversation. `"flag"` = sales: replies tag the brand and/or founder and point them at the post's author as a lead. Neither claims the replier used the product |
+| `reply_tag_accounts` | string[] | fallback | **X only, used with `"flag"`.** Up to 2 handles, brand first then founder. Omitted → `mention_accounts`, then the product's X handle |
 | `visibility` | enum | `"public"` | `"public"` = drafts enter the community earn feed and network members post them (each posted reply bills you 20 credits); `"private"` = drafts stay yours to post |
 | `post_visibility` | enum | follows `visibility` | Visibility of each discovered post, independent of the campaign. `"public"` campaign + `"private"` posts = **held mode**: drafts arrive but nothing is claimable until `POST …/publish` releases the ones you approve |
 | `min_follower_count` | number | 100 | Minimum followers for targets |
@@ -557,6 +560,9 @@ pass `?caller_user_id=` (a campaign owned by a different user returns `404`).
     "mention_accounts": ["@productclank"],
     "reply_style_tags": ["friendly"],
     "reply_length": "short",
+    "reply_posted_by": "community",
+    "reply_approach": "flag",
+    "reply_tag_accounts": ["productclank", "goldenberglior"],
     "created_at": "2026-03-04T...",
     "updated_at": "2026-03-04T...",
     "url": "https://app.productclank.com/communiply/uuid",
@@ -576,6 +582,28 @@ pass `?caller_user_id=` (a campaign owned by a different user returns `404`).
 
 ### Error Codes
 - `404` — Campaign not found or not owned by this agent
+
+---
+
+## PATCH /api/v1/agents/campaigns/{campaignId}
+
+Tune a live campaign. **Free.** Only the fields you send change. Full field list (keywords, sources, relevance threshold, pause, visibility, platform targeting) is in the live docs at `GET /api/v1/docs`; the reply-approach fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `reply_approach` | `"mention"` \| `"flag"` | **X only.** Switch between awareness and flag-leads-to-the-founder. Applies to drafts written from now on |
+| `reply_tag_accounts` | string[] \| null | **X only, for `"flag"`.** Up to 2 handles, brand first. **Replaces** the list; `null` or `[]` clears it |
+
+```json
+{ "reply_approach": "flag", "reply_tag_accounts": ["productclank", "goldenberglior"] }
+```
+
+The response returns the updated `campaign`, a `changed` diff, and, when a setting won't take effect, `warnings`:
+- `no_tag_account`: flag mode with nobody to tag
+- `reply_tag_accounts_inactive`: tags set while the approach is `mention`
+- `reply_approach_inactive`: the campaign's replies are brand-posted
+
+**Errors:** `400` for a non-X campaign, an unknown approach (values are case-sensitive), more than 2 handles, or an invalid handle.
 
 ---
 
