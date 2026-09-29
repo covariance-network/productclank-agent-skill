@@ -154,7 +154,7 @@ curl -X POST https://api.productclank.com/api/v1/agents/support \
     "message": "generate-posts returns 500 for CP-123 on every call since 10:00 UTC",
     "category": "bug",
     "severity": "blocking",
-    "endpoint": "POST /api/v1/agents/campaigns/CP-123/generate-posts",
+    "endpoint": "POST /api/v1/agents/campaigns/{campaignId}/generate-posts",
     "http_status": 500,
     "error_code": "internal_error",
     "context": { "max_posts": 10, "tried": "waited 5 min, same result" },
