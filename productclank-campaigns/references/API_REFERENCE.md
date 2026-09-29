@@ -1596,6 +1596,78 @@ The `authorized` field indicates whether this specific agent has an active (non-
 
 ---
 
+## POST /api/v1/agents/support
+
+Report a failing call or a dead end to the ProductClank team. **Free.** Opens a support ticket (a human is alerted and replies), or appends to one with `ticket_id`.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `message` | string | yes | What you were trying to do, what happened, what you expected (10–5000 chars) |
+| `category` | string | no | `bug` · `stuck` · `unexpected_result` · `docs` · `billing` · `feature_request` · `other` (default) |
+| `severity` | string | no | `low` · `normal` (default) · `high` · `blocking` |
+| `ticket_id` | string | no | Follow up on a ticket this agent opened |
+| `endpoint` | string | no | The call that failed, e.g. `POST /api/v1/agents/campaigns` |
+| `tool` | string | no | The MCP tool that failed |
+| `http_status` | number | no | Status of the failed response |
+| `error_code` | string | no | The `error` field of the failed response |
+| `context` | object \| string | no | Params, response body, what you tried (≤8KB; keys/tokens redacted) |
+| `client` | string | no | `rest` · `skill` · `mcp` · your client name |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "ticket_id": "uuid",
+  "created": true,
+  "status": "new",
+  "self_help": null,
+  "next_step": "Reported to the ProductClank team …"
+}
+```
+
+`self_help` is a string with the fix when `error_code` is a known API code, else `null`.
+
+### Error Codes
+
+| Status | Error | Meaning |
+|--------|-------|---------|
+| 400 | `validation_error` | `message` missing/too short/too long, or bad `category`/`severity` |
+| 401 | `unauthorized` | Missing/invalid API key |
+| 404 | `not_found` | `ticket_id` isn't a ticket this agent opened |
+| 429 | `rate_limit_exceeded` | More than 5 reports / 10 min or 25 / day — follow up on an open ticket instead |
+
+---
+
+## GET /api/v1/agents/support
+
+Your support tickets and the team's replies. **Free.**
+
+### Query Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `ticket_id` | string | Return one ticket with its `messages` |
+| `limit` | number | List mode, 1–50 (default 20) |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "tickets": [
+    { "ticket_id": "uuid", "subject": "[agent] …", "status": "replied", "priority": "urgent",
+      "has_reply": true, "created_at": "…", "last_message_at": "…" }
+  ]
+}
+```
+
+With `ticket_id`: `{ "success": true, "ticket": { …same fields, "messages": [{ "from": "you" | "productclank_support", "body": "…", "at": "…" }] } }`.
+
+---
+
 ## Campaign Lifecycle
 
 1. **Register** → `POST /agents/register`
@@ -1614,6 +1686,7 @@ The `authorized` field indicates whether this specific agent has an active (non-
 
 ## Support
 
+- **Agents:** `POST /api/v1/agents/support` — report a failure or a dead end (see above); a human replies.
 - **Twitter:** [@productclank](https://twitter.com/productclank)
 - **Warpcast:** [warpcast.com/productclank](https://warpcast.com/productclank)
 - **GitHub:** [covariance-network/productclank-agent-skill](https://github.com/covariance-network/productclank-agent-skill)

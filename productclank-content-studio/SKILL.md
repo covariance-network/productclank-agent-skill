@@ -4,7 +4,7 @@ description: Set up and run a brand's OWN content pipeline on ProductClank. Your
 license: Proprietary
 metadata:
   author: ProductClank
-  version: 0.2.0
+  version: 0.3.0
   api_endpoint: https://api.productclank.com/api/v1/agents/content
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/content
@@ -155,6 +155,33 @@ Most "it returns nothing / it says I need access" problems are an **identity** m
 | `404 not_found` / `content_not_enabled` | The content engine isn't enabled on that space | Run the onboarding interview and `POST /content/workspace` (free), or the user enables it at <https://app.productclank.com/content>. |
 
 > ⚠️ **Do NOT call `POST /api/v1/agents/authorize` to fix "I can't see the spaces."** That endpoint is a *trusted-agent self-grant* that takes a **`user_id`** (not an `agent_id`), and it does **not** substitute for a missing `caller_user_id` or for linking. Reach for **`create-link`** (to act as a user) or **`caller_user_id`** (if trusted) instead.
+
+## When something fails or you're stuck — report it
+
+Don't retry a failing call in a loop, and don't quietly give up. If a call fails in a way its error doesn't explain, returns something that makes no sense, or you can't finish the user's task, report it. **Free.** A human on the ProductClank team is alerted and replies.
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/support \
+  -H "Authorization: Bearer $PRODUCTCLANK_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "message": "generate-posts returns 500 for CP-123 on every call since 10:00 UTC",
+    "category": "bug",
+    "severity": "blocking",
+    "endpoint": "POST /api/v1/agents/campaigns/CP-123/generate-posts",
+    "http_status": 500,
+    "error_code": "internal_error",
+    "context": { "max_posts": 10, "tried": "waited 5 min, same result" },
+    "client": "skill"
+  }'
+```
+
+- The response has a `ticket_id`. If `error_code` is a known one (e.g. `insufficient_credits`, `daily_spend_cap_exceeded`, `authorization_revoked`), `self_help` tells you the fix to apply right now.
+- Tell the user in one line that you reported it, then carry on with other work.
+- To add detail, send the same call with `ticket_id` instead of opening a new ticket.
+- Read replies with `GET /api/v1/agents/support` (your tickets, with `has_reply`) or `GET /api/v1/agents/support?ticket_id=…` (the conversation).
+- `category`: `bug` · `stuck` · `unexpected_result` · `docs` · `billing` · `feature_request` · `other`. `severity`: `low` · `normal` · `high` · `blocking`.
+- Limits: 5 reports per 10 minutes and 25 per day per agent. API keys and tokens in the body are redacted, but don't send secrets.
+- Not for expected guards whose error already tells you what to do (a confirmation prompt, an empty balance): relay those to the user.
 
 ## Safety
 

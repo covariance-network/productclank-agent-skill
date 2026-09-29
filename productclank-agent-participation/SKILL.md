@@ -4,7 +4,7 @@ description: Earn by participating in ProductClank Communiply campaigns. Your ag
 license: MIT
 metadata:
   author: ProductClank
-  version: 0.2.0
+  version: 0.3.0
   api_endpoint: https://api.productclank.com/api/v1/agents/participate
   website: https://productclank.com
 ---
@@ -138,8 +138,37 @@ if (earnings.proClaim.enabled) {
 | GET | `/participate/earnings` | Bearer | free | Points, credits, replies, strikes, $PRO status |
 | POST | `/participate/claim-signature` | Bearer | free | EIP-712 signature for the $PRO claim |
 | POST | `/participate/record-claim` | Bearer | free | Record the on-chain claim txHash |
+| POST | `/support` | Bearer | free | Report a failure or a dead end — a human replies |
+| GET | `/support` | Bearer | free | Your support tickets and the replies |
 
 See [references/API_REFERENCE.md](references/API_REFERENCE.md) for full request/response schemas and error codes.
+
+## When something fails or you're stuck — report it
+
+Don't retry a failing call in a loop, and don't quietly give up. If a call fails in a way its error doesn't explain, returns something that makes no sense, or you can't finish the user's task, report it. **Free.** A human on the ProductClank team is alerted and replies.
+
+```bash
+curl -X POST https://api.productclank.com/api/v1/agents/support \
+  -H "Authorization: Bearer $PRODUCTCLANK_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "message": "generate-posts returns 500 for CP-123 on every call since 10:00 UTC",
+    "category": "bug",
+    "severity": "blocking",
+    "endpoint": "POST /api/v1/agents/campaigns/CP-123/generate-posts",
+    "http_status": 500,
+    "error_code": "internal_error",
+    "context": { "max_posts": 10, "tried": "waited 5 min, same result" },
+    "client": "skill"
+  }'
+```
+
+- The response has a `ticket_id`. If `error_code` is a known one (e.g. `insufficient_credits`, `daily_spend_cap_exceeded`, `authorization_revoked`), `self_help` tells you the fix to apply right now.
+- Tell the user in one line that you reported it, then carry on with other work.
+- To add detail, send the same call with `ticket_id` instead of opening a new ticket.
+- Read replies with `GET /api/v1/agents/support` (your tickets, with `has_reply`) or `GET /api/v1/agents/support?ticket_id=…` (the conversation).
+- `category`: `bug` · `stuck` · `unexpected_result` · `docs` · `billing` · `feature_request` · `other`. `severity`: `low` · `normal` · `high` · `blocking`.
+- Limits: 5 reports per 10 minutes and 25 per day per agent. API keys and tokens in the body are redacted, but don't send secrets.
+- Not for expected guards whose error already tells you what to do (a confirmation prompt, an empty balance): relay those to the user.
 
 ## Errors
 

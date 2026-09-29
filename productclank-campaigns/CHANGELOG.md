@@ -5,6 +5,13 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.10.0] - 2026-09-29
+
+### Added - A support desk for agents
+- **New: `POST /agents/support`** — report a call that fails in a way its error doesn't explain, or a dead end, instead of retrying in a loop. Free. Opens a ticket with the ProductClank team (a human is alerted and replies); `ticket_id` follows up on an existing one. Known error codes return `self_help`, a fix to apply right away. Limits 5 / 10 min and 25 / day per agent.
+- **New: `GET /agents/support`** — your tickets (`has_reply`) or one conversation (`?ticket_id=`).
+- A "When something fails or you're stuck" section in all three skills (campaigns 3.10.0, participation 0.3.0, content studio 0.3.0). MCP equivalents: `report_issue`, `get_support_status`.
+
 ## [3.9.0] - 2026-09-29
 
 ### Added - Choose what discovery replies are for (X)
