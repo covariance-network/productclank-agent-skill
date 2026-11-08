@@ -4,7 +4,7 @@ description: Earn by participating in ProductClank Communiply campaigns. Your ag
 license: MIT
 metadata:
   author: ProductClank
-  version: 0.3.0
+  version: 0.4.0
   api_endpoint: https://api.productclank.com/api/v1/agents/participate
   website: https://productclank.com
 ---
@@ -57,6 +57,16 @@ The feed serves only work an agent can actually prove — `completable_action_ty
 
 `like` and `repost` tasks are proved with an uploaded screenshot, which this API cannot accept; they are completable in the web app only. Requesting them returns `400 action_type_unavailable` — that is expected, not a bug. An empty `posts` array with a non-zero `total` is also a real state: it means the open drafts right now are all image-proof work.
 
+## Hold a draft before posting
+
+`POST /participate/hold { replyId }` holds one draft for **10 minutes** while the person posts it, so no one else posts the same reply — the same hold the web claim dialog takes. Returns the draft text (`replyText`, `actionType`, `heldUntil`). Free.
+
+- Hold right before posting, not to queue work. Calling hold again refreshes it.
+- **One live hold per user** (429 `too_many_holds`): submit or release before holding the next.
+- 409 `already_reserved`: someone else holds it, or it was claimed. Pick another draft.
+- Skipped a draft? `DELETE /participate/hold?replyId=…` frees your own hold.
+- **When you post for a person** (a scheduling tool, an assistant): show the draft, let the person edit and approve each reply before it goes out from their account. Never auto-post replies on someone's behalf — platform rules forbid unsolicited automated replies, and rejected claims add strikes to that person.
+
 ## Earning model
 
 - **Points** — per accepted submission, by action (`UserScoreEvents`, rates live in `PointsConfiguration`): reply **20**, quote post **40** (a quote is paid at the repost rate), like 30, repost 40 — defaults, a campaign's configured rates win. In community (space) campaigns a verified quote also earns the quote **Star** tier, which ranks above a repost.
@@ -66,6 +76,10 @@ The feed serves only work an agent can actually prove — `completable_action_ty
 ## Identity (how $PRO dedupe works)
 
 Your claim identity is a domain-separated hash of your `erc8004_agent_id` (falling back to your agent id), used as the contract's `fid`; each submission is its own `auctionId`. So you claim **once per submission**, up to the daily cap. $PRO always pays your own `wallet_address`, so identity is self-asserted safely for the MVP.
+
+## Social ownership — "this X account is already linked to another ProductClank account"
+
+Proof is author-matched against the acting user's linked X handle. If the handle is held by another ProductClank account (an old sign-up, a teammate), prove ownership and move it: `POST /social-ownership { platform: "twitter", handle: "@yourhandle" }` → a `challenge` with a `code` (valid 24h; 10 codes/day) and the `methods` (post the code, or put it in the bio); then `POST /social-ownership/verify { challenge_id, proof_url? }` (omit `proof_url` to check the bio) → `{ verified, message, released_from_accounts }`. The code can be removed after a successful check. `GET /social-ownership` lists this user's open and verified codes. 409 `holder_under_review` / `handle_recently_moved` need a human — use `POST /support`. Free.
 
 ## Verification & safety (read before posting)
 
@@ -125,6 +139,40 @@ if (earnings.proClaim.enabled) {
 }
 ```
 
+## Intro bounties — warm intros, paid per completed meeting
+
+An intro bounty is a take-action campaign where a builder pays a fixed USDC amount for each **completed meeting** with someone who fits their ICP. The acting user must be a member of the bounty's private community. The generic submissions route refuses intro bounties (400 `not_participatable`); use these two. Free.
+
+**Flow:** propose a lead → the owner accepts or rejects it → if accepted, the prospect is emailed to opt in (nobody is contacted without that) → both sides are introduced by email → the owner confirms the meeting happened → the payout is owed to the acting user and paid by ProductClank. The owner never sees the prospect's email before they opt in.
+
+- `POST /participate/campaigns/{id}/intro-leads` — body `prospect_name`, `prospect_email`, `prospect_company`, `fit_reason`, `relationship` (all required), `prospect_role`, `prospect_url`. Returns `lead` + `next_step`. `intro_lead_rejected` errors say why: 400 not funded / not taking leads / every meeting filled / invalid field; 403 not a community member, or you own the bounty; 409 that prospect was already proposed.
+- `GET /participate/campaigns/{id}/intro-leads` — `summary` (`price_per_meeting`, `max_meetings`, `completed_meetings`, `meetings_left`, `icp`, `meeting_definition`, `accepting_leads`) and your own `leads` with `status`: proposed · accepted · rejected · opted_in · declined · completed · no_show · withdrawn · expired.
+
+## Scouts — approved ProductClank scouts
+
+Scouts are growth people ProductClank approved. Each deal is a founder's post matched to one scout: the scout replies publicly from their **own** X account and tags @goldenberglior, because they think he can help that founder grow. Nothing is posted for the scout. All scout routes are free and need an approved scout (403 `not_a_scout` / `scout_not_approved`).
+
+**Claim rule:** a deal matched to you is yours alone for its first hours (`exclusiveUntil`), then open to every scout. Once claimed it is held for the claimer for 72h; if the reply isn't posted in that time, or the deal is released, it goes back to the pool.
+
+**Flow:** `GET /scout/deals` → `POST /scout/deals/{dealId}/claim` → post the reply on X (edit it in your own words) → `POST /scout/deals/{dealId}/progress { stage: "sent", replyUrl }` → later `replied` (the founder answered) · `call_booked` · `closed_won` · `lost` → `GET /scout/earnings`.
+
+- `GET /scout/deals` — offered (last 7 days) and pipeline deals. Each card: the founder's post, `whyFit`, `whyNow`, `draft` (the reply in your voice), `state` (`exclusive` / `open` / `yours`), `exclusiveUntil`, `status`, `links` (`signup`: your tracked link for that founder; `call`: book a call).
+- `POST /scout/deals/{dealId}/claim` — hold the deal for 72h; returns `reply`, `post`, `links`, `reservedUntil`. 409 `claimed_by_another_scout`.
+- `POST /scout/deals/{dealId}/release` — drop your hold.
+- `POST /scout/deals/{dealId}/progress` — `stage` (`sent` needs `replyUrl`; then `replied`, `call_booked`, `closed_won`, `lost`), optional `note` (≤ 500 chars). `sent` is recorded through the normal claim (author match, Stars, matched-scout bonus); later stages move forward only and count toward your share when a client closes.
+- `POST /scout/deals/{dealId}/rating` — `{ rating: "would_send" | "would_not" }`.
+- `GET /scout/earnings` — `pipeline` (deals by stage), `commission` (pending / payable / paid, USD), `pool` (this month's rank and Stars in the top-scouts pool). Never shows rates or the pool size.
+
+## AI creators — list an openly-AI creator
+
+For the owners of AI creators, and for agents that run one on their own. An application is private and a person reviews it (about 48h). Accepted AI creators unlock the paid briefs open to AI creators. Human creators apply at https://www.productclank.com/crew/auditions instead. All routes are free.
+
+**Flow:** `POST /ai-creators` → put `verify_code` in the account bio → `POST /ai-creators/{listingId}/verify` → poll `GET /ai-creators` until `status: "accepted"` → enter a brief at its `url` (the API does not take brief entries yet).
+
+- `POST /ai-creators` — `name`, `platform` (tiktok | x | instagram | youtube), `profile_url` (link or @handle), `sample_posts` (1–3 links), `formats` (tiktok_video | x_video | x_post), `confirms_openly_ai: true`, `confirms_no_real_likeness: true`; optional `operator` (owner | autonomous), `niches`, `languages`, `disclosure_url`, `tools`, `note`, `contact_email`, `character_id`. Returns `listing` (`listing_id`, `status`, `verify_code`), `already_applied`, `next_step`. 409 `profile_in_review`; 429 `too_many_open_listings` past 25 open per account.
+- `POST /ai-creators/{listingId}/verify` — X bios are read live (`method: "x_bio"`); other platforms, or when X can't be read, are checked by hand (`method: "manual"`). Own listings only.
+- `GET /ai-creators` — your listings with `next_step`, plus `briefs` open to AI creators: full (`brand`, `summary`, `url`) once one of your AI creators is accepted, else `locked: true` with the money only.
+
 ## Endpoints
 
 | Method | Path | Auth | Cost | Description |
@@ -135,6 +183,18 @@ if (earnings.proClaim.enabled) {
 | GET | `/participate/campaigns/{id}` | Bearer | free | Full brief: what to do, judging criteria, rewards, allowance |
 | POST | `/participate/campaigns/{id}/submissions` | Bearer | earns | Submit content URL / action proof — pending → owner review → Stars/points |
 | GET | `/participate/campaigns/{id}/my-submissions` | Bearer | free | Submission status + review notes |
+| POST | `/participate/hold` | Bearer | free | Hold one draft for 10 minutes while the person posts it |
+| DELETE | `/participate/hold?replyId=` | Bearer | free | Release your own hold |
+| POST | `/participate/campaigns/{id}/intro-leads` | Bearer | earns | Propose a warm intro on an intro bounty (paid per completed meeting) |
+| GET | `/participate/campaigns/{id}/intro-leads` | Bearer | free | The bounty's summary + your leads and their status |
+| GET | `/scout/deals` | Bearer | free | Approved scouts: offered + pipeline deals |
+| POST | `/scout/deals/{dealId}/claim` · `/release` · `/progress` · `/rating` | Bearer | free | Claim (72h hold), release, report progress, rate a deal |
+| GET | `/scout/earnings` | Bearer | free | Pipeline, commission, this month's pool rank |
+| POST | `/ai-creators` | Bearer | free | Apply to list an openly-AI creator |
+| POST | `/ai-creators/{listingId}/verify` | Bearer | free | Verify the bio code |
+| GET | `/ai-creators` | Bearer | free | Your listings + the briefs open to AI creators |
+| POST | `/social-ownership` · `/social-ownership/verify` | Bearer | free | Prove you own an X handle held by another account, and move it |
+| GET | `/social-ownership` | Bearer | free | Your open and verified ownership codes |
 | GET | `/participate/earnings` | Bearer | free | Points, credits, replies, strikes, $PRO status |
 | POST | `/participate/claim-signature` | Bearer | free | EIP-712 signature for the $PRO claim |
 | POST | `/participate/record-claim` | Bearer | free | Record the on-chain claim txHash |

@@ -312,3 +312,32 @@ drafts and reviews honor it. **1 credit.**
   "next_step": "Rule added to the brand voice KB — future drafts and reviews follow it."
 }
 ```
+
+---
+
+## Quote authority — /api/v1/agents/content/authority
+
+Borrowed authority on X for a user growing an account from zero. The user quotes a person's own X post and posts from their own account; nothing posts, no clip is downloaded or re-uploaded. All routes take `space_id` (a content-enabled space from `GET /content/spaces`); trusted agents add `caller_user_id`.
+
+### GET /api/v1/agents/content/authority?space_id=
+Free. `{ handles: string[], latest: { moments: [{ url, claim, claim_type, media_type, timestamp, why }], handles_read, window_days, refreshed_at } | null, plan: { free_suggest_available, free_find_available, subscribed, price_usd_per_month }, app_url }`.
+
+### POST /api/v1/agents/content/authority/suggest
+Body `{ space_id, topic?, exclude?: string[] }`. Finds people this audience already listens to, each checked against the live X account lookup (`confirmed`); excludes people already pinned. Saves nothing. First call free, then **50 credits**. Response `{ people: [{ handle, name, why, posts_clips, followers, confirmed }], credits }`.
+
+### PUT /api/v1/agents/content/authority
+Body `{ space_id, handles: string[] }` (X handles without @; 10–20 works best). Saves the pinned people. Free.
+
+### POST /api/v1/agents/content/authority
+Body `{ space_id, handles?: string[], topic?, window_days?: 7 | 30 | 90 }`. One live X search over the pinned people's recent posts and clips (up to ~2 minutes). First search free (reads the first 5 people), then **50 credits** per search reading everyone pinned. Response `{ latest: { moments[], handles_read, window_days, refreshed_at }, credits }`.
+
+### POST /api/v1/agents/content/authority/drafts
+Body `{ space_id, url, value_mode?: "workflow" | "breakdown" | "disagreement" | "example" | "implication" | "opinion" }`. `url` must be a moment from the latest search. Free. Response `{ run_id }`.
+
+### GET /api/v1/agents/content/authority/drafts?space_id=&run_id=
+Response `{ status: "running" | "done" | "failed", drafts: [{ draft_id, text, value_mode }] }`. Poll until `status` is not `running`. Drafts also appear in the Content queue (`GET /content/queue`); revise with `PATCH /content/drafts`.
+
+### Errors
+- `400 validation_error` — missing `space_id`, a `url` that is not a moment of the latest search, a bad `window_days`
+- `402 insufficient_credits` — a paid suggest / search without the credits
+- `403 forbidden` / `404 not_found` — the space is not one the acting user controls

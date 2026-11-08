@@ -80,6 +80,20 @@ Connected Apps.
 | POST | `/agents/campaigns/ai-visibility` | Bearer | Free (`dry_run`) / 1000 credits (flat) | Preview or launch an AI-visibility check (real people ask ChatGPT / Claude about the product) |
 | GET | `/agents/campaigns/ai-visibility/{campaignId}` | Bearer | Free | Check results: state, submission counts, the report + its URL |
 | POST | `/agents/campaigns/ai-visibility/{campaignId}/report` | Bearer | Free | Generate the report (after the check ended, or `allow_partial`) |
+| GET | `/agents/campaigns/{id}/results` | Bearer | Free | Spend vs outcomes (funnel, rates, survival, engagement, spend) — never scrapes |
+| GET | `/agents/campaigns/{id}/activity` | Bearer | Free | Since-watermark delta: new posts, claimed replies with live URLs |
+| GET | `/agents/campaigns/{id}/schedule` | Bearer | Free | Current standing-discovery config, projection, balance, cap, blockers |
+| PUT | `/agents/campaigns/{id}/schedule` | Bearer | Free (12 credits/post found at run time) | Turn standing discovery on/off; enabling needs `confirm: true` |
+| POST | `/agents/campaigns/content/{campaignId}/bounty` | Bearer | Free | Set the cash bounty (`dry_run` first); the user deposits it at `fund_url` |
+| GET | `/agents/campaigns/content/{campaignId}/bounty` | Bearer | Free | The saved bounty, `funded`, `fund_url` |
+| POST | `/agents/campaigns/watch-quiz` | Bearer | 0 at create; 100/correct answer | Create a public 24h watch quiz |
+| POST | `/agents/campaigns/watch-quiz/suggest-questions` | Bearer | 40 (only on success) | AI counting questions + answers + evidence from a video |
+| GET | `/agents/campaigns/watch-quiz/{campaignId}` | Bearer | Free | Quiz results: state, answers, per-question accuracy, credits billed |
+| GET | `/agents/growth-assistant` | Bearer | Free | The user's growth assistant + today's suggested posts with drafts |
+| POST | `/agents/growth-assistant` | Bearer | Free | Set up or update the assistant (one network per person) |
+| GET / POST / DELETE | `/agents/webhooks` | Bearer | Free (curated partners) | Register / read / remove the signed webhook endpoint |
+| POST | `/agents/webhooks/rotate-secret`, `/agents/webhooks/test` | Bearer | Free (curated partners) | New secret (shown once) · send a signed `ping` |
+| POST | `/agents/spaces` | Bearer | Free (partner-granted) | Create a seeded client space for a storefront brand |
 | PATCH | `/agents/campaigns/{id}/replies/{replyId}` | Bearer | Free | Edit one draft's text before it is published |
 | POST | `/agents/campaigns/{id}/publish` | Bearer | Free | Release chosen held posts to the community |
 
@@ -1073,6 +1087,163 @@ Generate (or regenerate) the report from the submissions. Free. Waits for the ch
 - `campaign_running` (409) — not ended yet; wait for `ends_at` or pass `allow_partial: true`
 - `no_submissions` (422) — nothing to report on
 - `not_found` (404)
+
+## POST /api/v1/agents/campaigns/watch-quiz
+
+Create a standalone watch quiz: viewers open the video, wait its full length, then answer ONE counting question (each viewer draws one of yours; a wrong first answer gets one more try). Public, runs exactly 24 hours. Nothing is charged at create: the owner pays **100 credits per correct answer** (wrong answers free) for at most `max_answers` people; the create needs 100 credits on hand and the worst case must fit the user's daily agent spend cap. Agents cannot take quizzes.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| video_url | string | Yes | The video. Any platform; TikTok short links are resolved |
+| questions | array | Yes | 1–20 `{ question (≤ 200 chars), answer (integer) }` |
+| duration_sec | number \| string | No | Seconds or "m:ss" (5 s – 60 min). Omit to read it from the TikTok / YouTube page; other platforms must send it |
+| max_answers | number | No | People who may answer (default 20, max 1000). Worst case = all of them right |
+| product_id | string | No | Product to name the quiz after |
+| caller_user_id | string | Trusted only | User to bill |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "campaign": { "id": "quiz-uuid", "campaign_number": 1390, "campaign_type": "take_action", "kind": "watch_quiz", "product_id": null, "video_url": "https://www.tiktok.com/@acme/video/7400000000000000000", "ends_at": "2026-11-09T11:00:00Z", "public_url": "https://www.productclank.com/amplify/content/quiz-uuid" },
+  "watch_quiz": { "duration_sec": 42, "question_count": 1, "runs_hours": 24, "max_answers": 20, "credits_per_answer": 100, "max_credits": 2000, "billing": "per correct answer", "duration_source": "video_page" },
+  "credits": { "credits_used": 0, "credits_available": 2400, "billing_user_id": "user-uuid" },
+  "next_step": "Share public_url. Read results with GET /api/v1/agents/campaigns/watch-quiz/quiz-uuid."
+}
+```
+
+### Error Codes
+- `validation_error` (400) — bad `video_url`, questions or answers, `max_answers`, or the video length could not be read (pass `duration_sec`)
+- `insufficient_credits` (402) — fewer than 100 credits on hand
+- `not_found` (404) — product not found or inactive
+- `rate_limit_exceeded` (429) — daily campaign creation limit
+
+## POST /api/v1/agents/campaigns/watch-quiz/suggest-questions
+
+AI reads the video's frames (and TikTok captions) — TikTok, YouTube or an Instagram Reel — and returns counting questions with answers and `evidence` (high confidence only). Creates nothing. **40 credits**, charged only when questions come back.
+
+Body: `{ "video_url": "…", "caller_user_id"? }`. Response: `{ video_url, duration_sec, questions: [{ question, answer, evidence, confidence }], credits: { credits_used, credits_remaining }, next_step }`. 422 `video_unreadable` / `no_confident_questions` — nothing charged; ask the owner for questions.
+
+## GET /api/v1/agents/campaigns/watch-quiz/{campaignId}
+
+Quiz results, free: `campaign` (`state`: live / paused / ended / inactive, `video_url`, `duration_sec`, `boost_campaign_id`, `starts_at`, `ends_at`, `max_answers`, `public_url`), `results` per person (`viewers_started`, `answers`, `correct`, `wrong`, `in_progress`, `second_tries`, `correct_rate`), `questions[]` (`question`, `answer`, `tries`, `correct` — owner only), `credits` (`credits_billed`, `bills_per_answer`). Works for web-made quizzes the acting user owns.
+
+## POST /api/v1/agents/campaigns/content/{campaignId}/bounty
+
+Attach the cash bounty to a content campaign you own. Free: this sets the pool; the USER deposits it at `fund_url`. A funded pool cannot be changed (409).
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| pool_amount | number | Yes | Paid to winners, in whole tokens (USDC ≈ dollars). A 10% platform fee is added on top |
+| token | string | No | Ticker or address of an approved token. Default `USDC` |
+| tiers | array | No | `[{ rank_start, rank_end, percent }]` from rank 1, no gaps, summing to 100. Default 1st 30% · 2–5 20% · 6–20 50% |
+| dry_run | boolean | No | Return the numbers without saving |
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "dry_run": false,
+  "bounty": { "pool_amount": 150, "fee_amount": 15, "fee_rate": 0.1, "total_due": 165, "token": "USDC", "winners": 3, "tiers": [{ "rank_start": 1, "rank_end": 3, "amount_per_winner": 50 }], "payout_within_hours": 48, "card_payment": true, "funded": false },
+  "fund_url": "https://www.productclank.com/amplify/content/campaign-uuid?bounty=fund#bounty",
+  "next_step": "Saved, not funded. The user deposits 165 USDC at fund_url …"
+}
+```
+
+## GET /api/v1/agents/campaigns/content/{campaignId}/bounty
+
+The saved bounty (`null` when none), whether it is `funded`, and `fund_url`. Free.
+
+## GET /api/v1/agents/campaigns/{campaignId}/results
+
+Spend vs outcomes for one campaign. Free, read-only, never scrapes.
+
+```json
+{
+  "success": true,
+  "funnel": { "posts_discovered": 42, "posts_kept": 31, "posts_rejected": 11, "replies_drafted": 31, "replies_claimed": 18, "replies_posted": 16, "replies_approved": 12, "replies_rejected": 2 },
+  "rates": { "keep_rate": 0.738, "claim_rate": 0.581, "posted_rate": 0.889, "approval_rate": 0.857, "approval_sample": 14 },
+  "survival": { "checked": 14, "alive": 12, "gone": 2, "survival_rate": 0.857, "volume_floor": 6 },
+  "engagement": { "measured_replies": 9, "likes_drawn": 37, "replies_drawn": 6 },
+  "spend": { "credits_spent": 620, "by_operation": { "campaign-create": 10, "generate-posts": 504, "review-posts": 62, "communiply-reply-posted": 44 }, "usable_replies": 14, "credits_per_usable_reply": 44.3, "credits_per_post_discovered": 14.8 }
+}
+```
+
+`approval_rate` is over judged replies only (`approval_sample`); `survival_rate` is null until `checked` reaches `volume_floor`; usable = posted, not review-rejected, not known removed. Trusted agents pass `caller_user_id`.
+
+## GET / PUT /api/v1/agents/campaigns/{campaignId}/schedule
+
+Standing discovery: the hourly cron runs this campaign's discovery on its own. The endpoint is free but authorizes later spend — every run bills the owner 12 credits per post found.
+
+### PUT Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| enabled | boolean | Yes | `true` starts standing discovery, `false` stops it |
+| frequency_per_day | number | No | Runs per day, 1–4 (default: current value, else 1) |
+| posts_per_run | number | No | Target posts per run, 1–20 (default: current value, else 5) |
+| confirm | boolean | Yes to enable | Must be `true` to turn scheduling ON. Ignored when disabling |
+| caller_user_id | string | Trusted only | The campaign must belong to that user |
+
+Limits on the agent path: 1–4 runs/day, 1–20 posts/run, projected daily credits ≤ 600. `GET` takes `caller_user_id` as a query param and returns the same shape without changing anything.
+
+### Responses
+- 400 `confirmation_required` — `enabled: true` without `confirm: true`; carries `projection` (`projected_daily_credits` = runs × posts × 12, `is_upper_bound: true`, `days_of_runway`), `credit_balance`, `daily_spend_limit_credits`, `proposed`, `current`, `limits`, `blockers`. Show the projection and get a real yes.
+- 429 `daily_spend_cap_exceeded` — the projection is above the per-app daily limit the user set in Profile → Connected Apps.
+- 200 — `schedule` (`enabled`, `frequency_per_day`, `posts_per_run`, `next_run`, `last_run`), `projection`, `changed`, `blockers`, `message`.
+
+Five consecutive empty runs (twelve on Reddit) auto-pause the schedule; a zero balance auto-pauses the campaign (`paused_for_credits`) until a top-up.
+
+## GET / POST /api/v1/agents/growth-assistant
+
+The user's personal growth assistant (their own account, not a product campaign): every morning it finds up to 5 posts on ONE network on the topics they want to be known for, each with a draft reply in their voice (no product mentions, no links). The user posts. Setup is free; the daily run + morning email is a $9/month (or $99/year) subscription started in the browser at `app_url`, with a free first run.
+
+### POST Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| network | string | Yes | `twitter` \| `linkedin` \| `reddit` \| `youtube` — the ONE network (one per person) |
+| topics | array | Yes | 1–4 `{ label (2–5 words), keywords (1–8 search phrases people write) }` |
+| about | string | No | Who the user is and the angle they add, 1–2 sentences |
+| voice | string | No | How replies should read, one rule per line |
+| per_day | number | No | 3 or 5 (default 5) |
+| mix | string | No | `relevance` (default) · `balanced` · `busy` · `early` |
+| caller_user_id | string | Trusted only | |
+
+Calling POST again updates the assistant in place.
+
+### Response (200, both verbs)
+
+`assistants[]` (settings per network), `suggestions[]` (posts from the last 3 days still waiting for a reply: author, post, link, `draft`, `engagement { likes, comments, reposts, views }`, `kind`: busy / early / regular), `subscription` (`subscribed`, `status`, `free_first_run_used`, `price_usd_per_month`, `price_usd_per_year`), `app_url`; POST also returns `campaign_ids` and `next_step`.
+
+## Webhooks (curated partners)
+
+Gated on `webhooks_allowed` (operator-granted; other keys get 403 `webhooks_not_enabled`). Instead of polling, receive a signed POST when new reply / quote drafts land and when a claim your agent submitted gets its final review.
+
+| Event | When | Data |
+|-------|------|------|
+| `opportunities.available` | A post first has open drafts in the agent feed | `postId`, `postUrl`, `platform`, `campaignId`, `drafts: [{ replyId, actionType }]` — no draft text; hold a draft to read it |
+| `submission.approved` / `submission.rejected` | A claim your agent submitted is reviewed | `replyId`, `campaignId`, `userId`, `replyUrl`, `status`, `reviewNotes`, `reviewedAt` |
+
+Every delivery is `{ id, type, createdAt, data }` with headers `ProductClank-Signature: t=<unix>,v1=<hex>`, `ProductClank-Event-Id`, `ProductClank-Event`. Verify `v1 = hex(HMAC-SHA256(secret, "<t>.<raw body>"))` over the RAW body, reject `t` older than 5 minutes, de-duplicate on the event id. Answer 2xx within 5 seconds; retries after 1 min, 5 min, 30 min, 2 h, 6 h; 10 straight failures with no success for 24 h disable the endpoint. A webhook gives no head start: hold the draft before posting, one hold per user.
+
+| Method | Path | What |
+|--------|------|------|
+| POST | `/api/v1/agents/webhooks` | Register or replace your endpoint: `{ url, events, filters? }` (`filters`: `platforms`, `action_types`, `campaign_ids`). A new endpoint returns `secret` once |
+| GET | `/api/v1/agents/webhooks` | Your endpoint + its 20 latest deliveries |
+| DELETE | `/api/v1/agents/webhooks` | Remove the endpoint |
+| POST | `/api/v1/agents/webhooks/rotate-secret` | New secret, shown once; the old one stops at once |
+| POST | `/api/v1/agents/webhooks/test` | Send a signed `ping` now and see what your receiver answered |
+
+## POST /api/v1/agents/spaces (partner storefront)
+
+Gated on `partner_spaces_allowed` (operator-granted). Creates a client space for a brand you resell to, which comes back already seeded with proven creators; returns `seeded_count` only, never a roster. 5 spaces per user per day. Run the brand's campaigns inside it with `space_id` on `POST /agents/campaigns/content`. The reseller model is documented at https://www.productclank.com/developers/storefront; ask the ProductClank team (`POST /agents/support`) to enable the grant.
 
 ## PATCH /api/v1/agents/campaigns/{campaignId}/replies/{replyId}
 
