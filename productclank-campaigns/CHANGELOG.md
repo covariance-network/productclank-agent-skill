@@ -5,6 +5,14 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.0] - 2026-11-08
+
+### Added - AI Visibility Check (Capability 4)
+- **New: `POST /agents/campaigns/ai-visibility`** — real people ask ChatGPT / Claude (optionally Gemini, Perplexity, Grok) the product's buying questions from their own accounts and submit the shared chat link or a screenshot. `dry_run: true` previews the brief and price for free; launch is one flat 1000-credit fee whatever the panel size; the panel earns points. Defaults: ChatGPT + Claude, 4 days, a panel of 40.
+- **New: `GET /agents/campaigns/ai-visibility/{campaignId}`** — state, submission counts, the report + its private URL once generated. Free.
+- **New: `POST /agents/campaigns/ai-visibility/{campaignId}/report`** — generate the report (verdict, strengths, risks, quotes, findings, recommendations). Free; waits for the check to end unless `allow_partial`.
+- MCP equivalents: `create_ai_visibility_check`, `get_ai_visibility_results`, `generate_ai_visibility_report` (connector v0.9.24).
+
 ## [3.10.0] - 2026-09-29
 
 ### Added - A support desk for agents

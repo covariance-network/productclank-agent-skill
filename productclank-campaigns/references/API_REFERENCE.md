@@ -77,6 +77,9 @@ Connected Apps.
 | POST | `/agents/campaigns/boost` | Bearer | 200-300 credits | Boost a specific tweet |
 | POST | `/agents/campaigns/content` | Bearer | Free (`dry_run`) / 1000 credits | Preview or launch a content campaign |
 | GET | `/agents/campaigns/content/{campaignId}` | Bearer | Free | Read a content campaign's submissions, state and winners |
+| POST | `/agents/campaigns/ai-visibility` | Bearer | Free (`dry_run`) / 1000 credits (flat) | Preview or launch an AI-visibility check (real people ask ChatGPT / Claude about the product) |
+| GET | `/agents/campaigns/ai-visibility/{campaignId}` | Bearer | Free | Check results: state, submission counts, the report + its URL |
+| POST | `/agents/campaigns/ai-visibility/{campaignId}/report` | Bearer | Free | Generate the report (after the check ended, or `allow_partial`) |
 | PATCH | `/agents/campaigns/{id}/replies/{replyId}` | Bearer | Free | Edit one draft's text before it is published |
 | POST | `/agents/campaigns/{id}/publish` | Bearer | Free | Release chosen held posts to the community |
 
@@ -955,6 +958,121 @@ This is how you close the loop after launching. Without it you only know a campa
 - `404` — Campaign not found
 
 ---
+
+## POST /api/v1/agents/campaigns/ai-visibility
+
+Create an AI-visibility check: real people ask ChatGPT / Claude (any of `models`) the product's buying questions from their own accounts in a fresh chat and submit the shared chat link or a screenshot. Once the check ends, generate the report with `POST …/{campaignId}/report`. The key-authed twin of the web form at `https://www.productclank.com/ai-visibility`. Agents cannot answer a check.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| product_id | string | Yes | The product the panel asks about |
+| questions | string[] | No | 1–30 buying questions (≤ 200 chars each). Omit to let people ask in their own words |
+| models | string[] | No | `ChatGPT`, `Claude`, `Gemini`, `Perplexity`, `Grok`. Default ChatGPT + Claude |
+| days | number | No | 1–14, default 4 |
+| max_participants | number | No | Panel size, 1–200, default 40 |
+| dry_run | boolean | No | `true` = return the brief and price, create nothing, charge nothing |
+| caller_user_id | string | Trusted only | User to bill |
+
+### Response (200) — dry run
+
+```json
+{
+  "success": true,
+  "dry_run": true,
+  "proposal": {
+    "product_id": "product-uuid",
+    "product": "Northsky",
+    "title": "Northsky — AI visibility check",
+    "models": ["ChatGPT", "Claude"],
+    "questions": ["best analytics tool for solo founders"],
+    "days": 4,
+    "max_participants": 40,
+    "action_message": "Ask ChatGPT or Claude what it thinks about Northsky, then submit the conversation link or a screenshot of the answer.",
+    "action_cta": "Ask ChatGPT",
+    "brief": "…"
+  },
+  "credits": { "credits_required": 1000, "credits_available": 2400, "billing_user_id": "user-uuid", "billing": "flat launch fee at create; the panel earns platform points; the report is free" },
+  "next_step": "Review the brief with the owner, then call again with dry_run:false to launch and charge the launch fee."
+}
+```
+
+### Response (200) — launch
+
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "campaign-uuid",
+    "campaign_number": 1387,
+    "campaign_type": "take_action",
+    "kind": "ai_visibility",
+    "title": "Northsky — AI visibility check",
+    "product_id": "product-uuid",
+    "product": "Northsky",
+    "models": ["ChatGPT", "Claude"],
+    "questions": ["best analytics tool for solo founders"],
+    "state": "active",
+    "starts_at": "2026-11-08T11:28:24Z",
+    "ends_at": "2026-11-12T11:28:24Z",
+    "max_participants": 40,
+    "public_url": "https://www.productclank.com/amplify/content/campaign-uuid",
+    "admin_url": "https://www.productclank.com/amplify/workbench/campaign-uuid"
+  },
+  "check": { "days": 4, "max_participants": 40, "models": ["ChatGPT", "Claude"], "question_count": 1, "report_url": "https://www.productclank.com/ai-visibility/report/campaign-uuid", "billing": "flat launch fee charged; the panel earns platform points; the report is free" },
+  "credits": { "credits_used": 1000, "credits_available": 1400, "billing_user_id": "user-uuid" },
+  "next_step": "Share public_url so people ask. Read progress with GET …; once it ends, POST …/report, then open report_url."
+}
+```
+
+### Error Codes
+- `validation_error` (400) — missing `product_id`, unknown model, bad `days` / `max_participants` / `questions`
+- `not_found` (404) — product not found or inactive
+- `insufficient_credits` (402) — balance below the launch fee
+- `rate_limit_exceeded` (429) — daily campaign creation limit
+
+## GET /api/v1/agents/campaigns/ai-visibility/{campaignId}
+
+Results of a check the caller owns (web-made checks the acting user owns too). Free.
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "campaign": { "id": "campaign-uuid", "state": "ended", "ends_at": "2026-11-12T11:28:24Z", "models": ["ChatGPT", "Claude"], "public_url": "…", "admin_url": "…" },
+  "submissions": { "total": 31, "pending": 4, "approved": 26, "rejected": 1, "shared_links": 22, "screenshots": 9 },
+  "report": null,
+  "report_generated_at": null,
+  "report_url": null,
+  "next_step": "The check has ended with 31 submissions: POST …/report to generate the report."
+}
+```
+
+`report` is the report object once generated (`verdict`, `mentalModel`, `strengths`, `risks`, `quotes`, `findings`, `recommendations`, `caveat`, `method`), with `report_url` the private report page.
+
+## POST /api/v1/agents/campaigns/ai-visibility/{campaignId}/report
+
+Generate (or regenerate) the report from the submissions. Free. Waits for the check to end so it covers the whole panel.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| allow_partial | boolean | No | Generate before the check ended, from what is in so far |
+| caller_user_id | string | Trusted only | |
+
+### Response (200)
+
+```json
+{ "success": true, "report": { "verdict": "…", "strengths": [], "risks": [], "quotes": [], "findings": [], "recommendations": [], "caveat": "…" }, "report_url": "https://www.productclank.com/ai-visibility/report/campaign-uuid", "partial": false }
+```
+
+### Error Codes
+- `campaign_running` (409) — not ended yet; wait for `ends_at` or pass `allow_partial: true`
+- `no_submissions` (422) — nothing to report on
+- `not_found` (404)
 
 ## PATCH /api/v1/agents/campaigns/{campaignId}/replies/{replyId}
 
