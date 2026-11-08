@@ -1,10 +1,10 @@
 ---
 name: productclank-campaigns
-description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, quote posts, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them.
+description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, quote posts, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them. AI Visibility Check asks real people to ask ChatGPT and Claude about your product from their own accounts and reports what they say. Use AI Visibility Check when the user wants to know what AI assistants tell buyers about their product.
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.10.0"
+  version: "3.11.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -592,6 +592,81 @@ Straight after launch this reads `state: "processing"` with zero submissions: th
 
 ---
 
+## Capability 4: AI Visibility Check
+
+**Find out what ChatGPT and Claude tell buyers about your product — from real people's own accounts.**
+
+Use AI Visibility Check when the user asks "what does ChatGPT say about us?", "do the AI assistants recommend us?", or wants to know who gets named instead. Real people ask the assistants the product's buying questions in a fresh chat from their own accounts (the answers depend on who is asking — plan, country, memory — so nothing is probed through an API) and submit the shared chat link or a screenshot. Once the check ends, a report is generated: how often the product comes up, who gets named instead, and the exact words used. Nobody on the panel is paid more when the product's name shows up. Nothing is posted anywhere.
+
+### How It Works
+1. Pick the product (`search_products` / `POST /agents/products`) and, ideally, the buying questions the user cares about
+2. **Preview it for free** — `dry_run: true` returns the brief the panel will see and the price
+3. On approval, launch — one flat launch fee (1000 credits) whatever the panel size; the panel earns ProductClank points
+4. People ask the assistants and submit proof through ProductClank (default: 4 days, a panel of 40)
+5. When the check has ended, generate the report (free) and relay it; the user can also open the private report page
+
+### Pricing
+
+| Operation | Credits |
+|-----------|---------|
+| Preview (`dry_run: true`) | Free |
+| Launch (`dry_run: false`) | 1000 (flat) |
+| Results (`GET`) | Free |
+| Report (`POST …/report`) | Free |
+
+### API Flow
+
+**Step 1: Preview (free)**
+```
+POST /api/v1/agents/campaigns/ai-visibility
+Authorization: Bearer pck_live_...
+Content-Type: application/json
+
+{
+  "product_id": "product-uuid",
+  "questions": ["best analytics tool for solo founders", "simplest analytics for a one-person team"],
+  "models": ["ChatGPT", "Claude"],
+  "days": 4,
+  "max_participants": 40,
+  "dry_run": true
+}
+```
+Returns `proposal` (title, models, questions, the participant brief) and `credits` (`credits_required`, `credits_available`). Creates nothing.
+
+**Step 2: Launch**
+Same body with `dry_run: false` (or omitted). Returns `campaign` (`id`, `public_url`, `admin_url`, `ends_at`, `models`, `questions`), `check.report_url` and `credits` (`credits_used: 1000`).
+
+**Step 3: Results (free, any time)**
+```
+GET /api/v1/agents/campaigns/ai-visibility/{campaignId}
+```
+Returns `campaign.state` (`active` / `ended` / `paused`), `submissions` (`total`, `pending`, `approved`, `rejected`, `shared_links`, `screenshots`), and `report` + `report_url` once generated.
+
+**Step 4: Report (free, once the check has ended)**
+```
+POST /api/v1/agents/campaigns/ai-visibility/{campaignId}/report
+{ "allow_partial": false }
+```
+Returns `report` (`verdict`, `mentalModel`, `strengths`, `risks` with how often each came up, `quotes`, `findings`, `recommendations`, `caveat`, `method`) and `report_url` (private: the owner and their delegates). 409 `campaign_running` before `ends_at` unless `allow_partial: true`; 422 `no_submissions` when nothing is in.
+
+### Required Fields
+- `product_id` — the product the panel asks about
+
+### Optional Fields
+- `questions` — 1–30 buying questions (≤ 200 chars each); omit to let people ask in their own words
+- `models` — `ChatGPT`, `Claude`, `Gemini`, `Perplexity`, `Grok` (default ChatGPT + Claude)
+- `days` — 1–14 (default 4)
+- `max_participants` — panel size 1–200 (default 40)
+- `dry_run` — preview only
+- `caller_user_id` — trusted agents only
+
+### When to Use AI Visibility Check
+- The user wants to know what the AI assistants say about the product, not to push a post
+- Before a positioning change, to see the words the models already use
+- After a launch, to see whether the product now comes up for its buying questions
+
+> **Agents cannot answer a check.** A person must ask the model and submit proof. Your job is the brief, the launch and relaying the report.
+
 ## Choosing Between Boost, Discover, and Content Campaign
 
 | Question | Boost | Discover | Content Campaign |
@@ -607,6 +682,8 @@ Straight after launch this reads `state: "processing"` with zero submissions: th
 | Results reviewed where? | In-app / via API | In-app / via API | Web app only (submissions + winners) |
 
 **Rule of thumb:** If the user has a specific post they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover. If the user wants the community to create original content for them → Content Campaign.
+
+If the user wants to know what ChatGPT / Claude tell buyers about the product → **AI Visibility Check** (Capability 4): one flat fee, real people ask, a report comes back.
 
 ---
 
@@ -721,6 +798,8 @@ When using `caller_user_id` (trusted agents), the billing user is auto-added as 
 | `/agents/campaigns/{id}` | GET | Free | Campaign details + stats |
 | `/agents/campaigns/{id}/posts` | GET | Free | Read posts + replies |
 | `/agents/campaigns/{id}/research` | GET | Free | Read cached research |
+| `/agents/campaigns/ai-visibility/{id}` | GET | Free | AI-visibility check results + the report |
+| `/agents/campaigns/ai-visibility/{id}/report` | POST | Free | Generate the AI-visibility report once the check ended |
 | `/agents/credits/balance` | GET | Free | Credit balance |
 | `/agents/credits/history` | GET | Free | Transaction history |
 | `/agents/products/search` | GET | Free | Search products |
