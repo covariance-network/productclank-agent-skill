@@ -1,10 +1,10 @@
 ---
 name: productclank-campaigns
-description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, quote posts, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them. AI Visibility Check asks real people to ask ChatGPT and Claude about your product from their own accounts and reports what they say. Use AI Visibility Check when the user wants to know what AI assistants tell buyers about their product.
+description: Community-powered growth for builders. Boost amplifies your social posts with authentic community engagement (replies, quote posts, likes, reposts). Discover finds relevant conversations and generates AI-powered replies at scale. Content Campaign rallies the community to create original content (posts, threads, videos) about your product. Use Boost when the user has a post URL. Use Discover when the user wants to find and engage in conversations about their product. Use Content Campaign when the user wants the community to make content for them. AI Visibility Check asks real people to ask ChatGPT and Claude about your product from their own accounts and reports what they say. Use AI Visibility Check when the user wants to know what AI assistants tell buyers about their product. Watch Quiz pays per verified full watch of a video. Growth Assistant grows the founder's own account with daily reply suggestions. Also covered: the cash bounty on a content campaign, campaign results, standing discovery (schedule), and the partner surfaces (webhooks, storefront spaces).
 license: Proprietary
 metadata:
   author: ProductClank
-  version: "3.11.0"
+  version: "3.12.0"
   api_endpoint: https://api.productclank.com/api/v1/agents
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/communiply/
@@ -585,6 +585,24 @@ Straight after launch this reads `state: "processing"` with zero submissions: th
 | `dry_run` | boolean | `true` = free preview; `false`/omitted = launch |
 | `caller_user_id` | string (UUID) | Trusted agents only |
 
+### Cash bounty (prize pool) on a content campaign
+
+Creators enter a content campaign for the **cash bounty** — set it right after launch, or the campaign has nothing to compete for. **Free to set**; the USER deposits the pool at `fund_url` (card or USDC, signed in as the owner). Agents never move money. A funded pool cannot be changed (409).
+
+```
+POST /api/v1/agents/campaigns/content/{campaignId}/bounty
+{ "pool_amount": 150, "token": "USDC", "tiers": [{ "rank_start": 1, "rank_end": 3, "percent": 100 }], "dry_run": true }
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| pool_amount | number | Yes | Paid to winners, in whole tokens (USDC ≈ dollars). A 10% platform fee is added on top |
+| token | string | No | Ticker or address of an approved token. Default `USDC` |
+| tiers | array | No | `[{ rank_start, rank_end, percent }]` from rank 1, no gaps, summing to 100. Default 1st 30% · 2–5 20% · 6–20 50% |
+| dry_run | boolean | No | Return the numbers without saving — do this first and show them |
+
+Returns `bounty` (`pool_amount`, `fee_amount`, `total_due`, `winners`, `tiers[].amount_per_winner`, `payout_within_hours`, `funded`) and `fund_url`. `GET …/{campaignId}/bounty` reads the saved pool (`null` when none), `funded`, and `fund_url`. Budget the launch fee AND the pool when you plan.
+
 ### When to Use Content Campaign
 - The user wants user-generated content about their product, not amplification of an existing post
 - There's no specific conversation to join — the goal is fresh community-created material
@@ -667,6 +685,72 @@ Returns `report` (`verdict`, `mentalModel`, `strengths`, `risks` with how often 
 
 > **Agents cannot answer a check.** A person must ask the model and submit proof. Your job is the brief, the launch and relaying the report.
 
+## Capability 5: Watch Quiz
+
+**Get people to watch a video all the way through.** Viewers open the video, wait its full length, then answer ONE counting question about it ("how many times does she say X?") that only a viewer can answer. A right answer is approved on the spot and earns ProductClank points; a wrong first answer gets one more try. Public, runs exactly **24 hours**, works on any video link (TikTok, YouTube, Instagram Reels, …). Agents cannot take a quiz — a person must watch.
+
+### Pricing
+
+| Operation | Credits |
+|-----------|---------|
+| Create | 0 — nothing at create |
+| Each CORRECT answer (wrong answers free) | 100, for at most `max_answers` people (default 20 → 2,000 max) |
+| `suggest-questions` (AI reads a TikTok) | 40, only when questions come back |
+
+The create needs 100 credits on hand, and the worst case (`max_answers` × 100) must fit the user's daily agent spend cap. Note for the user: paid watch time may count as artificial engagement under the platform's rules.
+
+### API Flow
+1. Get the questions AND answers from the user — you cannot watch the video. Or `POST /api/v1/agents/campaigns/watch-quiz/suggest-questions { video_url }` (TikTok, YouTube, Instagram Reel): returns `questions[]` with `answer`, `evidence`, `confidence`; show every question WITH its evidence and pass only the ones the user confirms. 422 `video_unreadable` / `no_confident_questions` = not charged.
+2. Confirm `max_answers` and the maximum spend with the user.
+3. Create:
+```
+POST /api/v1/agents/campaigns/watch-quiz
+{ "video_url": "https://www.tiktok.com/@acme/video/7400000000000000000",
+  "questions": [{ "question": "How many times does she say \"ship\"?", "answer": 4 }],
+  "duration_sec": "0:42", "max_answers": 20, "product_id": "optional-product-uuid" }
+```
+   `duration_sec` is seconds or "m:ss" (5 s – 60 min); omit it to read it from the TikTok / YouTube page. 1–20 questions, ≤ 200 chars, whole-number answers. Returns `campaign` (`id`, `public_url`, `ends_at`) and `watch_quiz` (`max_credits`, `credits_per_answer`, `duration_source`).
+4. Share `public_url`. Results, free: `GET /api/v1/agents/campaigns/watch-quiz/{campaignId}` → `campaign.state` (live / paused / ended), `results` per person (`viewers_started`, `answers`, `correct`, `wrong`, `second_tries`, `correct_rate`), per-question accuracy with the answer, `credits.credits_billed`. A question most viewers miss is usually ambiguous — say so. "paused" with credits left = the user paused it; otherwise the balance ran out.
+
+To add a quiz to a boosted video instead, send `watch_quiz` on `POST /campaigns/boost` (same fields).
+
+## Capability 6: Growth Assistant (the founder's own account)
+
+**Personal brand, not a product campaign.** Every morning the assistant finds up to 5 posts on ONE network (X, LinkedIn, Reddit or YouTube) on the topics the user wants to be known for, each with a draft reply in their voice — no product mentions, no links. The user posts the replies themselves. **Setup is free and spends no credits.** The daily run + morning email is a **$9/month (or $99/year) subscription** the user starts in their browser at `app_url`; the first run is free.
+
+### API Flow
+1. Agree with the user on 2–4 topics with their search phrases, one or two sentences about who they are, and a few rules for how their replies should read — draft these from what you know and confirm.
+2. Set up (or update in place):
+```
+POST /api/v1/agents/growth-assistant
+{ "network": "twitter",
+  "topics": [{ "label": "developer marketing", "keywords": ["devrel", "developer marketing", "docs as marketing"] }],
+  "about": "Founder of a dev-tools company; ten years in developer relations.",
+  "voice": "Short. Concrete. One opinion per reply. Never pitch.",
+  "per_day": 5, "mix": "balanced" }
+```
+   `network`: `twitter` | `linkedin` | `reddit` | `youtube` (one per person). `topics`: 1–4, each `label` (2–5 words) + `keywords` (1–8 phrases people actually write). `per_day`: 3 or 5. `mix`: `relevance` (default) · `balanced` · `busy` (threads with many comments) · `early` (posts with few comments, where the author reads you). Returns `campaign_ids`, `subscription` (`subscribed`, `free_first_run_used`, `price_usd_per_month`), `app_url`, `next_step`.
+3. Each day: `GET /api/v1/agents/growth-assistant` → `suggestions[]` (posts from the last 3 days still waiting for a reply, each with `draft`, `engagement { likes, comments, reposts, views }` and `kind`: busy / early / regular) + `assistants` (settings). Free. Show each post briefly, help the user edit the draft; they post it from their own account. More busy threads or more early posts → update `mix`.
+
+## Operating a campaign: results and standing discovery
+
+### Results — spend vs outcomes (free, no scraping)
+`GET /api/v1/agents/campaigns/{campaignId}/results` → `funnel` (discovered → kept → drafted → claimed → posted → approved), `rates`, `survival`, `engagement`, `spend` (`credits_spent`, `by_operation`, `credits_per_usable_reply`). Read it honestly: `approval_rate` covers judged replies only; `survival_rate` is null below `volume_floor`; removal is usually a platform/mod decision, not fraud. `GET …/{campaignId}/activity?since=` is the since-watermark delta (new posts, claimed replies with live `posted_url`); pass back `checked_at`.
+
+### Standing discovery — the schedule (free to set; authorizes later spend)
+`PUT /api/v1/agents/campaigns/{campaignId}/schedule { enabled, frequency_per_day, posts_per_run, confirm }` lets the hourly cron run discovery on its own. Every scheduled run bills the owner **12 credits per post found** with nobody in the loop, so:
+- **Enabling requires `confirm: true`.** Without it you get 400 `confirmation_required` with the full `projection` (`projected_daily_credits` = runs × posts × 12, an upper bound). Show it to the human and get a real yes. Disabling never needs confirmation.
+- Limits on the agent path: `frequency_per_day` 1–4, `posts_per_run` 1–20, projected daily credits ≤ 600. A projection above the user's daily spend cap is refused with 429 `daily_spend_cap_exceeded`.
+- `blockers` lists why an enabled schedule would not fire (paused, completed, auto-paused for credits) — relay them. Five empty runs in a row (twelve on Reddit) auto-pause the schedule; a zero balance auto-pauses the campaign.
+- `GET …/schedule` returns the same shape without changing anything.
+
+## Partners: webhooks and storefront spaces
+
+Both are **operator-granted**: ask the ProductClank team (`POST /api/v1/agents/support`) before building on them; other keys get 403.
+
+- **Webhooks** (`webhooks_allowed`): instead of polling, receive a signed POST when new drafts land (`opportunities.available` — no draft text; hold a draft to read it) and when a claim your agent submitted is reviewed (`submission.approved` / `submission.rejected`). `POST /api/v1/agents/webhooks { url, events, filters? }` registers or replaces your endpoint (the `secret` is returned once); `GET` shows it with the 20 latest deliveries; `DELETE` removes it; `POST …/rotate-secret`; `POST …/test` sends a signed `ping`. Verify `ProductClank-Signature: t=<unix>,v1=<hex>` as `hex(HMAC-SHA256(secret, "<t>.<raw body>"))`, reject `t` older than 5 minutes, de-duplicate on the event id; answer 2xx within 5 seconds (retries at 1 min, 5 min, 30 min, 2 h, 6 h; 10 straight failures over 24 h disable the endpoint).
+- **Storefront spaces** (`partner_spaces_allowed`): `POST /api/v1/agents/spaces` creates a client space for a brand you resell to, already seeded with proven creators (returns `seeded_count`, never a roster; 5 spaces per user per day). Run that brand's campaigns inside it with `space_id` on `POST /campaigns/content`. The full reseller model (held-mode discovery as a subscription, boost as a one-off, what we commit to, money) is at https://www.productclank.com/developers/storefront.
+
 ## Choosing Between Boost, Discover, and Content Campaign
 
 | Question | Boost | Discover | Content Campaign |
@@ -684,6 +768,8 @@ Returns `report` (`verdict`, `mentalModel`, `strengths`, `risks` with how often 
 **Rule of thumb:** If the user has a specific post they want community to rally behind → Boost. If the user wants to find and join conversations about their product's topic → Discover. If the user wants the community to create original content for them → Content Campaign.
 
 If the user wants to know what ChatGPT / Claude tell buyers about the product → **AI Visibility Check** (Capability 4): one flat fee, real people ask, a report comes back.
+
+If a video needs to be watched to the end → **Watch Quiz** (Capability 5): paid per correct answer. If the founder wants to grow their OWN account, not the product's → **Growth Assistant** (Capability 6): free setup, a small subscription for the daily run.
 
 ---
 
@@ -800,6 +886,16 @@ When using `caller_user_id` (trusted agents), the billing user is auto-added as 
 | `/agents/campaigns/{id}/research` | GET | Free | Read cached research |
 | `/agents/campaigns/ai-visibility/{id}` | GET | Free | AI-visibility check results + the report |
 | `/agents/campaigns/ai-visibility/{id}/report` | POST | Free | Generate the AI-visibility report once the check ended |
+| `/agents/campaigns/{id}/results` | GET | Free | Spend vs outcomes: funnel, rates, survival, engagement, spend |
+| `/agents/campaigns/{id}/activity` | GET | Free | What changed since `since` (new posts, claimed replies with live URLs) |
+| `/agents/campaigns/{id}/schedule` | GET / PUT | Free to set · 12/post found later | Standing discovery; enabling needs `confirm: true` |
+| `/agents/campaigns/content/{id}/bounty` | POST / GET | Free (the user deposits the pool) | Set / read the cash bounty of a content campaign |
+| `/agents/campaigns/watch-quiz` | POST | 100 per correct answer | Create a 24h watch quiz |
+| `/agents/campaigns/watch-quiz/suggest-questions` | POST | 40 on success | AI questions from a TikTok / YouTube / Reel |
+| `/agents/campaigns/watch-quiz/{id}` | GET | Free | Quiz results |
+| `/agents/growth-assistant` | GET / POST | Free (subscription in the browser) | The founder's growth assistant: setup, today's suggestions |
+| `/agents/webhooks` (+ `/rotate-secret`, `/test`) | GET / POST / DELETE | Free, curated partners | Signed event delivery instead of polling |
+| `/agents/spaces` | POST | Free, partner-granted | A seeded client space for a storefront |
 | `/agents/credits/balance` | GET | Free | Credit balance |
 | `/agents/credits/history` | GET | Free | Transaction history |
 | `/agents/products/search` | GET | Free | Search products |

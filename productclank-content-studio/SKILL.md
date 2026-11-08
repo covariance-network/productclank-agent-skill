@@ -4,7 +4,7 @@ description: Set up and run a brand's OWN content pipeline on ProductClank. Your
 license: Proprietary
 metadata:
   author: ProductClank
-  version: 0.3.0
+  version: 0.4.0
   api_endpoint: https://api.productclank.com/api/v1/agents/content
   website: https://www.productclank.com
   web_ui: https://app.productclank.com/content
@@ -111,6 +111,30 @@ Only `text` is required per candidate. `platform` must be one of the workspace's
 ```
 
 Share `review_url` with the user so they can review, edit, and schedule the drafts.
+
+## Quote authority — borrow trusted voices on X
+
+For a user growing an account **from zero**: pin the people their audience already listens to, find those people's clearest claims on X, and draft quote posts that add the user's own value. The user quotes the person's post and posts it from their own account. **Nothing here posts, and no clip is downloaded or re-uploaded** — the product quotes the person's own X post. Moments come from posts on X (including their video clips); a podcast or interview counts only when it was posted on X. Never imply the quoted person endorses the user. Needs a content space (`GET /content/spaces`).
+
+### Pricing
+
+| Operation | Credits |
+|-----------|---------|
+| Read the pinned people, the latest moments, the plan (`GET`) | Free |
+| Suggest people (`POST …/suggest`) | First call free, then 50 |
+| Find moments (`POST …/authority`, one live X search) | First search free (reads the first 5 people), then 50 |
+| Pin people (`PUT`) · Draft quote posts (`POST …/drafts`) | Free |
+| The weekly run by email | $19/month plan the user starts at `app_url` (the card step needs a browser) |
+
+Tell the user the cost and get a yes before a paid call.
+
+### The flow
+1. `GET /api/v1/agents/content/authority?space_id=` → `{ handles, latest: { moments[], handles_read, window_days, refreshed_at } | null, plan, app_url }`. Use it first to see what is already there (`plan.free_suggest_available`, `plan.free_find_available`).
+2. `POST /api/v1/agents/content/authority/suggest { space_id, topic?, exclude? }` → `people[]` (`handle`, `name`, `why`, `posts_clips`, `followers`, `confirmed` — checked against the live X account). Saves nothing: the user picks who to pin. Favours people who post clips (podcasts, interviews, talks).
+3. `PUT /api/v1/agents/content/authority { space_id, handles }` — save the pinned people (10–20 works best). Free.
+4. `POST /api/v1/agents/content/authority { space_id, handles?, topic?, window_days?: 7 | 30 | 90 }` — one live X search over the pinned people's recent posts and clips (up to ~2 minutes). Returns `latest.moments[]`: `url` (the person's post), `claim`, `claim_type`, `media_type`, `timestamp`, `why`. `handles` replaces the pinned list for this search; omit it to use the saved list.
+5. `POST /api/v1/agents/content/authority/drafts { space_id, url, value_mode? }` → `{ run_id }`. `url` must be a moment from the latest search. `value_mode`: `workflow` · `breakdown` · `disagreement` · `example` · `implication` · `opinion` (omit to let the drafter pick). Free.
+6. `GET /api/v1/agents/content/authority/drafts?space_id=&run_id=` → `{ status, drafts[] }`; poll until `status` is not `running` (usually under a minute). The drafts also land in the user's Content queue; revise one with `PATCH /content/drafts`. Show them, help the user edit one; they quote the person's post with it and post from their own account. Never claim a post went out.
 
 ## Fields
 

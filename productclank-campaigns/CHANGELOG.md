@@ -5,6 +5,20 @@ All notable changes to the ProductClank Agent Skill will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.12.0] - 2026-11-08
+
+### Added - parity with the MCP connector
+- **Watch Quiz (Capability 5)**: `POST /agents/campaigns/watch-quiz` (100 credits per correct answer, nothing at create, `max_answers` cap), `POST …/watch-quiz/suggest-questions` (40 on success), `GET …/watch-quiz/{campaignId}` (free).
+- **Growth Assistant (Capability 6)**: `GET` / `POST /agents/growth-assistant` — the founder's own account; free setup, the daily run is a $9/month subscription started in the browser.
+- **Cash bounty** on a content campaign: `POST` / `GET /agents/campaigns/content/{campaignId}/bounty` (free; the user deposits the pool at `fund_url`).
+- **Operating a campaign**: `GET …/{campaignId}/results` (spend vs outcomes, free, no scraping) and `GET` / `PUT …/{campaignId}/schedule` (standing discovery; enabling needs `confirm: true`; 12 credits per post found at run time).
+- **Partners**: webhooks (`/agents/webhooks` + `rotate-secret`, `test`; curated partners) and storefront spaces (`POST /agents/spaces`; partner-granted).
+- MCP equivalents: `create_watch_quiz`, `suggest_quiz_questions`, `get_watch_quiz_results`, `setup_growth_assistant`, `get_growth_suggestions`, `set_content_bounty`, `get_campaign_results`, `set_campaign_schedule`.
+
+### Changed
+- The chooser's rule of thumb now routes to Watch Quiz and Growth Assistant too.
+- Same release across the repo: **content studio 0.4.0** gains Quote authority (`/agents/content/authority/*`: suggest, pin, find moments, draft quote posts; first suggest and first search free, then 50 credits; $19/month weekly run); **participation 0.4.0** gains the draft hold (`/participate/hold`), intro bounties (`/participate/campaigns/{id}/intro-leads`), scouts (`/scout/*`), AI creators (`/ai-creators`) and social ownership (`/social-ownership`).
+
 ## [3.11.0] - 2026-11-08
 
 ### Added - AI Visibility Check (Capability 4)
